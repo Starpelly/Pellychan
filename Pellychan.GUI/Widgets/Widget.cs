@@ -1,15 +1,9 @@
-﻿using Pellychan.GUI.Platform.Skia;
+﻿using Pellychan.GUI.Input;
+using Pellychan.GUI.Platform.Skia;
 using SDL2;
 using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
-
-public enum MouseEventType
-{
-    Down,
-    Up,
-    Move
-}
 
 public class Widget : IDisposable
 {
@@ -47,19 +41,36 @@ public class Widget : IDisposable
         Parent = parent;
         parent?.AddChild(this);
         Update();
+
+        if (IsTopLevel)
+        {
+            Application.Instance!.TopLevelWidgets.Add(this);
+            initializeIfTopLevel();
+        }
     }
 
-    public void InitializeIfTopLevel()
+    private void initializeIfTopLevel()
     {
         if (!IsTopLevel) return;
 
         m_nativeWindow = new(this, Width, Height, GetType().Name);
         WindowRegistry.Register(m_nativeWindow);
+
+        m_nativeWindow.OnWindowResize += delegate (int w, int h)
+        {
+            m_nativeWindow!.CreateFrameBuffer(w, h);
+            Resize(w, h);
+            
+            Update();
+        };
+        m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
+        m_nativeWindow.OnMouseMoved += handleMouseMove;
     }
 
     public void UpdateAndRender()
     {
         if (!IsTopLevel) return;
+        if (Width == 0 || Height == 0) return;
 
         // Lock texture to get pixel buffer
         m_nativeWindow!.Lock();
@@ -87,10 +98,13 @@ public class Widget : IDisposable
     /// </summary>
     public void Show()
     {
+        Visible = true;
+
         if (IsTopLevel)
         {
-            Application.Instance!.TopLevelWidgets.Add(this);
-            InitializeIfTopLevel();
+            m_nativeWindow?.CreateFrameBuffer(Width, Height);
+            m_nativeWindow?.Center();
+            m_nativeWindow?.Show();
         }
     }
 
@@ -118,6 +132,8 @@ public class Widget : IDisposable
     {
         Width = width;
         Height = height;
+
+        m_nativeWindow?.Resize(width, height);
 
         OnResize(width, height);
     }
@@ -188,46 +204,6 @@ public class Widget : IDisposable
         return IsTopLevel && m_nativeWindow!.ShouldClose;
     }
 
-    public void HandleEvent(SDL.SDL_Event e)
-    {
-        switch (e.type)
-        {
-            case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
-                dispatchMouseEvent(e.button.x, e.button.y, MouseEventType.Down);
-                break;
-
-            case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
-                dispatchMouseEvent(e.button.x, e.button.y, MouseEventType.Up);
-                break;
-
-            case SDL.SDL_EventType.SDL_MOUSEMOTION:
-                handleMouseMove(e.motion.x, e.motion.y);
-                break;
-
-            case SDL.SDL_EventType.SDL_WINDOWEVENT:
-
-                switch (e.window.windowEvent)
-                {
-                    case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-                    {
-                        m_nativeWindow!.CreateFrameBuffer(e.window.data1, e.window.data2);
-                        Resize(e.window.data1, e.window.data2);
-
-                        Update();
-                    }
-                    break;
-
-                    case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE:
-                    {
-                        m_nativeWindow!.ShouldClose = true;
-                    }
-                    break;
-                }
-
-                break;
-        }
-    }
-
     public virtual void Dispose()
     {
         m_nativeWindow?.Dispose();
@@ -247,6 +223,14 @@ public class Widget : IDisposable
     public bool HitTest(int x, int y)
     {
         return Visible && (x >= 0 && y >= 0 && x < Width && y < Height);
+    }
+
+    /// <summary>
+    /// Sets the title of the window.
+    /// </summary>
+    public void SetWindowTitle(string title)
+    {
+        m_nativeWindow?.SetTitle(title);
     }
 
     #region Events

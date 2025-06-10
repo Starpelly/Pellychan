@@ -6,15 +6,15 @@ namespace Pellychan.GUI;
 
 internal static class WindowRegistry
 {
-    private static readonly Dictionary<uint, SkiaWindow> windows = new();
+    private static readonly Dictionary<uint, SkiaWindow> s_windows = [];
 
     public static void Register(SkiaWindow window)
     {
-        windows[window.WindowID] = window;
+        s_windows[window.WindowID] = window;
     }
 
     public static SkiaWindow? Get(uint id) =>
-        windows.TryGetValue(id, out var win) ? win : null;
+        s_windows.TryGetValue(id, out var win) ? win : null;
 }
 
 public class Application : IDisposable
@@ -95,7 +95,7 @@ public class Application : IDisposable
 
             if (WindowRegistry.Get(id) is { } win)
             {
-                win.ParentWidget.HandleEvent(e);
+                win.HandleEvent(e);
             }
         }
     }
