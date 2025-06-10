@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <Title>Pellychan Resources</Title>
+    <Product>Pellychan Resources</Product>
+    <Company>Boxsubmus</Company>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Images\**\*" />
+  </ItemGroup>
+  
+</Project>

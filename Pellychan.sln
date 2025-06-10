@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pellychan", "D:\Pellychan\Pellychan\Pellychan.csproj", "{FB444F9A-3151-4021-A83F-7CAE9C56DA8C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pellychan.GUI", "Pellychan.GUI\Pellychan.GUI.csproj", "{C7AFFF85-7537-4C61-ABB2-3FE99F4ACBD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pellychan.Resources", "Pellychan.Resources\Pellychan.Resources.csproj", "{C1CA6900-95D6-AA89-3B69-65E9A97CB10A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{C7AFFF85-7537-4C61-ABB2-3FE99F4ACBD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7AFFF85-7537-4C61-ABB2-3FE99F4ACBD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7AFFF85-7537-4C61-ABB2-3FE99F4ACBD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1CA6900-95D6-AA89-3B69-65E9A97CB10A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1CA6900-95D6-AA89-3B69-65E9A97CB10A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1CA6900-95D6-AA89-3B69-65E9A97CB10A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1CA6900-95D6-AA89-3B69-65E9A97CB10A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

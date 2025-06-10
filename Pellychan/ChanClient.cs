@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.API.Responses;
 
@@ -18,7 +19,7 @@ public class ChanClient
 
     public async Task<List<Board>> GetBoardsAsync()
     {
-        var url = "https://a.4cdn.org/boards.json";
+        var url = $"https://{Domains.API}/boards.json";
         var json = await m_httpClient.GetStringAsync(url);
 
         var result = JsonConvert.DeserializeObject<BoardsResponse>(json);
