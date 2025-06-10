@@ -1,4 +1,8 @@
-﻿namespace Pellychan;
+﻿using Pellychan.Resources;
+using SkiaSharp;
+using Svg.Skia;
+
+namespace Pellychan;
 
 public static class Helpers
 {
@@ -22,5 +26,32 @@ public static class Helpers
 
         var baseFileName = string.Join("-", emojiCodepoints);
         return $"{baseFileName}.svg";
+    }
+
+    public static SKPicture? LoadSvgPicture(string resourceName)
+    {
+        var assembly = PellychanResources.ResourceAssembly;
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return null;
+
+        var svg = new SKSvg();
+        svg.Load(stream);
+        return svg.Picture;
+    }
+
+    public static void DrawSvg(SKCanvas canvas, SKPicture? picture, SKRect targetBounds)
+    {
+        if (picture == null) return;
+
+        // Calculate scale
+        var originalSize = picture.CullRect;
+        var matrix = SKMatrix.CreateScale(
+            targetBounds.Width / originalSize.Width,
+            targetBounds.Height / originalSize.Height);
+
+        canvas.Save();
+        canvas.Translate(targetBounds.Left, targetBounds.Top);
+        canvas.DrawPicture(picture, in matrix);
+        canvas.Restore();
     }
 }

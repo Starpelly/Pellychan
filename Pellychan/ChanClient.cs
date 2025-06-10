@@ -9,6 +9,8 @@ public class ChanClient
 {
     private readonly HttpClient m_httpClient = new();
 
+    public List<Board> Boards = [];
+
     public ChanClient()
     {
         // The 4chan API requires a UserAgent or else it won't work.

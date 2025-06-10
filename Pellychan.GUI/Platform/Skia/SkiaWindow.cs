@@ -77,7 +77,7 @@ internal class SkiaWindow
         Lock();
 
         Surface?.Dispose();
-        Surface = SKSurface.Create(ImageInfo, m_pixels, m_pitch);
+        Surface = SKSurface.Create(ImageInfo, m_pixels, m_pitch, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
 
         Unlock();
     }
@@ -146,6 +146,12 @@ internal class SkiaWindow
                             OnWindowResize?.Invoke(e.window.data1, e.window.data2);
                         }
                         break;
+
+                    case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED:
+                        {
+                        }
+                        break;
+
 
                     case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE:
                         {

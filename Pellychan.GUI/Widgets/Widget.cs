@@ -166,7 +166,7 @@ public class Widget : IDisposable
                 {
                     m_cachedSurface?.Dispose();
 
-                    m_cachedSurface = SKSurface.Create(new SKImageInfo(Width, Height));
+                    m_cachedSurface = SKSurface.Create(new SKImageInfo(Width, Height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
                     m_cachedWidth = Width;
                     m_cachedHeight = Height;
                 }

@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Images\**\*" />
+	  <EmbeddedResource Include="Fonts\**\*" />
+	  <EmbeddedResource Include="Images\**\*" />
   </ItemGroup>
   
 </Project>
