@@ -59,7 +59,7 @@ public class Application : IDisposable
                 }
                 else
                 {
-                    w.UpdateAndRender();
+                    w.RenderTopLevel();
                     // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
                 }
             }

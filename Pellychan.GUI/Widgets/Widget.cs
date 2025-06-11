@@ -36,15 +36,12 @@ public class Widget : IDisposable
     public bool IsTopLevel => Parent == null;
     internal SkiaWindow? m_nativeWindow;
 
-    public Widget(Widget? parent = null)
+    public Widget()
     {
-        Parent = parent;
-        parent?.AddChild(this);
-        Update();
+        Invalidate();
 
         if (IsTopLevel)
         {
-            Application.Instance!.TopLevelWidgets.Add(this);
             initializeIfTopLevel();
         }
     }
@@ -61,13 +58,13 @@ public class Widget : IDisposable
             m_nativeWindow!.CreateFrameBuffer(w, h);
             Resize(w, h);
             
-            Update();
+            Invalidate();
         };
         m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
         m_nativeWindow.OnMouseMoved += handleMouseMove;
     }
 
-    public void UpdateAndRender()
+    public void RenderTopLevel()
     {
         if (!IsTopLevel) return;
         if (Width == 0 || Height == 0) return;
@@ -102,17 +99,19 @@ public class Widget : IDisposable
 
         if (IsTopLevel)
         {
+            Application.Instance!.TopLevelWidgets.Add(this);
+
             m_nativeWindow?.CreateFrameBuffer(Width, Height);
             m_nativeWindow?.Center();
             m_nativeWindow?.Show();
         }
     }
 
-    public void AddChild(Widget child, int x = 0, int y = 0)
+    public void AddChild(Widget child)
     {
+        child.Parent?.m_children.Remove(child);
         child.Parent = this;
-        child.X = x;
-        child.Y = y;
+
         m_children.Add(child);
     }
 
@@ -151,15 +150,17 @@ public class Widget : IDisposable
         if (Width <= 0 || Height <= 0)
             return;
 
-        canvas.Save();
-        canvas.Translate(X, Y);
+        SKSurface? GetPaintSurface()
+        {
+            return (IsTopLevel) ? canvas.Surface : m_cachedSurface!;
+        }
 
         if (m_isDirty)
         {
             m_isDirty = false;
 
             // We'll only recreate the surface when the widget is resized
-            // AND only if we're not a top level widget
+            // AND only if we're not a top level widget, as the surface for a top level widget is the window itself
             if (!IsTopLevel)
             {
                 if (m_cachedSurface == null || Width != m_cachedWidth || Height != m_cachedHeight)
@@ -172,29 +173,34 @@ public class Widget : IDisposable
                 }
             }
 
-            var surface = (IsTopLevel) ? m_nativeWindow!.Surface! : m_cachedSurface!;
+            var paintSurface = GetPaintSurface()!;
 
-            var sc = surface.Canvas;
+            var sc = paintSurface.Canvas;
             sc.Clear(SKColors.Transparent);
             OnPaint(sc);
 
             // We can recreate the image every paint, that's fine.
             m_cachedImage?.Dispose();
-            m_cachedImage = surface.Snapshot();
+            m_cachedImage = paintSurface.Snapshot();
         }
 
         // Draw the cached image to the real canvas
+        // This is never actually null, but I don't want Rider yelling at me... :<
         if (m_cachedImage != null)
         {
-            canvas.DrawImage(m_cachedImage, 0, 0);
+            canvas.DrawImage(m_cachedImage, X, Y);
         }
 
-        foreach (var child in m_children)
+        // Draw the children afterwards (obviously)
+        if (m_children.Count > 0)
         {
-            child.Paint(canvas);
-        }
+            var paintSurface = GetPaintSurface()!;
 
-        canvas.Restore();
+            foreach (var child in m_children)
+            {
+                child.Paint(paintSurface.Canvas);
+            }
+        }
 
         m_hasDirtyDescendants = false;
     }
@@ -215,7 +221,7 @@ public class Widget : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void Update()
+    public void Invalidate()
     {
         invalidate();
     }
