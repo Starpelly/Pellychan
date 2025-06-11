@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Pellychan;
 
-public class MainWindow : GUI.Widgets.MainWindow
+public class MainWindow : GUI.Widgets.MainWindow, IPaintHandler, IMouseDownHandler
 {
     private readonly ChanClient m_chanClient = new();
 
@@ -60,19 +60,39 @@ public class MainWindow : GUI.Widgets.MainWindow
         createLabel("test", 0, 0);
         */
 
-        AddChild(new Rect()
+        AddChild(new Rect(SKColors.Red)
         {
             X = 16,
             Y = 16,
             Width = 100,
             Height = 100,
         });
+
+        AddChild(new Rect(SKColors.Green)
+        {
+            X = 32,
+            Y = 32,
+            Width = 100,
+            Height = 100,
+        });
+
+        AddChild(new Rect(SKColors.Blue)
+        {
+            X = 48,
+            Y = 48,
+            Width = 100,
+            Height = 100,
+        });
     }
 
-    public override void OnPaint(SKCanvas canvas)
+    public void OnMouseDown(int x, int y)
     {
-        base.OnPaint(canvas);
 
+        Invalidate();
+    }
+
+    public void OnPaint(SKCanvas canvas)
+    {
         canvas.Clear(new(15, 15, 15, 255));
 
         // Helpers.DrawSvg(canvas, m_flag, new SKRect(0, 0, 256, 256));

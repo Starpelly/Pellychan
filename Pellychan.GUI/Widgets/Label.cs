@@ -37,13 +37,9 @@ namespace Pellychan.GUI.Widgets
             m_font = font;
         }
 
-        public override void OnPaint(SKCanvas canvas)
+        public void OnPaint(SKCanvas canvas)
         {
-            base.OnPaint(canvas);
-
             canvas.Save();
-
-            // canvas.Translate(X, Y);
 
             canvas.DrawRect(new SKRect(0, 0, Width, Height), new SKPaint() { Color = SKColors.Red });
 

@@ -2,20 +2,18 @@
 
 namespace Pellychan.GUI.Widgets;
 
-public class ClickableLabel : Label
+public class ClickableLabel : Label, IMouseEnterHandler, IMouseLeaveHandler
 {
     public ClickableLabel(SKFont font) : base(font)
     {
         Paint.Color = SKColors.Blue;
     }
 
-    public override void OnMouseEnter()
+    public void OnMouseEnter()
     {
-        base.OnMouseEnter();
     }
 
-    public override void OnMouseLeave()
+    public void OnMouseLeave()
     {
-        base.OnMouseLeave();
     }
 }

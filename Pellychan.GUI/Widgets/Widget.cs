@@ -5,6 +5,41 @@ using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
 
+public interface IPaintHandler
+{
+    public void OnPaint(SKCanvas canvas);
+}
+
+public interface IMouseEnterHandler
+{
+    public void OnMouseEnter();
+}
+
+public interface IMouseLeaveHandler
+{
+    public void OnMouseLeave();
+}
+
+public interface IMouseMoveHandler
+{
+    public void OnMouseMove(int x, int y);
+}
+
+public interface IMouseDownHandler
+{
+    public void OnMouseDown(int x, int y);
+}
+
+public interface IMouseUpHandler
+{
+    public void OnMouseUp(int x, int y);
+}
+
+public interface IResizeHandler
+{
+    public void OnResize(int width, int height);
+}
+
 public class Widget : IDisposable
 {
     public Widget? Parent { get; private set; }
@@ -44,50 +79,6 @@ public class Widget : IDisposable
         {
             initializeIfTopLevel();
         }
-    }
-
-    private void initializeIfTopLevel()
-    {
-        if (!IsTopLevel) return;
-
-        m_nativeWindow = new(this, Width, Height, GetType().Name);
-        WindowRegistry.Register(m_nativeWindow);
-
-        m_nativeWindow.OnWindowResize += delegate (int w, int h)
-        {
-            m_nativeWindow!.CreateFrameBuffer(w, h);
-            Resize(w, h);
-            
-            Invalidate();
-        };
-        m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
-        m_nativeWindow.OnMouseMoved += handleMouseMove;
-    }
-
-    public void RenderTopLevel()
-    {
-        if (!IsTopLevel) return;
-        if (Width == 0 || Height == 0) return;
-
-        // Lock texture to get pixel buffer
-        m_nativeWindow!.Lock();
-
-        var surface = m_nativeWindow!.Surface!;
-        var canvas = surface.Canvas;
-
-        {
-            canvas.Clear(SKColors.White);
-
-            Paint(canvas);
-
-            canvas.Flush();
-        }
-
-        canvas.Flush();
-
-        m_nativeWindow!.Unlock();
-
-        m_nativeWindow!.Present();
     }
 
     /// <summary>
@@ -134,7 +125,7 @@ public class Widget : IDisposable
 
         m_nativeWindow?.Resize(width, height);
 
-        OnResize(width, height);
+        (this as IResizeHandler)?.OnResize(width, height);
     }
 
     public void SetRect(int x, int y, int width, int height)
@@ -145,7 +136,38 @@ public class Widget : IDisposable
         Height = height;
     }
 
-    public void Paint(SKCanvas canvas)
+    public void Invalidate()
+    {
+        invalidate();
+    }
+
+    /// <summary>
+    /// Sets the title of the window (if this is a top level widget).
+    /// </summary>
+    public void SetWindowTitle(string title)
+    {
+        m_nativeWindow?.SetTitle(title);
+    }
+
+    public bool HitTest(int x, int y)
+    {
+        return Visible && (x >= 0 && y >= 0 && x < Width && y < Height);
+    }
+
+    public virtual void Dispose()
+    {
+        m_nativeWindow?.Dispose();
+        m_cachedSurface?.Dispose();
+
+        foreach (var child in m_children)
+            child.Dispose();
+
+        GC.SuppressFinalize(this);
+    }
+
+    #region Internal methods
+
+    internal void Paint(SKCanvas canvas)
     {
         if (Width <= 0 || Height <= 0)
             return;
@@ -177,7 +199,8 @@ public class Widget : IDisposable
 
             var sc = paintSurface.Canvas;
             sc.Clear(SKColors.Transparent);
-            OnPaint(sc);
+            var paint = this as IPaintHandler;
+            paint?.OnPaint(sc);
 
             // We can recreate the image every paint, that's fine.
             m_cachedImage?.Dispose();
@@ -205,59 +228,58 @@ public class Widget : IDisposable
         m_hasDirtyDescendants = false;
     }
 
-    public bool ShouldClose()
+    internal void RenderTopLevel()
+    {
+        if (!IsTopLevel) return;
+        if (Width == 0 || Height == 0) return;
+
+        // Lock texture to get pixel buffer
+        m_nativeWindow!.Lock();
+
+        var surface = m_nativeWindow!.Surface!;
+        var canvas = surface.Canvas;
+
+        {
+            canvas.Clear(SKColors.White);
+
+            Paint(canvas);
+
+            canvas.Flush();
+        }
+
+        canvas.Flush();
+
+        m_nativeWindow!.Unlock();
+
+        m_nativeWindow!.Present();
+    }
+
+    internal bool ShouldClose()
     {
         return IsTopLevel && m_nativeWindow!.ShouldClose;
     }
 
-    public virtual void Dispose()
-    {
-        m_nativeWindow?.Dispose();
-        m_cachedSurface?.Dispose();
-
-        foreach (var child in m_children)
-            child.Dispose();
-
-        GC.SuppressFinalize(this);
-    }
-
-    public void Invalidate()
-    {
-        invalidate();
-    }
-
-    public bool HitTest(int x, int y)
-    {
-        return Visible && (x >= 0 && y >= 0 && x < Width && y < Height);
-    }
-
-    /// <summary>
-    /// Sets the title of the window.
-    /// </summary>
-    public void SetWindowTitle(string title)
-    {
-        m_nativeWindow?.SetTitle(title);
-    }
-
-    #region Events
-
-    public virtual void OnPaint(SKCanvas canvas)
-    {
-    }
-
-    public virtual void OnResize(int width, int height)
-    {
-    }
-
-    public virtual void OnMouseEnter() { }
-    public virtual void OnMouseLeave() { }
-    public virtual void OnMouseMove(int x, int y) { }
-    public virtual void OnMouseDown(int x, int y) { }
-    public virtual void OnMouseUp(int x, int y) { }
-
     #endregion
 
     #region Private Methods
+
+    private void initializeIfTopLevel()
+    {
+        if (!IsTopLevel) return;
+
+        m_nativeWindow = new(this, Width, Height, GetType().Name);
+        WindowRegistry.Register(m_nativeWindow);
+
+        m_nativeWindow.OnWindowResize += delegate (int w, int h)
+        {
+            m_nativeWindow!.CreateFrameBuffer(w, h);
+            Resize(w, h);
+
+            Invalidate();
+        };
+        m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
+        m_nativeWindow.OnMouseMoved += handleMouseMove;
+    }
 
     private void invalidate()
     {
@@ -295,7 +317,7 @@ public class Widget : IDisposable
         if (!IsHovered)
         {
             IsHovered = true;
-            OnMouseEnter();
+            (this as IMouseEnterHandler)?.OnMouseEnter();
         }
     }
 
@@ -304,7 +326,7 @@ public class Widget : IDisposable
         if (IsHovered)
         {
             IsHovered = false;
-            OnMouseLeave();
+            (this as IMouseLeaveHandler)?.OnMouseLeave();
         }
     }
 
@@ -325,34 +347,45 @@ public class Widget : IDisposable
             newHovered?.handleMouseEnter();
         }
 
-        newHovered?.OnMouseMove((int)x - X, (int)y - Y);
+        (newHovered as IMouseMoveHandler)?.OnMouseMove((int)x - X, (int)y - Y);
         m_lastHovered = newHovered;
     }
 
     private void dispatchMouseEvent(int mouseX, int mouseY, MouseEventType type)
     {
-        foreach (var widget in m_children.Reverse<Widget>()) // top-most first
+        bool hitTest(Widget widget)
         {
-            if (!widget.Visible)
-                continue;
-
             if (widget.HitTest(mouseX - widget.X, mouseY - widget.Y))
             {
                 switch (type)
                 {
                     case MouseEventType.Move:
-                        widget.OnMouseMove(mouseX - widget.X, mouseY - widget.Y);
+                        (widget as IMouseMoveHandler)?.OnMouseMove(mouseX - widget.X, mouseY - widget.Y);
                         break;
                     case MouseEventType.Down:
-                        widget.OnMouseDown(mouseX - widget.X, mouseY - widget.Y);
+                        (widget as IMouseDownHandler)?.OnMouseDown(mouseX - widget.X, mouseY - widget.Y);
                         break;
                     case MouseEventType.Up:
-                        widget.OnMouseUp(mouseX - widget.X, mouseY - widget.Y);
+                        (widget as IMouseUpHandler)?.OnMouseUp(mouseX - widget.X, mouseY - widget.Y);
                         break;
                 }
-                break; // stop at first hit
+                // break; // stop at first hit
+                return true;
             }
+            return false;
         }
+
+        // Check children first
+        foreach (var widget in m_children.Reverse<Widget>()) // top-most first
+        {
+            if (!widget.Visible)
+                continue;
+
+            if (hitTest(widget))
+                break;
+        }
+
+        hitTest(this);
     }
 
     /// <summary>
