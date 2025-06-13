@@ -1,6 +1,8 @@
 ﻿using Pellychan.GUI.Platform.Skia;
 using Pellychan.GUI.Widgets;
+using Pellychan.Resources;
 using SDL2;
+using SkiaSharp;
 
 namespace Pellychan.GUI;
 
@@ -19,6 +21,8 @@ internal static class WindowRegistry
 
 public class Application : IDisposable
 {
+    public static SKFont DefaultFont { get; set; }
+
     internal static Application? Instance { get; private set; } = null;
     
     internal readonly List<Widget> TopLevelWidgets = [];
@@ -32,20 +36,23 @@ public class Application : IDisposable
         Instance = this;
         
         SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+
+        using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
+        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        using var typeface = SKTypeface.FromStream(fontStream);
+        
+        DefaultFont = new SKFont
+        {
+            Edging = SKFontEdging.SubpixelAntialias,
+            Hinting = SKFontHinting.Full,
+            Subpixel = true,
+            Typeface = typeface,
+            Size = 13
+        };
     }
 
     public void Run()
     {
-        /*
-        foreach (var w in widgets)
-        {
-            if (w.Parent != null) continue;
-            
-            TopLevelWidgets.Add(w);
-            w.InitializeIfTopLevel();
-        }
-        */
-
         while (TopLevelWidgets.Count > 0)
         {
             pumpEvents();

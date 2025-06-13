@@ -52,6 +52,8 @@ public class Widget : IDisposable
 
     public bool Visible = true;
 
+    protected virtual bool ShouldCache => false;
+
     private bool IsHovered { get; set; } = false;
     private Widget? m_lastHovered = null;
 
@@ -169,6 +171,79 @@ public class Widget : IDisposable
 
     internal void Paint(SKCanvas canvas)
     {
+        if (Width <= 0 || Height <= 0 || !Visible)
+            return;
+
+        if (ShouldCache)
+        {
+            SKSurface? GetPaintSurface() => (IsTopLevel) ? canvas.Surface : m_cachedSurface!;
+
+            if (m_isDirty)
+            {
+                m_isDirty = false;
+
+                if (!IsTopLevel)
+                {
+                    if (m_cachedSurface == null || Width != m_cachedWidth || Height != m_cachedHeight)
+                    {
+                        m_cachedSurface?.Dispose();
+                        m_cachedSurface = SKSurface.Create(new SKImageInfo(Width, Height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
+                        m_cachedWidth = Width;
+                        m_cachedHeight = Height;
+                    }
+                }
+
+                var paintSurface = GetPaintSurface()!;
+                var sc = paintSurface.Canvas;
+
+                sc.Save();
+                sc.Clear(SKColors.Transparent);
+
+                var paintHandler = this as IPaintHandler;
+                paintHandler?.OnPaint(sc);
+
+                sc.Restore();
+
+                m_cachedImage?.Dispose();
+                m_cachedImage = paintSurface.Snapshot();
+            }
+
+            if (m_cachedImage != null)
+            {
+                canvas.DrawImage(m_cachedImage, X, Y);
+            }
+        }
+        else
+        {
+            (this as IPaintHandler)?.OnPaint(canvas);
+        }
+
+        if (m_children.Count > 0)
+        {
+            foreach (var child in m_children)
+            {
+                if (!child.Visible)
+                    continue;
+
+                canvas.Save();
+
+                // Clip to the child's bounds relative to the parent
+                canvas.ClipRect(new SKRect(child.X, child.Y, child.X + child.Width, child.Y + child.Height));
+                canvas.Translate(child.X, child.Y);
+
+                // Paint the child with the canvas offset to its local space
+                child.Paint(canvas);
+
+                canvas.Restore();
+            }
+        }
+
+        m_hasDirtyDescendants = false;
+    }
+
+    [Obsolete]
+    internal void Paint_OLD(SKCanvas canvas)
+    {
         if (Width <= 0 || Height <= 0)
             return;
 
@@ -278,7 +353,7 @@ public class Widget : IDisposable
             Invalidate();
         };
         m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
-        m_nativeWindow.OnMouseMoved += handleMouseMove;
+        m_nativeWindow.OnMouseMoved += dispatchMouseMove;
     }
 
     private void invalidate()
@@ -295,22 +370,60 @@ public class Widget : IDisposable
         Parent?.markChildDirty();
     }
 
+    private (int, int) getLocalPosition(Widget widget, int globalX, int globalY)
+    {
+        int lx = globalX;
+        int ly = globalY;
+
+        Widget? current = widget;
+        while (current != null && current != this)
+        {
+            lx -= current.X;
+            ly -= current.Y;
+            current = current.Parent;
+        }
+
+        return (lx, ly);
+    }
+
     private Widget? findHoveredWidget(int x, int y)
     {
-        if (x < X || y < Y || x > X + Width || y > Y + Height)
+        int localX = x - X;
+        int localY = y - Y;
+
+        if (!HitTest(localX, localY))
             return null;
 
-        foreach (var child in m_children.AsReadOnly().Reverse()) // top to bottom
+        foreach (var child in m_children.AsReadOnly().Reverse()) // top-most first
         {
-            var localX = x - child.X;
-            var localY = y - child.Y;
-            var hit = child.findHoveredWidget(x, y);
-            if (hit != null)
-                return hit;
+            var result = child.findHoveredWidget(localX, localY);
+            if (result != null)
+                return result;
         }
 
         return this;
     }
+
+    /// <summary>
+    /// Helper to find topmost widget under point
+    /// </summary>
+    private Widget? findTopMostWidgetAt(int x, int y)
+    {
+        // Reverse order so topmost drawn widget checked first
+        foreach (var child in m_children.AsEnumerable().Reverse())
+        {
+            if (!child.Visible)
+                continue;
+
+            if (child.HitTest(x - child.X, y - child.Y))
+                return child;
+        }
+        return null;
+    }
+
+    // --------------------
+    // Native window events
+    // --------------------
 
     private void handleMouseEnter()
     {
@@ -330,79 +443,46 @@ public class Widget : IDisposable
         }
     }
 
-    private void handleMouseMove(int x, int y)
-    {
-        var newHovered = findHoveredWidget((int)x, (int)y);
-        
-        var newCursorShape = newHovered?.CursorShape;
-
-        if (newCursorShape.HasValue)
-        {
-            MouseCursor.Set(newCursorShape.Value);
-        }
-
-        if (m_lastHovered != newHovered)
-        {
-            m_lastHovered?.handleMouseLeave();
-            newHovered?.handleMouseEnter();
-        }
-
-        (newHovered as IMouseMoveHandler)?.OnMouseMove((int)x - X, (int)y - Y);
-        m_lastHovered = newHovered;
-    }
 
     private void dispatchMouseEvent(int mouseX, int mouseY, MouseEventType type)
     {
-        bool hitTest(Widget widget)
-        {
-            if (widget.HitTest(mouseX - widget.X, mouseY - widget.Y))
-            {
-                switch (type)
-                {
-                    case MouseEventType.Move:
-                        (widget as IMouseMoveHandler)?.OnMouseMove(mouseX - widget.X, mouseY - widget.Y);
-                        break;
-                    case MouseEventType.Down:
-                        (widget as IMouseDownHandler)?.OnMouseDown(mouseX - widget.X, mouseY - widget.Y);
-                        break;
-                    case MouseEventType.Up:
-                        (widget as IMouseUpHandler)?.OnMouseUp(mouseX - widget.X, mouseY - widget.Y);
-                        break;
-                }
-                // break; // stop at first hit
-                return true;
-            }
-            return false;
-        }
+        var newHovered = findHoveredWidget(mouseX, mouseY);
 
-        // Check children first
-        foreach (var widget in m_children.Reverse<Widget>()) // top-most first
+        switch (type)
         {
-            if (!widget.Visible)
-                continue;
-
-            if (hitTest(widget))
+            case MouseEventType.Move:
+                (newHovered as IMouseMoveHandler)?.OnMouseMove(mouseX, mouseY);
+                break;
+            case MouseEventType.Down:
+                (newHovered as IMouseDownHandler)?.OnMouseDown(mouseX, mouseY);
+                break;
+            case MouseEventType.Up:
+                (newHovered as IMouseUpHandler)?.OnMouseUp(mouseX, mouseY);
                 break;
         }
-
-        hitTest(this);
     }
 
-    /// <summary>
-    /// Helper to find topmost widget under point
-    /// </summary>
-    private Widget? findTopMostWidgetAt(int x, int y)
+    private void dispatchMouseMove(int x, int y)
     {
-        // Reverse order so topmost drawn widget checked first
-        foreach (var child in m_children.AsEnumerable().Reverse())
-        {
-            if (!child.Visible)
-                continue;
+        var newHovered = findHoveredWidget(x, y);
 
-            if (child.HitTest(x - child.X, y - child.Y))
-                return child;
+        if (newHovered != m_lastHovered)
+        {
+            m_lastHovered?.handleMouseLeave();
+            newHovered?.handleMouseEnter();
+            m_lastHovered = newHovered;
         }
-        return null;
+
+        if (newHovered is IMouseMoveHandler moveHandler)
+        {
+            var (lx, ly) = getLocalPosition(newHovered, x, y);
+            moveHandler.OnMouseMove(lx, ly);
+        }
+
+        // Cursor shape
+        var cursor = newHovered?.CursorShape;
+        if (cursor.HasValue)
+            MouseCursor.Set(cursor.Value);
     }
 
     #endregion

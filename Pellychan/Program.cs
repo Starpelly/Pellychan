@@ -8,7 +8,7 @@ namespace Pellychan
         {
             using var app = new Application();
             
-            var mainWindow = new MainWindow();
+            var mainWindow = new PellychanWindow();
             mainWindow.SetWindowTitle("Pellychan");
             mainWindow.Resize(1280, 720);
             mainWindow.Show();

@@ -2,7 +2,7 @@
 
 namespace Pellychan.GUI.Widgets
 {
-    public class Rect : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler
+    public class Rect : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
     {
         private readonly SKPaint m_paint = new()
         {
@@ -36,6 +36,11 @@ namespace Pellychan.GUI.Widgets
             MouseCursor.Set(MouseCursor.CursorType.Arrow);
 
             Invalidate();
+        }
+
+        public void OnMouseDown(int x, int y)
+        {
+            Console.WriteLine(Color);
         }
     }
 }

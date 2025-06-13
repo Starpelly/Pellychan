@@ -1,12 +1,9 @@
-﻿using ExCSS;
-using Pellychan.GUI.Widgets;
-using Pellychan.Resources;
+﻿using Pellychan.GUI.Widgets;
 using SkiaSharp;
-using System.Text;
 
 namespace Pellychan;
 
-public class MainWindow : GUI.Widgets.MainWindow, IPaintHandler, IMouseDownHandler
+public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 {
     private readonly ChanClient m_chanClient = new();
 
@@ -16,25 +13,14 @@ public class MainWindow : GUI.Widgets.MainWindow, IPaintHandler, IMouseDownHandl
 
     private List<Label> m_labels = [];
 
-    public MainWindow()
+    Rect m_rect;
+
+    public PellychanWindow() : base()
     {
         // m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
         m_labelPaint.Color = SKColors.White;
 
         m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
-
-        using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-
-        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        using var typeface = SKTypeface.FromStream(fontStream);
-        m_font = new SKFont
-        {
-            Edging = SKFontEdging.SubpixelAntialias,
-            Hinting = SKFontHinting.Full,
-            Subpixel = true,
-            Typeface = typeface,
-            Size = 13
-        };
 
         /*
         void createLabel(string text, int x, int y)
@@ -60,33 +46,77 @@ public class MainWindow : GUI.Widgets.MainWindow, IPaintHandler, IMouseDownHandl
         createLabel("test", 0, 0);
         */
 
-        AddChild(new Rect(SKColors.Red)
+        Menubar = new()
+        {
+            Width = 1280,
+            ScreenPosition = MenuBar.Orientation.Top
+        };
+
+        void addMenu(string title, List<MenuItem> items)
+        {
+            var menu = new Menu(title);
+            foreach (var item in items)
+            {
+                menu.AddItem(item);
+            }
+            Menubar!.AddMenu(menu);
+        }
+        addMenu("File",
+        [
+            new ("Open", () => Console.WriteLine("Open clicked!"))
+        ]);
+        addMenu("Edit",
+        [
+            new ("Undo"),
+            new ("Redo"),
+        ]);
+        /*
+        addMenu("View", []);
+        addMenu("Project", []);
+        addMenu("Build", []);
+        addMenu("Debug", []);
+        addMenu("Test", []);
+        addMenu("Window", []);
+        addMenu("Help", []);
+        */
+
+        AddChild(Menubar);
+
+        var rect1 = new Rect(SKColors.Red)
+        {
+            X = 16,
+            Y = 32,
+            Width = 300,
+            Height = 300,
+        };
+        var rect2 = new Rect(SKColors.Green)
+        {
+            X = 16,
+            Y = 16,
+            Width = 200,
+            Height = 200,
+        };
+        var rect3 = new Rect(SKColors.Blue)
         {
             X = 16,
             Y = 16,
             Width = 100,
             Height = 100,
-        });
+        };
 
-        AddChild(new Rect(SKColors.Green)
-        {
-            X = 32,
-            Y = 32,
-            Width = 100,
-            Height = 100,
-        });
+        rect1.AddChild(rect2);
+        rect2.AddChild(rect3);
 
-        AddChild(new Rect(SKColors.Blue)
-        {
-            X = 48,
-            Y = 48,
-            Width = 100,
-            Height = 100,
-        });
+        m_rect = rect1;
+
+        AddChild(rect1);
     }
 
     public void OnMouseDown(int x, int y)
     {
+        return;
+        m_rect.X = x;
+        m_rect.Y = y;
 
         Invalidate();
     }

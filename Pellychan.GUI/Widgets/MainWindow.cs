@@ -4,7 +4,9 @@ namespace Pellychan.GUI.Widgets;
 
 public class MainWindow : Widget
 {
-    public MainWindow()
+    public MenuBar? Menubar;
+
+    public MainWindow() : base()
     {
     }
 }

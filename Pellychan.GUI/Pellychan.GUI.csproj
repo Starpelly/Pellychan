@@ -15,6 +15,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Pellychan.Resources\Pellychan.Resources.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="glfw3.dll">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>

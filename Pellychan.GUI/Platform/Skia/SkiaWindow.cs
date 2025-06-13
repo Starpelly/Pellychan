@@ -37,10 +37,10 @@ internal class SkiaWindow
     public delegate void OnMouseMovedHandler(int x, int y);
     public delegate void OnMouseEventHandler(int x, int y, MouseEventType type);
 
-    public event OnWindowResizeHandler OnWindowResize;
-    public event OnWindowCloseHandler OnWindowClose;
-    public event OnMouseMovedHandler OnMouseMoved;
-    public event OnMouseEventHandler OnMouseEvent;
+    public event OnWindowResizeHandler? OnWindowResize;
+    public event OnWindowCloseHandler? OnWindowClose;
+    public event OnMouseMovedHandler? OnMouseMoved;
+    public event OnMouseEventHandler? OnMouseEvent;
 
     #endregion
 
