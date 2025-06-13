@@ -21,7 +21,7 @@ internal static class WindowRegistry
 
 public class Application : IDisposable
 {
-    public static SKFont DefaultFont { get; set; }
+    public static SKFont DefaultFont { get; private set; }
 
     internal static Application? Instance { get; private set; } = null;
     
@@ -38,16 +38,20 @@ public class Application : IDisposable
         SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
         using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        using var typeface = SKTypeface.FromStream(fontStream);
-        
+        using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        // using var typeface = SKTypeface.FromStream(fontStream);
+
+        int dpi = 96;
+        float pixelsPerPoint = dpi / 72.0f;
+        float skiaFontSize = 9 * pixelsPerPoint;
+
         DefaultFont = new SKFont
         {
             Edging = SKFontEdging.SubpixelAntialias,
-            Hinting = SKFontHinting.Full,
+            Hinting = SKFontHinting.Slight,
             Subpixel = true,
             Typeface = typeface,
-            Size = 13
+            Size = skiaFontSize
         };
     }
 

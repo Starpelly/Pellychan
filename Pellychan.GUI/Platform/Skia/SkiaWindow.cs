@@ -61,7 +61,7 @@ internal class SkiaWindow
 
     public void CreateFrameBuffer(int w, int h)
     {
-        ImageInfo = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
+        ImageInfo = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
         if (SdlTexture != IntPtr.Zero)
         {

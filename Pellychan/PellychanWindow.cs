@@ -70,7 +70,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
             new ("Undo"),
             new ("Redo"),
         ]);
-        /*
         addMenu("View", []);
         addMenu("Project", []);
         addMenu("Build", []);
@@ -78,7 +77,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         addMenu("Test", []);
         addMenu("Window", []);
         addMenu("Help", []);
-        */
 
         AddChild(Menubar);
 
@@ -123,7 +121,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 
     public void OnPaint(SKCanvas canvas)
     {
-        canvas.Clear(new(15, 15, 15, 255));
+        canvas.Clear(EffectivePalette.Get(GUI.ColorGroup.Active, GUI.ColorRole.Window));
 
         // Helpers.DrawSvg(canvas, m_flag, new SKRect(0, 0, 256, 256));
         

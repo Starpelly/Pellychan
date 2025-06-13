@@ -6,7 +6,8 @@ namespace Pellychan.GUI.Widgets
     {
         private readonly SKPaint m_paint = new()
         {
-            Color = SKColors.Red
+            Color = SKColors.Red,
+            IsAntialias = true,
         };
 
         public SKColor Color { get; set; } = SKColors.Black;
@@ -19,13 +20,21 @@ namespace Pellychan.GUI.Widgets
 
         public void OnPaint(SKCanvas canvas)
         {
-            canvas.DrawRect(new SKRect(0, 0, Width, Height), m_paint);
+            var roundness = 0;
+            if (roundness == 0)
+            {
+                canvas.DrawRect(new SKRect(0, 0, Width, Height), m_paint);
+            }
+            else
+            {
+                canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), roundness), m_paint);
+            }
         }
 
         public void OnMouseEnter()
         {
             m_paint.Color = SKColors.White;
-            MouseCursor.Set(MouseCursor.CursorType.Hand);
+            // MouseCursor.Set(MouseCursor.CursorType.Hand);
 
             Invalidate();
         }
@@ -33,7 +42,7 @@ namespace Pellychan.GUI.Widgets
         public void OnMouseLeave()
         {
             m_paint.Color = Color;
-            MouseCursor.Set(MouseCursor.CursorType.Arrow);
+            // MouseCursor.Set(MouseCursor.CursorType.Arrow);
 
             Invalidate();
         }

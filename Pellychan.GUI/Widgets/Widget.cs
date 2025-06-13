@@ -60,6 +60,11 @@ public class Widget : IDisposable
     private bool m_isDirty = false;
     private bool m_hasDirtyDescendants = false;
 
+    // Palette
+    public ColorPalette? Palette { get; set; }
+
+    public ColorPalette EffectivePalette => Palette ?? Parent?.EffectivePalette ?? ColorPalette.Default;
+
     // Cursor
     public MouseCursor.CursorType? CursorShape = null;
     
