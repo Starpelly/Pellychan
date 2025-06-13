@@ -51,7 +51,7 @@ namespace Pellychan.GUI
         /// as some styles require a different background color for buttons.
         /// </summary>
         Button,
-        
+
         /// <summary>
         /// A foreground color used with the <see cref="Button"/> color.
         /// </summary>
@@ -83,7 +83,7 @@ namespace Pellychan.GUI
     {
         private readonly SKColor[,] m_colors;
 
-        public static ColorPalette Default { get; } = new ColorPalette();
+        public static ColorPalette Default { get; } = new();
 
         public ColorPalette()
         {

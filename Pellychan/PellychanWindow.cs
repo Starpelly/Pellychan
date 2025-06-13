@@ -52,7 +52,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
             ScreenPosition = MenuBar.Orientation.Top
         };
 
-        void addMenu(string title, List<MenuItem> items)
+        void AddMenu(string title, List<MenuItem> items)
         {
             var menu = new Menu(title);
             foreach (var item in items)
@@ -61,22 +61,22 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
             }
             Menubar!.AddMenu(menu);
         }
-        addMenu("File",
+        AddMenu("File",
         [
             new ("Open", () => Console.WriteLine("Open clicked!"))
         ]);
-        addMenu("Edit",
+        AddMenu("Edit",
         [
             new ("Undo"),
             new ("Redo"),
         ]);
-        addMenu("View", []);
-        addMenu("Project", []);
-        addMenu("Build", []);
-        addMenu("Debug", []);
-        addMenu("Test", []);
-        addMenu("Window", []);
-        addMenu("Help", []);
+        AddMenu("View", []);
+        AddMenu("Project", []);
+        AddMenu("Build", []);
+        AddMenu("Debug", []);
+        AddMenu("Test", []);
+        AddMenu("Window", []);
+        AddMenu("Help", []);
 
         AddChild(Menubar);
 

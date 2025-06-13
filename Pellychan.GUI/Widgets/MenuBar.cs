@@ -14,7 +14,8 @@ namespace Pellychan.GUI.Widgets
         }
     }
 
-    public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
+    public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler, IMouseLeaveHandler,
+        IMouseDownHandler
     {
         private const int XPadding = 8;
 
@@ -46,17 +47,20 @@ namespace Pellychan.GUI.Widgets
         {
             var active = m_open || m_hovering;
 
-            var bgColor = active ? EffectivePalette.Get(ColorGroup.Active, ColorRole.Highlight) : EffectivePalette.Get(ColorGroup.Active, ColorRole.Button);
-            var textColor = active ? EffectivePalette.Get(ColorGroup.Active, ColorRole.HighlightedText) : EffectivePalette.Get(ColorGroup.Active, ColorRole.Text);
+            var bgColor = active
+                ? EffectivePalette.Get(ColorGroup.Active, ColorRole.Highlight)
+                : EffectivePalette.Get(ColorGroup.Active, ColorRole.Button);
+            var textColor = active
+                ? EffectivePalette.Get(ColorGroup.Active, ColorRole.HighlightedText)
+                : EffectivePalette.Get(ColorGroup.Active, ColorRole.Text);
 
-            using var paint = new SKPaint { Color = bgColor };
+            using var paint = new SKPaint();
+            paint.Color = bgColor;
             canvas.DrawRect(0, 0, Width, Height, paint);
 
-            using var textPaint = new SKPaint
-            {
-                Color = textColor,
-                IsAntialias = true
-            };
+            using var textPaint = new SKPaint();
+            textPaint.Color = textColor;
+            textPaint.IsAntialias = true;
             canvas.DrawText(Title, XPadding, 16, Application.DefaultFont, textPaint);
 
             if (m_open)
@@ -164,7 +168,8 @@ namespace Pellychan.GUI.Widgets
 
         public void OnPaint(SKCanvas canvas)
         {
-            using var paint = new SKPaint { Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.Button) };
+            using var paint = new SKPaint();
+            paint.Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.Button);
             canvas.DrawRect(0, 0, Width, Height, paint);
         }
     }

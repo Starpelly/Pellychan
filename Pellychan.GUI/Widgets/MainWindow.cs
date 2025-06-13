@@ -1,6 +1,4 @@
-﻿using SkiaSharp;
-
-namespace Pellychan.GUI.Widgets;
+﻿namespace Pellychan.GUI.Widgets;
 
 public class MainWindow : Widget, IResizeHandler
 {

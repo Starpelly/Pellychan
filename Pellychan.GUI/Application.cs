@@ -8,15 +8,15 @@ namespace Pellychan.GUI;
 
 internal static class WindowRegistry
 {
-    private static readonly Dictionary<uint, SkiaWindow> s_windows = [];
+    private static readonly Dictionary<uint, SkiaWindow> Windows = [];
 
     public static void Register(SkiaWindow window)
     {
-        s_windows[window.WindowID] = window;
+        Windows[window.WindowID] = window;
     }
 
     public static SkiaWindow? Get(uint id) =>
-        s_windows.TryGetValue(id, out var win) ? win : null;
+        Windows.GetValueOrDefault(id);
 }
 
 public class Application : IDisposable
@@ -92,7 +92,7 @@ public class Application : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void pumpEvents()
+    private static void pumpEvents()
     {
         while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
         {

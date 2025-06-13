@@ -18,9 +18,9 @@ public static class Helpers
         countryCode = countryCode.ToUpperInvariant();
         var emojiCodepoints = new string[2];
 
-        for (int i = 0; i < 2; i++)
+        for (var i = 0; i < 2; i++)
         {
-            int unicode = char.ConvertToUtf32(countryCode, i);
+            var unicode = char.ConvertToUtf32(countryCode, i);
             emojiCodepoints[i] = (unicode + 127397).ToString("x").ToLowerInvariant();
         }
 
