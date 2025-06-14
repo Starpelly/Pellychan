@@ -46,6 +46,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         createLabel("test", 0, 0);
         */
 
+        /*
         Menubar = new()
         {
             Width = 1280,
@@ -71,7 +72,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
             new ("Redo"),
         ]);
         AddMenu("View", []);
-        AddMenu("Project", []);
         AddMenu("Build", []);
         AddMenu("Debug", []);
         AddMenu("Test", []);
@@ -79,6 +79,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         AddMenu("Help", []);
 
         AddChild(Menubar);
+        */
 
         var rect1 = new Rect(SKColors.Red)
         {
@@ -108,6 +109,12 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         m_rect = rect1;
 
         AddChild(rect1);
+
+        AddChild(new Button("Click me!")
+        {
+            X = 16,
+            Y = 400
+        });
     }
 
     public void OnMouseDown(int x, int y)

@@ -121,6 +121,9 @@ namespace Pellychan.GUI
             Set(ColorGroup.Active, ColorRole.Highlight, new SKColor(191, 199, 213));
             Set(ColorGroup.Active, ColorRole.HighlightedText, new SKColor(45, 44, 39));
 
+
+            Set(ColorGroup.Active, ColorRole.ButtonText, Get(ColorGroup.Active, ColorRole.Text));
+
             Set(ColorGroup.Disabled, ColorRole.Text, new SKColor(164, 166, 168));
         }
 
