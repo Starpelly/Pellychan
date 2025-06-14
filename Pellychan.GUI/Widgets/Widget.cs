@@ -42,7 +42,11 @@ public interface IResizeHandler
 
 public class Widget : IDisposable
 {
-    public Widget? Parent { get; private set; }
+    private Widget? m_parent;
+    public Widget? Parent
+    {
+        get => m_parent;
+    }
     private readonly List<Widget> m_children = [];
 
     public int X = 0;
@@ -78,18 +82,23 @@ public class Widget : IDisposable
     public bool IsTopLevel => Parent == null;
     internal SkiaWindow? m_nativeWindow;
 
-    public Widget()
+    public Widget(Widget? parent = null)
     {
-        Invalidate();
+        if (parent != null)
+            SetParent(parent);
 
         if (IsTopLevel)
         {
             initializeIfTopLevel();
         }
+
+        Invalidate();
     }
 
     /// <summary>
-    /// Shows top level widgets, will automatically show any children along with it.
+    /// Shows the widget and its child widgets.
+    /// 
+    /// For child windows, this is the equivalent to calling `<see cref="Visible"/> = true`.
     /// </summary>
     public void Show()
     {
@@ -99,30 +108,41 @@ public class Widget : IDisposable
         {
             Application.Instance!.TopLevelWidgets.Add(this);
 
+            m_nativeWindow?.Resize(Width, Height);
             m_nativeWindow?.CreateFrameBuffer(Width, Height);
             m_nativeWindow?.Center();
             m_nativeWindow?.Show();
         }
     }
 
-    public void AddChild(Widget child)
+    /// <summary>
+    /// Sets the parent of the widget to the parent. The widget is moved to position (0, 0) in its new parent.
+    /// 
+    /// If the "new" parent widget is the old parent widget, this function does nothing.
+    /// </summary>
+    public void SetParent(Widget parent)
     {
-        child.Parent?.m_children.Remove(child);
-        child.Parent = this;
+        if (m_parent == parent)
+            return;
 
-        m_children.Add(child);
-    }
+        m_parent?.m_children.Remove(this);
 
-    public void RemoveChild(Widget child)
-    {
-        child.Parent = null;
-        m_children.Remove(child);
+        m_parent = parent;
+        m_parent?.m_children.Add(this);
     }
 
     public void SetPosition(int x, int y)
     {
         this.X = x;
         this.Y = y;
+    }
+
+    public void SetRect(int x, int y, int width, int height)
+    {
+        this.X = x;
+        this.Y = y;
+        Width = width;
+        Height = height;
     }
 
     public void Resize(int width, int height)
@@ -133,14 +153,6 @@ public class Widget : IDisposable
         m_nativeWindow?.Resize(width, height);
 
         (this as IResizeHandler)?.OnResize(width, height);
-    }
-
-    public void SetRect(int x, int y, int width, int height)
-    {
-        this.X = x;
-        this.Y = y;
-        Width = width;
-        Height = height;
     }
 
     public void Invalidate()
@@ -347,6 +359,8 @@ public class Widget : IDisposable
     {
         if (!IsTopLevel) return;
 
+        Console.WriteLine($"Initialized top level widget of type: {GetType().Name}");
+
         m_nativeWindow = new(this, Width, Height, GetType().Name);
         WindowRegistry.Register(m_nativeWindow);
 
@@ -393,8 +407,11 @@ public class Widget : IDisposable
 
     private Widget? findHoveredWidget(int x, int y)
     {
-        int localX = x - X;
-        int localY = y - Y;
+        var thisX = (IsTopLevel) ? 0 : this.X;
+        var thisY = (IsTopLevel) ? 0 : this.Y;
+
+        int localX = x - thisX;
+        int localY = y - thisY;
 
         if (!HitTest(localX, localY))
             return null;

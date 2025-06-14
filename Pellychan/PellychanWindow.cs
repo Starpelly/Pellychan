@@ -46,8 +46,44 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         createLabel("test", 0, 0);
         */
 
-        /*
-        Menubar = new()
+        createMenubar();
+
+        var rect1 = new Rect(SKColors.Red, this)
+        {
+            X = 16,
+            Y = 32,
+            Width = 300,
+            Height = 300,
+        };
+        var rect2 = new Rect(SKColors.Green, rect1)
+        {
+            X = 16,
+            Y = 16,
+            Width = 200,
+            Height = 200,
+        };
+        var rect3 = new Rect(SKColors.Blue, rect2)
+        {
+            X = 16,
+            Y = 16,
+            Width = 100,
+            Height = 100,
+        };
+
+        rect1.Show();
+
+        m_rect = rect1;
+
+        new Button("Test Notification", this)
+        {
+            X = 16,
+            Y = 400
+        };
+    }
+
+    private void createMenubar()
+    {
+        Menubar = new(this)
         {
             Width = 1280,
             ScreenPosition = MenuBar.Orientation.Top
@@ -55,7 +91,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 
         void AddMenu(string title, List<MenuItem> items)
         {
-            var menu = new Menu(title);
+            var menu = new Menu(title, Menubar);
             foreach (var item in items)
             {
                 menu.AddItem(item);
@@ -77,48 +113,15 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         AddMenu("Test", []);
         AddMenu("Window", []);
         AddMenu("Help", []);
-
-        AddChild(Menubar);
-        */
-
-        var rect1 = new Rect(SKColors.Red)
-        {
-            X = 16,
-            Y = 32,
-            Width = 300,
-            Height = 300,
-        };
-        var rect2 = new Rect(SKColors.Green)
-        {
-            X = 16,
-            Y = 16,
-            Width = 200,
-            Height = 200,
-        };
-        var rect3 = new Rect(SKColors.Blue)
-        {
-            X = 16,
-            Y = 16,
-            Width = 100,
-            Height = 100,
-        };
-
-        rect1.AddChild(rect2);
-        rect2.AddChild(rect3);
-
-        m_rect = rect1;
-
-        AddChild(rect1);
-
-        AddChild(new Button("Click me!")
-        {
-            X = 16,
-            Y = 400
-        });
     }
 
     public void OnMouseDown(int x, int y)
     {
+        var mainWindow = new PellychanWindow();
+        mainWindow.SetWindowTitle("Pellychan");
+        mainWindow.Resize(1280, 720);
+        mainWindow.Show();
+
         return;
         m_rect.X = x;
         m_rect.Y = y;

@@ -32,7 +32,7 @@ namespace Pellychan.GUI.Widgets
 
         private int m_maxWidth = int.MaxValue;
 
-        public Label(SKFont font)
+        public Label(SKFont font, Widget? parent = null) : base(parent)
         {
             m_font = font;
         }

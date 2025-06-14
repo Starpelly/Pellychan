@@ -4,7 +4,7 @@ public class MainWindow : Widget, IResizeHandler
 {
     public MenuBar? Menubar;
 
-    public MainWindow() : base()
+    public MainWindow(Widget? parent = null) : base(parent)
     {
     }
 

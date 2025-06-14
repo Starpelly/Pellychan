@@ -12,7 +12,7 @@ namespace Pellychan.GUI.Widgets
 
         public SKColor Color { get; set; } = SKColors.Black;
 
-        public Rect(SKColor color)
+        public Rect(SKColor color, Widget? parent = null) : base(parent)
         {
             Color = color;
             m_paint.Color = color;

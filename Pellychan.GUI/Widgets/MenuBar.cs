@@ -26,7 +26,7 @@ namespace Pellychan.GUI.Widgets
         private bool m_open = false;
         private bool m_hovering = false;
 
-        public Menu(string title)
+        public Menu(string title, Widget? parent = null) : base(parent)
         {
             Title = title;
             Width = (int)Application.DefaultFont.MeasureText(title) + (XPadding * 2);
@@ -49,7 +49,7 @@ namespace Pellychan.GUI.Widgets
 
             var bgColor = active
                 ? EffectivePalette.Get(ColorGroup.Active, ColorRole.Highlight)
-                : EffectivePalette.Get(ColorGroup.Active, ColorRole.Button);
+                : EffectivePalette.Get(ColorGroup.Active, ColorRole.Window);
             var textColor = active
                 ? EffectivePalette.Get(ColorGroup.Active, ColorRole.HighlightedText)
                 : EffectivePalette.Get(ColorGroup.Active, ColorRole.Text);
@@ -146,11 +146,15 @@ namespace Pellychan.GUI.Widgets
         public Orientation ScreenPosition { get; set; }
 
         private const int MenuBarHeight = 24;
+
+        private const int BorderSize = 1;
+        private const bool DrawBorder = BorderSize > 0;
+
         private int m_nextX = 0;
 
-        public MenuBar()
+        public MenuBar(Widget? parent = null) : base(parent)
         {
-            Height = MenuBarHeight;
+            Height = MenuBarHeight + BorderSize;
         }
 
         public void AddMenu(Menu menu)
@@ -158,19 +162,25 @@ namespace Pellychan.GUI.Widgets
             menu.SetPosition(m_nextX, 0);
             m_nextX += menu.Width;
             menu.Height = MenuBarHeight;
-            AddChild(menu);
         }
 
         public void AddMenu(string title)
         {
-            AddMenu(new Menu(title));
+            AddMenu(new Menu(title, this));
         }
 
         public void OnPaint(SKCanvas canvas)
         {
             using var paint = new SKPaint();
-            paint.Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.Button);
-            canvas.DrawRect(0, 0, Width, Height, paint);
+
+            if (DrawBorder)
+            {
+                paint.Color = new SKColor(42, 42, 45);
+                canvas.DrawRect(0, 0, Width, Height, paint);
+            }
+
+            paint.Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.Window);
+            canvas.DrawRect(0, 0, Width, Height - BorderSize, paint);
         }
     }
 }
