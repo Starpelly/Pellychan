@@ -131,7 +131,7 @@ public class Widget : IDisposable
 
     public SizePolicy SizePolicy { get; set; } = SizePolicy.FixedPolicy;
 
-    public virtual SKSizeI SizeHint => new(m_width, m_height);
+    public virtual SKSizeI SizeHint => Layout?.SizeHint(this) ?? new(m_width, m_height);
     public virtual SKSizeI MinimumSizeHint => new(0, 0);
 
     public int MinimumWidth { get; set; } = 0;
@@ -139,6 +139,11 @@ public class Widget : IDisposable
 
     public int MinimumHeight { get; set; } = 0;
     public int MaximumHeight { get; set; } = int.MaxValue;
+
+    public bool AutoResizeToFit { get; set; } = false;
+
+    public Action? OnResize;
+    public Action? OnLayoutUpdate;
 
     // Palette
     public ColorPalette? Palette { get; set; }
@@ -196,7 +201,7 @@ public class Widget : IDisposable
             m_nativeWindow?.Show();
         }
 
-        OnLayoutUpdate();
+        updateLayout();
     }
 
     /// <summary>
@@ -217,7 +222,7 @@ public class Widget : IDisposable
         if (m_parent != null)
         {
             if (m_parent.Visible)
-                m_parent.OnLayoutUpdate();
+                m_parent.updateLayout();
         }
     }
 
@@ -280,9 +285,16 @@ public class Widget : IDisposable
 
     #region Virtual methods
 
-    protected virtual void OnLayoutUpdate()
+    private void updateLayout()
     {
+        if (AutoResizeToFit && Layout != null)
+        {
+            var hint = Layout.SizeHint(this);
+            Resize(hint.Width, hint.Height);
+        }
+
         Layout?.PerformLayout(this);
+        OnLayoutUpdate?.Invoke();
     }
 
     #endregion
@@ -353,7 +365,7 @@ public class Widget : IDisposable
                 canvas.Save();
 
                 // Clip to the child's bounds relative to the parent
-                canvas.ClipRect(new SKRect(child.m_x, child.m_y, child.m_x + child.m_width, child.m_y + child.m_height));
+                // canvas.ClipRect(new SKRect(child.m_x, child.m_y, child.m_x + child.m_width, child.m_y + child.m_height));
                 canvas.Translate(child.m_x, child.m_y);
 
                 // Paint the child with the canvas offset to its local space
@@ -469,7 +481,9 @@ public class Widget : IDisposable
 
         (this as IResizeHandler)?.OnResize(m_width, m_height);
 
-        OnLayoutUpdate();
+        OnResize?.Invoke();
+
+        updateLayout();
     }
 
     private void initializeIfTopLevel()
@@ -489,7 +503,7 @@ public class Widget : IDisposable
             Invalidate();
         };
         m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
-        m_nativeWindow.OnMouseMoved += dispatchMouseMove;
+        // m_nativeWindow.OnMouseMoved += dispatchMouseMove;
     }
 
     private void invalidate()
@@ -586,11 +600,19 @@ public class Widget : IDisposable
     {
         var hovered = findHoveredWidget(mouseX, mouseY);
 
+        if (hovered != m_lastHovered)
+        {
+            m_lastHovered?.handleMouseLeave();
+            hovered?.handleMouseEnter();
+            m_lastHovered = hovered;
+        }
+
         // If there's a mouse grabber, it always receives input!
         if (s_mouseGrabber != null)
         {
-            int localX = mouseX - s_mouseGrabber.m_x;
-            int localY = mouseY - s_mouseGrabber.m_y;
+            var localPos = getLocalPosition(s_mouseGrabber, mouseX, mouseY);
+            int localX = localPos.Item1;
+            int localY = localPos.Item2;
 
             switch (type)
             {
@@ -618,53 +640,31 @@ public class Widget : IDisposable
         // No grabber - do regular hit testing.
         if (hovered != null)
         {
-            int localX = mouseX - hovered.m_x;
-            int localY = mouseY - hovered.m_y;
+            var localPos = getLocalPosition(hovered, mouseX, mouseY);
+            int localX = localPos.Item1;
+            int localY = localPos.Item2;
 
             switch (type)
             {
                 case MouseEventType.Move:
-                    (hovered as IMouseMoveHandler)?.OnMouseMove(localX, mouseY);
+                    (hovered as IMouseMoveHandler)?.OnMouseMove(localX, localY);
                     break;
                 case MouseEventType.Down:
                     s_mouseGrabber = hovered;
-                    (hovered as IMouseDownHandler)?.OnMouseDown(localX, mouseY);
+                    (hovered as IMouseDownHandler)?.OnMouseDown(localX, localY);
                     break;
                 case MouseEventType.Up:
-                    (hovered as IMouseUpHandler)?.OnMouseUp(localX, mouseY);
+                    (hovered as IMouseUpHandler)?.OnMouseUp(localX, localY);
 
                     if (s_mouseGrabber == hovered)
                     {
-                        (hovered as IMouseClickHandler)?.OnMouseClick(localX, mouseY);
+                        (hovered as IMouseClickHandler)?.OnMouseClick(localX, localY);
                     }
 
                     s_mouseGrabber = null;
                     break;
             }
         }
-    }
-
-    private void dispatchMouseMove(int x, int y)
-    {
-        var newHovered = findHoveredWidget(x, y);
-
-        if (newHovered != m_lastHovered)
-        {
-            m_lastHovered?.handleMouseLeave();
-            newHovered?.handleMouseEnter();
-            m_lastHovered = newHovered;
-        }
-
-        if (newHovered is IMouseMoveHandler moveHandler)
-        {
-            var (lx, ly) = getLocalPosition(newHovered, x, y);
-            moveHandler.OnMouseMove(lx, ly);
-        }
-
-        // Cursor shape
-        var cursor = newHovered?.CursorShape;
-        if (cursor.HasValue)
-            MouseCursor.Set(cursor.Value);
     }
 
     #endregion

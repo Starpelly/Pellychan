@@ -245,7 +245,7 @@ public static class SkiaSharpHelpers
     /// <summary>
     /// Convert SKColor to HSLuv.
     /// </summary>
-    public static Hsl ToHsluv(SKColor c)
+    public static Hsl ToHsluv(this SKColor c)
     {
         var lin = ToLinearRgb(c);
         Hsluv.RgbToHsluv(lin.r, lin.g, lin.b, out double h, out double s, out double l);
@@ -255,7 +255,7 @@ public static class SkiaSharpHelpers
     /// <summary>
     /// Convert HSLuv to SKColor.
     /// </summary>
-    public static SKColor FromHsluv(Hsl hsl, byte? alpha = null)
+    public static SKColor FromHsluv(this Hsl hsl, byte? alpha = null)
     {
         // s and l in [0,1] → scale to [0,100]
         Hsluv.HsluvToRgb(hsl.h, hsl.s * 100.0, hsl.l * 100.0, out double r, out double g, out double b);

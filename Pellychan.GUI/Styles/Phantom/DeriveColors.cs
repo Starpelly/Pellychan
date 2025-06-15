@@ -2,6 +2,32 @@
 
 namespace Pellychan.GUI.Styles.Phantom;
 
+public struct Grad
+{
+    public Rgb rgbA, rgbB;
+    public double lA, lB;
+
+    public Grad(SKColor from, SKColor to)
+    {
+        rgbA = SkiaSharpHelpers.ToLinearRgb(from);
+        rgbB = SkiaSharpHelpers.ToLinearRgb(to);
+        lA = SkiaSharpHelpers.ToHsluv(from).l;
+        lB = SkiaSharpHelpers.ToHsluv(to).l;
+    }
+
+    public readonly SKColor Sample(double alpha)
+    {
+        Hsl hsl = SkiaSharpHelpers.FromLinearRgb(Rgb.Lerp(rgbA, rgbB, alpha)).ToHsluv();
+        hsl.l = Lerp(lA, lB, alpha);
+        return hsl.FromHsluv();
+    }
+
+    public static double Lerp(double x, double y, double a)
+    {
+        return (1.0 - a) * x + a * y;
+    }
+}
+
 public static class DeriveColors
 {
     public static double Saturate(double x)
@@ -85,5 +111,12 @@ public static class DeriveColors
         var hsl1 = SkiaSharpHelpers.ToHsluv(pal.Get(ColorRole.Highlight));
         hsl1.l = Saturate(Math.Min(hsl0.l - 0.1, hsl1.l - 0.2));
         return SkiaSharpHelpers.FromHsluv(hsl1);
+    }
+
+    public static SKColor IndicatorColorOf(ColorPalette palette, ColorGroup group = ColorGroup.Active)
+    {
+        return new Grad(palette.Get(ColorGroup.Active, ColorRole.WindowText),
+                palette.Get(group, ColorRole.Button))
+        .Sample(0.45);
     }
 }

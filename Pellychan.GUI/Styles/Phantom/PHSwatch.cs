@@ -53,6 +53,8 @@ public struct PHSwatch
         colors[SwatchColor.Highlight] = getPal(ColorRole.Highlight);
         colors[SwatchColor.HighlightedText] = getPal(ColorRole.HighlightedText);
 
+        colors[SwatchColor.ScrollbarGutter] = Dc.GutterColorOf(palette);
+
         colors[SwatchColor.Window_Outline] = Dc.AdjustLightness(colors[SwatchColor.Window], isEnabled ? -0.1 : -0.07);
         colors[SwatchColor.Window_Specular] = isEnabled ? Dc.SpecularOf(colors[SwatchColor.Window]) : colors[SwatchColor.Window];
         colors[SwatchColor.Window_Divider] = Dc.DividerColor(colors[SwatchColor.Window]);
@@ -74,6 +76,12 @@ public struct PHSwatch
             isEnabled ? Dc.SpecularOf(colors[SwatchColor.Highlight]) : colors[SwatchColor.Highlight];
 
         colors[SwatchColor.ProgressBar_Outline] = Dc.ProgressBarOutlineColorOf(palette);
+
+        // Qt has something called "current" groups but they're not actual groups???
+        colors[SwatchColor.Indicator_Current] = Dc.IndicatorColorOf(palette, ColorGroup.Active);
+        colors[SwatchColor.Indicator_Disabled] = Dc.IndicatorColorOf(palette, ColorGroup.Disabled);
+
+        colors[SwatchColor.ScrollbarGutter_Disabled] = colors[SwatchColor.Window];
 
         Paints[(int)SwatchColor.None] = new();
 

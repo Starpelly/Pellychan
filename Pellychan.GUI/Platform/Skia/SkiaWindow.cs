@@ -34,12 +34,12 @@ internal class SkiaWindow
 
     public delegate void OnWindowResizeHandler(int w, int h);
     public delegate void OnWindowCloseHandler();
-    public delegate void OnMouseMovedHandler(int x, int y);
+    // public delegate void OnMouseMovedHandler(int x, int y);
     public delegate void OnMouseEventHandler(int x, int y, MouseEventType type);
 
     public event OnWindowResizeHandler? OnWindowResize;
     public event OnWindowCloseHandler? OnWindowClose;
-    public event OnMouseMovedHandler? OnMouseMoved;
+    // public event OnMouseMovedHandler? OnMouseMoved;
     public event OnMouseEventHandler? OnMouseEvent;
 
     #endregion
@@ -134,7 +134,7 @@ internal class SkiaWindow
                 break;
 
             case SDL.SDL_EventType.SDL_MOUSEMOTION:
-                OnMouseMoved?.Invoke(e.motion.x, e.motion.y);
+                OnMouseEvent?.Invoke(e.motion.x, e.motion.y, MouseEventType.Move);
                 break;
 
             case SDL.SDL_EventType.SDL_WINDOWEVENT:

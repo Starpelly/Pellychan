@@ -12,7 +12,7 @@ namespace Pellychan
             mainWindow.SetWindowTitle("Pellychan");
             mainWindow.Resize(1280, 720);
             mainWindow.Show();
-            
+
             app.Run();
         }
     }

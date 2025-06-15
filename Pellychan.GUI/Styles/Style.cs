@@ -3,6 +3,15 @@ using SkiaSharp;
 
 namespace Pellychan.GUI.Styles;
 
+public enum ArrowType
+{
+    NoArrow,
+    Up,
+    Down,
+    Left,
+    Right
+}
+
 public abstract class Style
 {
     [Flags]
@@ -18,4 +27,5 @@ public abstract class Style
     }
     
     public abstract void DrawPushButton(SKCanvas canvas, PushButton button, StyleOptionButton option);
+    public abstract void DrawScrollBar(SKCanvas canvas, ScrollBar scrollBar, StyleOptionScrollBar option);
 }

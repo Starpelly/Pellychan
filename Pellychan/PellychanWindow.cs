@@ -14,7 +14,9 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
 
     private readonly List<Label> m_labels = [];
 
-    private readonly Widget m_centralWidget;
+    private Widget m_centralWidget;
+
+    private int m_clickCount = 0;
 
     public PellychanWindow() : base()
     {
@@ -25,6 +27,11 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
 
         m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 
+        createUI();
+    }
+
+    private void createUI()
+    {
         m_centralWidget = new Widget(this)
         {
             // Y = Menubar!.Height,
@@ -37,34 +44,87 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
 
         // Boards
         {
-            var boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), m_centralWidget)
+            var boardsContainer = new Widget(m_centralWidget)
             {
-                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
-                Layout = new VBoxLayout
+                Layout = new HBoxLayout
                 {
                     Spacing = 0,
-                    Align = VBoxLayout.HorizontalAlignment.Center,
-                    Padding = new(16)
-                }
+                },
+                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
+                Width = 200
             };
-            boardsListWidget.Resize(200, 0);
 
-            void createLabel(string text, int x, int y)
+            var boardsListContainer = new Widget(boardsContainer)
             {
-                var label = new Label(Application.DefaultFont, boardsListWidget)
+                Layout = new HBoxLayout
                 {
-                    Text = text
+                },
+                SizePolicy = SizePolicy.ExpandingPolicy
+            };
+            Widget boardsListWidget;
+
+            // List
+            {
+                boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), boardsListContainer)
+                {
+                    SizePolicy = new SizePolicy(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
+                    Layout = new VBoxLayout
+                    {
+                        Spacing = 2,
+                        Align = VBoxLayout.HorizontalAlignment.Center,
+                        Padding = new(16)
+                    }
                 };
 
-                m_labels.Add(label);
+                void createLabel(string text, int x, int y)
+                {
+                    var label = new Label(Application.DefaultFont, boardsListWidget)
+                    {
+                        Text = text
+                    };
+
+                    m_labels.Add(label);
+                }
+
+                for (int i = 0; i < m_chanClient.Boards.Count; i++)
+                {
+                    var board = m_chanClient.Boards[i];
+
+                    createLabel(board.Title, 16, (i * 16) + 16);
+                }
             }
 
-            for (int i = 0; i < m_chanClient.Boards.Count; i++)
+            var scroll = new ScrollBar(boardsContainer)
             {
-                var board = m_chanClient.Boards[i];
+                X = 400,
+                Y = 16,
+                Width = 16,
+                Height = 400,
+                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding)
+            };
+            scroll.OnValueChanged += delegate(int value)
+            {
+                boardsListWidget.Y = -value;
+            };
 
-                createLabel(board.Title, 16, (i * 16) + 16);
-            }
+            boardsListContainer.OnResize += delegate()
+            {
+                scroll.Maximum = boardsListWidget.Height - boardsContainer.Height;
+                scroll.PageStep = boardsContainer.Height;
+            };
+            boardsListWidget.OnLayoutUpdate += delegate()
+            {
+                boardsListWidget.Resize(boardsListWidget.Width, boardsListWidget.SizeHint.Height);
+            };
+        }
+
+        // Separator (temp?)
+        {
+            new Rect(new SKColor(42, 42, 45), m_centralWidget)
+            {
+                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
+                Width = 1
+            };
         }
 
         // Main content
@@ -83,10 +143,18 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
                 };
                 button.OnClicked += delegate ()
                 {
-                    clickCount++;
-                    button.Text = $"Test Notification ({clickCount})";
+                    m_clickCount++;
+                    button.Text = $"Test Notification ({m_clickCount})";
                 };
             }
+
+            new ScrollBar(mainContentWidget)
+            {
+                X = 400,
+                Y = 16,
+                Width = 16,
+                Height = 400
+            };
         }
 
         // Idk lol
@@ -118,7 +186,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
             rect1.Show();
         }
     }
-    int clickCount = 0;
 
     private void createMenubar()
     {

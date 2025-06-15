@@ -17,7 +17,7 @@ namespace Pellychan.GUI
         /// <summary>
         /// Used for widgets (not windows) that are disabled for some reason.
         /// </summary>
-        Disabled
+        Disabled,
     }
 
     public enum ColorRole
@@ -129,6 +129,8 @@ namespace Pellychan.GUI
             Set(ColorGroup.Active, ColorRole.ButtonText, Get(ColorGroup.Active, ColorRole.Text));
 
             Set(ColorGroup.Disabled, ColorRole.Text, new SKColor(164, 166, 168));
+
+            Set(ColorGroup.Active, ColorRole.WindowText, Get(ColorRole.Text));
         }
 
         #endregion

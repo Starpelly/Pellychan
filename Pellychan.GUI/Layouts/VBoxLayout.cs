@@ -1,4 +1,6 @@
 ﻿using Pellychan.GUI.Widgets;
+using SkiaSharp;
+using System.Drawing;
 
 namespace Pellychan.GUI.Layouts;
 
@@ -99,5 +101,24 @@ public class VBoxLayout : Layout
 
             y += finalHeight + Spacing;
         }
+    }
+
+    public override SKSizeI SizeHint(Widget parent)
+    {
+        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
+
+        int width = 0;
+        int height = Padding.Top + Padding.Bottom + Spacing * (visibleChildren.Count - 1);
+
+        foreach (var child in visibleChildren)
+        {
+            var hint = child.SizeHint;
+            width = Math.Max(width, hint.Width);
+            height += hint.Height;
+        }
+
+        width += Padding.Left + Padding.Right;
+
+        return new(width, height);
     }
 }

@@ -25,6 +25,9 @@ public enum SwatchColor : int
     Highlight_Outline,
     Highlight_Specular,
     ProgressBar_Outline,
+    Indicator_Current,
+    Indicator_Disabled,
+    ScrollbarGutter_Disabled,
 
     Num,
 
