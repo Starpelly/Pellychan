@@ -12,6 +12,16 @@ public class StyleOption
     }
     
     public Style.StateFlag State { get; set; }
+
+    /// <summary>
+    /// Initializes the State based on the specified widget.
+    /// </summary>
+    public void InitFrom(Widget widget)
+    {
+        State = Style.StateFlag.None;
+        if (widget.Enabled)
+            State |= Style.StateFlag.Enabled;
+    }
 }
 
 public class StyleOptionComplex : StyleOption

@@ -17,13 +17,42 @@ public abstract class Style
     [Flags]
     public enum StateFlag
     {
+        /// <summary>
+        /// The widget doesn't have a state.
+        /// </summary>
         None = 0,
-        Enabled = 1 << 0,
-        Raised = 1 << 1,
-        Sunken = 1 << 2,
-        Off = 1 << 3,
-        On = 1 << 4,
-        HasFocus = 1 << 5,
+
+        /// <summary>
+        /// The widget is active.
+        /// </summary>
+        Active = 1 << 0,
+
+        /// <summary>
+        /// The widget is enabled.
+        /// </summary>
+        Enabled = 1 << 1,
+
+        /// <summary>
+        /// Indicate if auto-raise appearance should be used on a tool button.
+        /// </summary>
+        Raised = 1 << 2,
+
+        Sunken = 1 << 3,
+
+        /// <summary>
+        /// The widget is not "checked".
+        /// </summary>
+        Off = 1 << 4,
+
+        /// <summary>
+        /// The widget is "checked".
+        /// </summary>
+        On = 1 << 5,
+
+        /// <summary>
+        /// The widget has focus.
+        /// </summary>
+        HasFocus = 1 << 6,
     }
     
     public abstract void DrawPushButton(SKCanvas canvas, PushButton button, StyleOptionButton option);

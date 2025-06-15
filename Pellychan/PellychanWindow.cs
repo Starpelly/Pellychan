@@ -109,8 +109,11 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
 
             boardsListContainer.OnResize += delegate()
             {
-                scroll.Maximum = boardsListWidget.Height - boardsContainer.Height;
+                scroll.Maximum = Math.Max(0, boardsListWidget.Height - boardsContainer.Height);
                 scroll.PageStep = boardsContainer.Height;
+
+                scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
+                scroll.Enabled = scroll.Maximum > 0;
             };
             boardsListWidget.OnLayoutUpdate += delegate()
             {
@@ -146,8 +149,10 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
                     m_clickCount++;
                     button.Text = $"Test Notification ({m_clickCount})";
                 };
+                button.Enabled = false;
             }
 
+            /*
             new ScrollBar(mainContentWidget)
             {
                 X = 400,
@@ -155,6 +160,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
                 Width = 16,
                 Height = 400
             };
+            */
         }
 
         // Idk lol

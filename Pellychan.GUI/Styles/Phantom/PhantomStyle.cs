@@ -173,6 +173,7 @@ public class PhantomStyle : Style
         var isOn = option.State.HasFlag(StateFlag.On);
         var isDown = option.State.HasFlag(StateFlag.Sunken);
         var hasFocus = option.State.HasFlag(StateFlag.HasFocus);
+        var isEnabled = option.State.HasFlag(StateFlag.Enabled);
 
         var outline = SwatchColor.Window_Outline;
         var fill = SwatchColor.Button;
@@ -180,7 +181,7 @@ public class PhantomStyle : Style
 
         // Paint background
         {
-            if (isDown)
+            if (isDown || !isEnabled)
             {
                 fill = SwatchColor.Button_Pressed;
                 specular = SwatchColor.Button_Pressed_Specular;
@@ -221,7 +222,7 @@ public class PhantomStyle : Style
         // Paint label
         {
             paint.Reset();
-            paint.Color = m_swatch.GetColor(SwatchColor.Text);
+            paint.Color = m_swatch.GetColor(isEnabled ? SwatchColor.Text : SwatchColor.WindowText_Disabled);
 
             var labelX = button.Width / 2 - Application.DefaultFont.MeasureText(option.Text) / 2;
             var labelY = Application.DefaultFont.Size + PushButton.TextPaddingH / 2;
@@ -248,7 +249,7 @@ public class PhantomStyle : Style
 
         bool isSunken = option.State.HasFlag(StateFlag.Sunken);
         bool isEnabled = option.State.HasFlag(StateFlag.Enabled);
-        bool hasRange = true;
+        bool hasRange = scrollBar.Minimum != scrollBar.Maximum;
 
         bool scrollBarGrooveShown = true;
 

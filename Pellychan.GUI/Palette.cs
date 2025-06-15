@@ -128,7 +128,9 @@ namespace Pellychan.GUI
 
             Set(ColorGroup.Active, ColorRole.ButtonText, Get(ColorGroup.Active, ColorRole.Text));
 
+            // @HACK
             Set(ColorGroup.Disabled, ColorRole.Text, new SKColor(164, 166, 168));
+            Set(ColorGroup.Disabled, ColorRole.WindowText, new SKColor(164, 166, 168));
 
             Set(ColorGroup.Active, ColorRole.WindowText, Get(ColorRole.Text));
         }

@@ -33,7 +33,13 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
     public int Maximum
     {
         get => m_maxiumum;
-        set => m_maxiumum = value;
+        set
+        {
+            if (value < 0)
+                throw new Exception("Maximum must NOT be less than 0!");
+
+            m_maxiumum = value;
+        }
     }
 
     public int Value
@@ -90,8 +96,8 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
         {
             Hovered = m_hovered,
             Pressed = m_pressed,
-            State = Style.StateFlag.Enabled
         };
+        option.InitFrom(this);
 
         if (m_pressed != SubControl.None)
         {
@@ -162,7 +168,11 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
 
             // @Crash - There's an exception thrown here when the bottom of the scrollbar is less than the top?
             // Investigate by fullscreening on the 2k monitor.
-            float newTop = Math.Clamp(y - m_dragOffset, groove.Top, groove.Bottom - sliderHeight);
+
+            // This is hack I think to fix the above....
+            var min = Math.Min(groove.Top, groove.Bottom - sliderHeight);
+            var max = Math.Max(groove.Top, groove.Bottom - sliderHeight);
+            float newTop = Math.Clamp(y - m_dragOffset, min, max);
 
             float ratio = (newTop - groove.Top) / (groove.Height - sliderHeight);
             Value = Minimum + (int)(ratio * (Maximum - Minimum));

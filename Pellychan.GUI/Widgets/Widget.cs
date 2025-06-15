@@ -116,6 +116,24 @@ public class Widget : IDisposable
         }
     }
 
+    private bool m_enabled = true;
+    public bool Enabled
+    {
+        get
+        {
+            if (m_parent != null)
+            {
+                if (!m_parent.Enabled)
+                    return false;
+            }
+            return m_enabled;
+        }
+        set
+        {
+            m_enabled = value;
+        }
+    }
+
     protected virtual bool ShouldCache => false;
 
     private bool IsHovered { get; set; } = false;
@@ -146,9 +164,11 @@ public class Widget : IDisposable
     public Action? OnLayoutUpdate;
 
     // Palette
-    public ColorPalette? Palette { get; set; }
+    public ColorPalette Palette => Application.Palette;
 
     public ColorPalette EffectivePalette => Palette ?? Parent?.EffectivePalette ?? ColorPalette.Default;
+
+    public ColorGroup ColorGroup => Enabled ? ColorGroup.Active : ColorGroup.Disabled;
 
     // Cursor
     public MouseCursor.CursorType? CursorShape = null;
@@ -610,28 +630,31 @@ public class Widget : IDisposable
         // If there's a mouse grabber, it always receives input!
         if (s_mouseGrabber != null)
         {
-            var localPos = getLocalPosition(s_mouseGrabber, mouseX, mouseY);
-            int localX = localPos.Item1;
-            int localY = localPos.Item2;
-
-            switch (type)
+            if (s_mouseGrabber.Enabled)
             {
-                case MouseEventType.Move:
-                    (s_mouseGrabber as IMouseMoveHandler)?.OnMouseMove(localX, localY);
-                    break;
-                case MouseEventType.Down:
-                    (s_mouseGrabber as IMouseDownHandler)?.OnMouseDown(localX, localY);
-                    break;
-                case MouseEventType.Up:
-                    (s_mouseGrabber as IMouseUpHandler)?.OnMouseUp(localX, localY);
+                var localPos = getLocalPosition(s_mouseGrabber, mouseX, mouseY);
+                int localX = localPos.Item1;
+                int localY = localPos.Item2;
 
-                    if (s_mouseGrabber == hovered)
-                    {
-                        (s_mouseGrabber as IMouseClickHandler)?.OnMouseClick(localX, localY);
-                    }
+                switch (type)
+                {
+                    case MouseEventType.Move:
+                        (s_mouseGrabber as IMouseMoveHandler)?.OnMouseMove(localX, localY);
+                        break;
+                    case MouseEventType.Down:
+                        (s_mouseGrabber as IMouseDownHandler)?.OnMouseDown(localX, localY);
+                        break;
+                    case MouseEventType.Up:
+                        (s_mouseGrabber as IMouseUpHandler)?.OnMouseUp(localX, localY);
 
-                    s_mouseGrabber = null;
-                    break;
+                        if (s_mouseGrabber == hovered)
+                        {
+                            (s_mouseGrabber as IMouseClickHandler)?.OnMouseClick(localX, localY);
+                        }
+
+                        s_mouseGrabber = null;
+                        break;
+                }
             }
 
             return;
@@ -640,29 +663,32 @@ public class Widget : IDisposable
         // No grabber - do regular hit testing.
         if (hovered != null)
         {
-            var localPos = getLocalPosition(hovered, mouseX, mouseY);
-            int localX = localPos.Item1;
-            int localY = localPos.Item2;
-
-            switch (type)
+            if (hovered.Enabled)
             {
-                case MouseEventType.Move:
-                    (hovered as IMouseMoveHandler)?.OnMouseMove(localX, localY);
-                    break;
-                case MouseEventType.Down:
-                    s_mouseGrabber = hovered;
-                    (hovered as IMouseDownHandler)?.OnMouseDown(localX, localY);
-                    break;
-                case MouseEventType.Up:
-                    (hovered as IMouseUpHandler)?.OnMouseUp(localX, localY);
+                var localPos = getLocalPosition(hovered, mouseX, mouseY);
+                int localX = localPos.Item1;
+                int localY = localPos.Item2;
 
-                    if (s_mouseGrabber == hovered)
-                    {
-                        (hovered as IMouseClickHandler)?.OnMouseClick(localX, localY);
-                    }
+                switch (type)
+                {
+                    case MouseEventType.Move:
+                        (hovered as IMouseMoveHandler)?.OnMouseMove(localX, localY);
+                        break;
+                    case MouseEventType.Down:
+                        s_mouseGrabber = hovered;
+                        (hovered as IMouseDownHandler)?.OnMouseDown(localX, localY);
+                        break;
+                    case MouseEventType.Up:
+                        (hovered as IMouseUpHandler)?.OnMouseUp(localX, localY);
 
-                    s_mouseGrabber = null;
-                    break;
+                        if (s_mouseGrabber == hovered)
+                        {
+                            (hovered as IMouseClickHandler)?.OnMouseClick(localX, localY);
+                        }
+
+                        s_mouseGrabber = null;
+                        break;
+                }
             }
         }
     }

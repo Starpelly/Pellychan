@@ -40,6 +40,10 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         {
             Text = Text
         };
+        option.InitFrom(this);
+
+        if (Enabled)
+            option.State |= Style.StateFlag.On;
 
         if (m_hovering && m_pressed)
             option.State |= Style.StateFlag.Sunken;
