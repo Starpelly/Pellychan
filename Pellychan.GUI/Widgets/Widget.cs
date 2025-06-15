@@ -58,6 +58,8 @@ public class Widget : IDisposable
     public int Y = 0;
     public int Width;
     public int Height;
+    
+    public SKRect Rect => new(X, Y, X + Width, Y + Height);
 
     public bool Visible = true;
 
@@ -246,7 +248,12 @@ public class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
+                // Don't paint anything that isn't set as visible.
                 if (!child.Visible)
+                    continue;
+                
+                // Don't paint anything that is outside the view bounds
+                if (!child.Rect.IntersectsWith(Rect))
                     continue;
 
                 canvas.Save();

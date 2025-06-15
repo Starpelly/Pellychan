@@ -4,8 +4,8 @@ namespace Pellychan.GUI.Widgets;
 
 public class Button : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler, IMouseUpHandler, IMouseClickHandler
 {
-    private const int TextPaddingW = 24;
-    private const int TextPaddingH = 24;
+    private const int TextPaddingW = 16;
+    private const int TextPaddingH = 16;
     private const float ButtonRounding = 2.0f;
 
     private string m_text = string.Empty;

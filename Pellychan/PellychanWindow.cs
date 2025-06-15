@@ -74,16 +74,20 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 
         m_rect = rect1;
 
-        var button = new Button("Test Notification", this)
+        for (int i = 0; i < 10; i++)
         {
-            X = 16,
-            Y = 400
-        };
-        button.OnClicked += delegate()
-        {
-            clickCount++;
-            button.Text = $"Test Notification ({clickCount})";
-        };
+            var button = new Button("Test Notification", this)
+            {
+                X = 16,
+                Y = 400 + (i * 29)
+            };
+            button.OnClicked += delegate()
+            {
+                clickCount++;
+                button.Text = $"Test Notification ({clickCount})";
+            };
+        }
+
     }
     int clickCount = 0;
 
