@@ -74,9 +74,9 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 
         m_rect = rect1;
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 1; i++)
         {
-            var button = new Button("Test Notification", this)
+            var button = new PushButton("Test Notification", this)
             {
                 X = 16,
                 Y = 400 + (i * 29)

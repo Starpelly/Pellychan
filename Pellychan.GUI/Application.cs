@@ -1,4 +1,6 @@
 ﻿using Pellychan.GUI.Platform.Skia;
+using Pellychan.GUI.Styles;
+using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
 using Pellychan.Resources;
 using SDL2;
@@ -21,11 +23,20 @@ internal static class WindowRegistry
 
 public class Application : IDisposable
 {
-    public static SKFont DefaultFont { get; private set; }
-
-    internal static Application? Instance { get; private set; } = null;
-    
+    internal static Application? Instance { get; private set; }
     internal readonly List<Widget> TopLevelWidgets = [];
+
+    private readonly SKFont m_defaultFont;
+    private readonly Style m_defaultStyle;
+    private ColorPalette m_palette;
+    
+    public static SKFont DefaultFont => Instance!.m_defaultFont;
+    public static Style DefaultStyle => Instance!.m_defaultStyle;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public static ColorPalette Palette => Instance!.m_palette;
 
     public Application()
     {
@@ -41,11 +52,11 @@ public class Application : IDisposable
         using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
         // using var typeface = SKTypeface.FromStream(fontStream);
 
-        int dpi = 96;
-        float pixelsPerPoint = dpi / 72.0f;
-        float skiaFontSize = 9 * pixelsPerPoint;
+        const int dpi = 96;
+        const float pixelsPerPoint = dpi / 72.0f;
+        const float skiaFontSize = 9 * pixelsPerPoint;
 
-        DefaultFont = new SKFont
+        m_defaultFont = new SKFont
         {
             Edging = SKFontEdging.SubpixelAntialias,
             Hinting = SKFontHinting.Slight,
@@ -53,6 +64,10 @@ public class Application : IDisposable
             Typeface = typeface,
             Size = skiaFontSize
         };
+        m_palette = ColorPalette.Default;
+
+        // Load default style last
+        m_defaultStyle = new PhantomStyle();
     }
 
     public void Run()

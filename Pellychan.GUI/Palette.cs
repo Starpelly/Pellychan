@@ -95,6 +95,11 @@ namespace Pellychan.GUI
             setDefaults();
         }
 
+        public SKColor Get(ColorRole role)
+        {
+            return m_colors[(int)ColorGroup.Active, (int)role];
+        }
+
         public SKColor Get(ColorGroup group, ColorRole role)
         {
             return m_colors[(int)group, (int)role];
@@ -120,7 +125,6 @@ namespace Pellychan.GUI
 
             Set(ColorGroup.Active, ColorRole.Highlight, new SKColor(191, 199, 213));
             Set(ColorGroup.Active, ColorRole.HighlightedText, new SKColor(45, 44, 39));
-
 
             Set(ColorGroup.Active, ColorRole.ButtonText, Get(ColorGroup.Active, ColorRole.Text));
 

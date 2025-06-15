@@ -54,7 +54,6 @@ namespace Pellychan.GUI.Widgets
         public void OnMouseClick(int x, int y)
         {
             Console.WriteLine(Color);
-
         }
     }
 }
