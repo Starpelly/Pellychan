@@ -2,7 +2,7 @@
 
 namespace Pellychan.GUI.Widgets
 {
-    public class Rect : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
+    public class Rect : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseClickHandler
     {
         private readonly SKPaint m_paint = new()
         {
@@ -49,7 +49,12 @@ namespace Pellychan.GUI.Widgets
 
         public void OnMouseDown(int x, int y)
         {
+        }
+
+        public void OnMouseClick(int x, int y)
+        {
             Console.WriteLine(Color);
+
         }
     }
 }

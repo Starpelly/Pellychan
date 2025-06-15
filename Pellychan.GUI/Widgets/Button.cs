@@ -2,9 +2,10 @@
 
 namespace Pellychan.GUI.Widgets;
 
-public class Button : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler, IMouseUpHandler
+public class Button : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler, IMouseUpHandler, IMouseClickHandler
 {
-    private const int TextPadding = 16;
+    private const int TextPaddingW = 24;
+    private const int TextPaddingH = 24;
     private const float ButtonRounding = 2.0f;
 
     private string m_text = string.Empty;
@@ -17,40 +18,33 @@ public class Button : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHand
         set
         {
             m_text = value;
+            updateSize();
         }
     }
 
     private bool m_hovering = false;
     private bool m_pressed = false;
 
+    public Action? OnClicked;
+    public Action? OnPressed;
+    public Action? OnReleased;
+
     public Button(string text, Widget? parent = null) : base(parent)
     {
-        m_text = text;
-        Width = (int)Application.DefaultFont.MeasureText(text) + TextPadding;
-        Height = (int)Application.DefaultFont.Size + 2 + TextPadding;
-    }
-
-    public void OnMouseEnter()
-    {
-        m_hovering = true;
-        MouseCursor.Set(MouseCursor.CursorType.Hand);
-    }
-
-    public void OnMouseLeave()
-    {
-        m_hovering = false;
-        MouseCursor.Set(MouseCursor.CursorType.Arrow);
+        Text = text;
     }
 
     public void OnPaint(SKCanvas canvas)
     {
         using var paint = new SKPaint();
 
+        var held = m_pressed && m_hovering;
+
         // Paint background
         {
             paint.Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.Button);
 
-            if (m_pressed)
+            if (held)
             {
                 paint.Color = new SKColor(69, 70, 75);
             }
@@ -83,9 +77,9 @@ public class Button : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHand
             paint.Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.ButtonText);
 
             var labelX = (Width / 2) - (Application.DefaultFont.MeasureText(m_text) / 2);
-            var labelY = Application.DefaultFont.Size + (TextPadding / 2);
+            var labelY = Application.DefaultFont.Size + (TextPaddingH / 2);
 
-            if (m_pressed)
+            if (held)
             {
                 labelY += 1;
             }
@@ -94,15 +88,48 @@ public class Button : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHand
         }
     }
 
+    public void OnMouseEnter()
+    {
+        m_hovering = true;
+        MouseCursor.Set(MouseCursor.CursorType.Hand);
+
+        Invalidate();
+    }
+
+    public void OnMouseLeave()
+    {
+        m_hovering = false;
+        MouseCursor.Set(MouseCursor.CursorType.Arrow);
+
+        Invalidate();
+    }
+
     public void OnMouseDown(int x, int y)
     {
         m_pressed = true;
+        OnPressed?.Invoke();
+
         Invalidate();
     }
 
     public void OnMouseUp(int x, int y)
     {
         m_pressed = false;
+        OnReleased?.Invoke();
+
         Invalidate();
+    }
+
+    public void OnMouseClick(int x, int y)
+    {
+        OnClicked?.Invoke();
+    
+        Invalidate();
+    }
+
+    private void updateSize()
+    {
+        Width = (int)Application.DefaultFont.MeasureText(m_text) + TextPaddingW;
+        Height = (int)Application.DefaultFont.Size + 2 + TextPaddingH;
     }
 }

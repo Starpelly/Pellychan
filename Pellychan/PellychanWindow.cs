@@ -74,12 +74,18 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 
         m_rect = rect1;
 
-        new Button("Test Notification", this)
+        var button = new Button("Test Notification", this)
         {
             X = 16,
             Y = 400
         };
+        button.OnClicked += delegate()
+        {
+            clickCount++;
+            button.Text = $"Test Notification ({clickCount})";
+        };
     }
+    int clickCount = 0;
 
     private void createMenubar()
     {
@@ -117,11 +123,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
 
     public void OnMouseDown(int x, int y)
     {
-        var mainWindow = new PellychanWindow();
-        mainWindow.SetWindowTitle("Pellychan");
-        mainWindow.Resize(1280, 720);
-        mainWindow.Show();
-
         return;
         m_rect.X = x;
         m_rect.Y = y;
