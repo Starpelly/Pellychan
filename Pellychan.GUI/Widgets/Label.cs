@@ -2,7 +2,7 @@
 
 namespace Pellychan.GUI.Widgets
 {
-    public class Label : Widget
+    public class Label : Widget, IPaintHandler
     {
         private SKFont m_font;
 
@@ -41,7 +41,9 @@ namespace Pellychan.GUI.Widgets
         {
             canvas.Save();
 
-            canvas.DrawRect(new SKRect(0, 0, Width, Height), new SKPaint() { Color = SKColors.Red });
+            Paint.Color = Application.Palette.Get(ColorRole.Text);
+
+            // canvas.DrawRect(new SKRect(0, 0, Width, Height), new SKPaint() { Color = SKColors.Red });
 
             if (WordWrap)
             {
@@ -50,7 +52,7 @@ namespace Pellychan.GUI.Widgets
 
                 foreach (var line in lines)
                 {
-                    float x = HorizontalAlignment switch
+                    int x = HorizontalAlignment switch
                     {
                         SKTextAlign.Left => 0,
                         SKTextAlign.Center => Width / 2,
@@ -66,7 +68,7 @@ namespace Pellychan.GUI.Widgets
             {
                 string displayText = ElideRight ? elide(Text, m_maxWidth, m_font) : Text;
 
-                float x = HorizontalAlignment switch
+                int x = HorizontalAlignment switch
                 {
                     SKTextAlign.Left => 0,
                     SKTextAlign.Center => Width / 2,
@@ -85,23 +87,27 @@ namespace Pellychan.GUI.Widgets
         {
             if (string.IsNullOrEmpty(Text))
             {
-                Width = 0;
-                Height = 0;
+                Resize(0, 0);
                 return;
             }
+
+            int width;
+            int height;
 
             if (WordWrap)
             {
                 var lines = breakLines(Text, m_maxWidth, m_font);
-                Width = m_maxWidth;
-                Height = (int)((lines.Count) * (m_font.Size + 2));
+                width = m_maxWidth;
+                height = (int)((lines.Count) * (m_font.Size + 2));
             }
             else
             {
                 string displayText = ElideRight ? elide(Text, m_maxWidth, m_font) : Text;
-                Width = (int)m_font.MeasureText(displayText);
-                Height = (int)(m_font.Size + 2);
+                width = (int)m_font.MeasureText(displayText) + 2;
+                height = (int)(m_font.Size + 2);
             }
+
+            Resize(width, height);
         }
 
         // Truncate text to fit with "..." at the end

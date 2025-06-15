@@ -88,7 +88,6 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
 
     private void updateSize()
     {
-        Width = (int)Application.DefaultFont.MeasureText(m_text) + TextPaddingW;
-        Height = (int)Application.DefaultFont.Size + 2 + TextPaddingH;
+        Resize((int)Application.DefaultFont.MeasureText(m_text) + TextPaddingW, (int)Application.DefaultFont.Size + 2 + TextPaddingH);
     }
 }

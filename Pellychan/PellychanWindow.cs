@@ -1,93 +1,122 @@
-﻿using Pellychan.GUI.Widgets;
+﻿using Pellychan.GUI;
+using Pellychan.GUI.Layouts;
+using Pellychan.GUI.Widgets;
 using SkiaSharp;
 
 namespace Pellychan;
 
-public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
+public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
 {
     private readonly ChanClient m_chanClient = new();
 
     private readonly SKPaint m_labelPaint = new();
     private readonly SKPicture m_flag;
-    private readonly SKFont m_font;
 
-    private List<Label> m_labels = [];
+    private readonly List<Label> m_labels = [];
 
-    Rect m_rect;
+    private readonly Widget m_centralWidget;
 
     public PellychanWindow() : base()
     {
-        // m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
+        // createMenubar();
+
+        m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
         m_labelPaint.Color = SKColors.White;
 
         m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 
-        /*
-        void createLabel(string text, int x, int y)
+        m_centralWidget = new Widget(this)
         {
-            var label = new Label(m_font)
+            // Y = Menubar!.Height,
+            Layout = new HBoxLayout
             {
-                Text = text,
-                X = x,
-                Y = y
+                Align = HBoxLayout.VerticalAlignment.Top,
+                Padding = new()
+            }
+        };
+
+        // Boards
+        {
+            var boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), m_centralWidget)
+            {
+                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
+                Layout = new VBoxLayout
+                {
+                    Spacing = 0,
+                    Align = VBoxLayout.HorizontalAlignment.Center,
+                    Padding = new(16)
+                }
             };
-            this.AddChild(label);
+            boardsListWidget.Resize(200, 0);
 
-            m_labels.Add(label);
+            void createLabel(string text, int x, int y)
+            {
+                var label = new Label(Application.DefaultFont, boardsListWidget)
+                {
+                    Text = text
+                };
+
+                m_labels.Add(label);
+            }
+
+            for (int i = 0; i < m_chanClient.Boards.Count; i++)
+            {
+                var board = m_chanClient.Boards[i];
+
+                createLabel(board.Title, 16, (i * 16) + 16);
+            }
         }
 
-        for (int i = 0; i < m_chanClient.Boards.Count; i++)
+        // Main content
         {
-            var board = m_chanClient.Boards[i];
+            var mainContentWidget = new Widget(m_centralWidget)
+            {
+                SizePolicy = SizePolicy.ExpandingPolicy
+            };
 
-            createLabel(board.Title, 16, (i * 16) + 16);
+            for (int i = 0; i < 1; i++)
+            {
+                var button = new PushButton("Test Notification", mainContentWidget)
+                {
+                    X = 16,
+                    Y = 16 + (i * 29)
+                };
+                button.OnClicked += delegate ()
+                {
+                    clickCount++;
+                    button.Text = $"Test Notification ({clickCount})";
+                };
+            }
         }
-        for (var i = 0; i < 20; i++)
-        createLabel("test", 0, 0);
-        */
 
-        createMenubar();
-
-        var rect1 = new Rect(SKColors.Red, this)
+        // Idk lol
+        if (false)
         {
-            X = 16,
-            Y = 32,
-            Width = 300,
-            Height = 300,
-        };
-        var rect2 = new Rect(SKColors.Green, rect1)
-        {
-            X = 16,
-            Y = 16,
-            Width = 200,
-            Height = 200,
-        };
-        var rect3 = new Rect(SKColors.Blue, rect2)
-        {
-            X = 16,
-            Y = 16,
-            Width = 100,
-            Height = 100,
-        };
-
-        rect1.Show();
-
-        m_rect = rect1;
-
-        for (int i = 0; i < 1; i++)
-        {
-            var button = new PushButton("Test Notification", this)
+            var rect1 = new Rect(SKColors.Red, m_centralWidget)
             {
                 X = 16,
-                Y = 400 + (i * 29)
+                Y = 32,
+                Width = 300,
+                Height = 300,
+                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding)
             };
-            button.OnClicked += delegate()
+            var rect2 = new Rect(SKColors.Green, rect1)
             {
-                clickCount++;
-                button.Text = $"Test Notification ({clickCount})";
+                X = 16,
+                Y = 16,
+                Width = 200,
+                Height = 200,
             };
-        }
+            var rect3 = new Rect(SKColors.Blue, rect2)
+            {
+                X = 16,
+                Y = 16,
+                Width = 100,
+                Height = 100,
+            };
 
+            rect1.Show();
+        }
     }
     int clickCount = 0;
 
@@ -96,7 +125,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         Menubar = new(this)
         {
             Width = 1280,
-            ScreenPosition = MenuBar.Orientation.Top
+            ScreenPosition = MenuBar.Orientation.Top,
         };
 
         void AddMenu(string title, List<MenuItem> items)
@@ -125,15 +154,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
         AddMenu("Help", []);
     }
 
-    public void OnMouseDown(int x, int y)
-    {
-        return;
-        m_rect.X = x;
-        m_rect.Y = y;
-
-        Invalidate();
-    }
-
     public void OnPaint(SKCanvas canvas)
     {
         canvas.Clear(EffectivePalette.Get(GUI.ColorGroup.Active, GUI.ColorRole.Window));
@@ -150,5 +170,11 @@ public class PellychanWindow : MainWindow, IPaintHandler, IMouseDownHandler
             canvas.DrawText(board.Title, pos + new SKPoint(62, 0), m_font, m_labelPaint);
         }
         */
+    }
+
+    public new void OnResize(int width, int height)
+    {
+        base.OnResize(width, height);
+        m_centralWidget?.Resize(width, height);
     }
 }

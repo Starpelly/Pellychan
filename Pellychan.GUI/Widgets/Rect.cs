@@ -2,7 +2,7 @@
 
 namespace Pellychan.GUI.Widgets
 {
-    public class Rect : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseClickHandler
+    public class Rect : Widget, IPaintHandler
     {
         private readonly SKPaint m_paint = new()
         {
@@ -29,31 +29,6 @@ namespace Pellychan.GUI.Widgets
             {
                 canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), roundness), m_paint);
             }
-        }
-
-        public void OnMouseEnter()
-        {
-            m_paint.Color = SKColors.White;
-            // MouseCursor.Set(MouseCursor.CursorType.Hand);
-
-            Invalidate();
-        }
-
-        public void OnMouseLeave()
-        {
-            m_paint.Color = Color;
-            // MouseCursor.Set(MouseCursor.CursorType.Arrow);
-
-            Invalidate();
-        }
-
-        public void OnMouseDown(int x, int y)
-        {
-        }
-
-        public void OnMouseClick(int x, int y)
-        {
-            Console.WriteLine(Color);
         }
     }
 }

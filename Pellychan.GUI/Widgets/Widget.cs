@@ -1,4 +1,5 @@
 ﻿using Pellychan.GUI.Input;
+using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Platform.Skia;
 using SDL2;
 using SkiaSharp;
@@ -53,15 +54,67 @@ public class Widget : IDisposable
         get => m_parent;
     }
     private readonly List<Widget> m_children = [];
+    public List<Widget> Children => m_children;
 
-    public int X = 0;
-    public int Y = 0;
-    public int Width;
-    public int Height;
+    private int m_x = 0;
+    private int m_y = 0;
+    private int m_width = 0;
+    private int m_height = 0;
+
+    public int X
+    {
+        get => m_x;
+        set
+        {
+            m_x = value;
+        }
+    }
+    public int Y
+    {
+        get => m_y;
+        set
+        {
+            m_y = value;
+        }
+    }
+    public int Width
+    {
+        get => m_width;
+        set
+        {
+            m_width = value;
+            dispatchResize();
+        }
+    }
+    public int Height
+    {
+        get => m_height;
+        set
+        {
+            m_height = value;
+            dispatchResize();
+        }
+    }
     
-    public SKRect Rect => new(X, Y, X + Width, Y + Height);
+    public SKRect Rect => new(m_x, m_y, m_x + m_width, m_y + m_height);
 
-    public bool Visible = true;
+    private bool m_visible = true;
+    public bool Visible
+    {
+        get
+        {
+            if (m_parent != null)
+            {
+                if (!m_parent.Visible)
+                    return false;
+            }
+            return m_visible;
+        }
+        set
+        {
+            m_visible = value;
+        }
+    }
 
     protected virtual bool ShouldCache => false;
 
@@ -72,6 +125,20 @@ public class Widget : IDisposable
 
     private bool m_isDirty = false;
     private bool m_hasDirtyDescendants = false;
+
+    // Layout
+    public Layout? Layout { get; set; }
+
+    public SizePolicy SizePolicy { get; set; } = SizePolicy.FixedPolicy;
+
+    public virtual SKSizeI SizeHint => new(m_width, m_height);
+    public virtual SKSizeI MinimumSizeHint => new(0, 0);
+
+    public int MinimumWidth { get; set; } = 0;
+    public int MaximumWidth { get; set; } = int.MaxValue;
+
+    public int MinimumHeight { get; set; } = 0;
+    public int MaximumHeight { get; set; } = int.MaxValue;
 
     // Palette
     public ColorPalette? Palette { get; set; }
@@ -98,6 +165,7 @@ public class Widget : IDisposable
 
         if (IsTopLevel)
         {
+            Visible = false;
             initializeIfTopLevel();
         }
 
@@ -113,15 +181,22 @@ public class Widget : IDisposable
     {
         Visible = true;
 
+        foreach (var child in m_children)
+        {
+            child.Show();
+        }
+
         if (IsTopLevel)
         {
             Application.Instance!.TopLevelWidgets.Add(this);
 
-            m_nativeWindow?.Resize(Width, Height);
-            m_nativeWindow?.CreateFrameBuffer(Width, Height);
+            m_nativeWindow?.Resize(m_width, m_height);
+            m_nativeWindow?.CreateFrameBuffer(m_width, m_height);
             m_nativeWindow?.Center();
             m_nativeWindow?.Show();
         }
+
+        OnLayoutUpdate();
     }
 
     /// <summary>
@@ -138,30 +213,40 @@ public class Widget : IDisposable
 
         m_parent = parent;
         m_parent?.m_children.Add(this);
+
+        if (m_parent != null)
+        {
+            if (m_parent.Visible)
+                m_parent.OnLayoutUpdate();
+        }
     }
 
     public void SetPosition(int x, int y)
     {
-        this.X = x;
-        this.Y = y;
+        m_x = x;
+        m_y = y;
     }
 
     public void SetRect(int x, int y, int width, int height)
     {
-        this.X = x;
-        this.Y = y;
-        Width = width;
-        Height = height;
+        m_x = x;
+        m_y = y;
+        m_width = width;
+        m_height = height;
+
+        dispatchResize();
     }
 
     public void Resize(int width, int height)
     {
-        Width = width;
-        Height = height;
+        // No point in dispatching anything in this case!
+        if (m_width == width && m_height == height)
+            return;
 
-        m_nativeWindow?.Resize(width, height);
+        m_width = width;
+        m_height = height;
 
-        (this as IResizeHandler)?.OnResize(width, height);
+        dispatchResize();
     }
 
     public void Invalidate()
@@ -179,7 +264,7 @@ public class Widget : IDisposable
 
     public bool HitTest(int x, int y)
     {
-        return Visible && (x >= 0 && y >= 0 && x < Width && y < Height);
+        return Visible && (x >= 0 && y >= 0 && x < m_width && y < m_height);
     }
 
     public virtual void Dispose()
@@ -193,11 +278,20 @@ public class Widget : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    #region Virtual methods
+
+    protected virtual void OnLayoutUpdate()
+    {
+        Layout?.PerformLayout(this);
+    }
+
+    #endregion
+
     #region Internal methods
 
     internal void Paint(SKCanvas canvas)
     {
-        if (Width <= 0 || Height <= 0 || !Visible)
+        if (m_height <= 0 || m_height <= 0 || !Visible)
             return;
 
         if (ShouldCache)
@@ -210,12 +304,12 @@ public class Widget : IDisposable
 
                 if (!IsTopLevel)
                 {
-                    if (m_cachedSurface == null || Width != m_cachedWidth || Height != m_cachedHeight)
+                    if (m_cachedSurface == null || m_height != m_cachedWidth || m_height != m_cachedHeight)
                     {
                         m_cachedSurface?.Dispose();
-                        m_cachedSurface = SKSurface.Create(new SKImageInfo(Width, Height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-                        m_cachedWidth = Width;
-                        m_cachedHeight = Height;
+                        m_cachedSurface = SKSurface.Create(new SKImageInfo(m_height, m_height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
+                        m_cachedWidth = m_height;
+                        m_cachedHeight = m_height;
                     }
                 }
 
@@ -236,7 +330,7 @@ public class Widget : IDisposable
 
             if (m_cachedImage != null)
             {
-                canvas.DrawImage(m_cachedImage, X, Y);
+                canvas.DrawImage(m_cachedImage, m_x, m_y);
             }
         }
         else
@@ -253,14 +347,14 @@ public class Widget : IDisposable
                     continue;
                 
                 // Don't paint anything that is outside the view bounds
-                if (!child.Rect.IntersectsWith(Rect))
-                    continue;
+                //if (!child.Rect.IntersectsWith(Rect))
+                //    continue;
 
                 canvas.Save();
 
                 // Clip to the child's bounds relative to the parent
-                canvas.ClipRect(new SKRect(child.X, child.Y, child.X + child.Width, child.Y + child.Height));
-                canvas.Translate(child.X, child.Y);
+                canvas.ClipRect(new SKRect(child.m_x, child.m_y, child.m_x + child.m_width, child.m_y + child.m_height));
+                canvas.Translate(child.m_x, child.m_y);
 
                 // Paint the child with the canvas offset to its local space
                 child.Paint(canvas);
@@ -275,7 +369,7 @@ public class Widget : IDisposable
     [Obsolete]
     internal void Paint_OLD(SKCanvas canvas)
     {
-        if (Width <= 0 || Height <= 0)
+        if (m_height <= 0 || m_height <= 0)
             return;
 
         SKSurface? GetPaintSurface()
@@ -291,13 +385,13 @@ public class Widget : IDisposable
             // AND only if we're not a top level widget, as the surface for a top level widget is the window itself
             if (!IsTopLevel)
             {
-                if (m_cachedSurface == null || Width != m_cachedWidth || Height != m_cachedHeight)
+                if (m_cachedSurface == null || m_height != m_cachedWidth || m_height != m_cachedHeight)
                 {
                     m_cachedSurface?.Dispose();
 
-                    m_cachedSurface = SKSurface.Create(new SKImageInfo(Width, Height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-                    m_cachedWidth = Width;
-                    m_cachedHeight = Height;
+                    m_cachedSurface = SKSurface.Create(new SKImageInfo(m_height, m_height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
+                    m_cachedWidth = m_height;
+                    m_cachedHeight = m_height;
                 }
             }
 
@@ -317,7 +411,7 @@ public class Widget : IDisposable
         // This is never actually null, but I don't want Rider yelling at me... :<
         if (m_cachedImage != null)
         {
-            canvas.DrawImage(m_cachedImage, X, Y);
+            canvas.DrawImage(m_cachedImage, m_x, m_y);
         }
 
         // Draw the children afterwards (obviously)
@@ -337,7 +431,7 @@ public class Widget : IDisposable
     internal void RenderTopLevel()
     {
         if (!IsTopLevel) return;
-        if (Width == 0 || Height == 0) return;
+        if (m_height == 0 || m_height == 0) return;
 
         // Lock texture to get pixel buffer
         m_nativeWindow!.Lock();
@@ -369,13 +463,22 @@ public class Widget : IDisposable
 
     #region Private Methods
 
+    private void dispatchResize()
+    {
+        m_nativeWindow?.Resize(m_width, m_height);
+
+        (this as IResizeHandler)?.OnResize(m_width, m_height);
+
+        OnLayoutUpdate();
+    }
+
     private void initializeIfTopLevel()
     {
         if (!IsTopLevel) return;
 
         Console.WriteLine($"Initialized top level widget of type: {GetType().Name}");
 
-        m_nativeWindow = new(this, Width, Height, GetType().Name);
+        m_nativeWindow = new(this, m_height, m_height, GetType().Name);
         WindowRegistry.Register(m_nativeWindow);
 
         m_nativeWindow.OnWindowResize += delegate (int w, int h)
@@ -411,8 +514,8 @@ public class Widget : IDisposable
         Widget? current = widget;
         while (current != null && current != this)
         {
-            lx -= current.X;
-            ly -= current.Y;
+            lx -= current.m_x;
+            ly -= current.m_y;
             current = current.Parent;
         }
 
@@ -421,8 +524,8 @@ public class Widget : IDisposable
 
     private Widget? findHoveredWidget(int x, int y)
     {
-        var thisX = (IsTopLevel) ? 0 : this.X;
-        var thisY = (IsTopLevel) ? 0 : this.Y;
+        var thisX = (IsTopLevel) ? 0 : this.m_x;
+        var thisY = (IsTopLevel) ? 0 : this.m_y;
 
         int localX = x - thisX;
         int localY = y - thisY;
@@ -451,7 +554,7 @@ public class Widget : IDisposable
             if (!child.Visible)
                 continue;
 
-            if (child.HitTest(x - child.X, y - child.Y))
+            if (child.HitTest(x - child.m_x, y - child.m_y))
                 return child;
         }
         return null;
@@ -486,8 +589,8 @@ public class Widget : IDisposable
         // If there's a mouse grabber, it always receives input!
         if (s_mouseGrabber != null)
         {
-            int localX = mouseX - s_mouseGrabber.X;
-            int localY = mouseY - s_mouseGrabber.Y;
+            int localX = mouseX - s_mouseGrabber.m_x;
+            int localY = mouseY - s_mouseGrabber.m_y;
 
             switch (type)
             {
@@ -515,8 +618,8 @@ public class Widget : IDisposable
         // No grabber - do regular hit testing.
         if (hovered != null)
         {
-            int localX = mouseX - hovered.X;
-            int localY = mouseY - hovered.Y;
+            int localX = mouseX - hovered.m_x;
+            int localY = mouseY - hovered.m_y;
 
             switch (type)
             {
