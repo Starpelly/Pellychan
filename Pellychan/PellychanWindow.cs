@@ -9,6 +9,9 @@ namespace Pellychan;
 
 public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler, IMouseDownHandler
 {
+    public static PellychanWindow Instance { get; private set; }
+    public static ChanClient ChanClient => Instance.m_chanClient;
+
     private readonly ChanClient m_chanClient = new();
     private API.Models.Thread m_thread;
 
@@ -23,14 +26,18 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler, IMouse
 
     private int m_clickCount = 0;
 
-    private int test_count = 40;
+    private int test_count = 8;
 
     public PellychanWindow() : base()
     {
+        Instance = this;
+
         createMenubar();
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-        m_thread = m_chanClient.GetThreadAsync("vg", "527536942").GetAwaiter().GetResult();
+        m_chanClient.CurrentBoard = "vg";
+
+        m_thread = m_chanClient.GetThreadAsync("527536942").GetAwaiter().GetResult();
 
         m_labelPaint.Color = SKColors.White;
 
@@ -46,7 +53,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler, IMouse
 
             if (post.Tim == null) continue;
 
-            m_chanClient.LoadThumbnail("vg", post, i, (thumbnail, index) =>
+            m_chanClient.LoadThumbnail(post, i, (thumbnail, index) =>
             {
                 if (thumbnail != null)
                 {

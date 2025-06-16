@@ -11,6 +11,8 @@ public class ChanClient
 {
     private readonly HttpClient m_httpClient = new();
 
+    public string CurrentBoard { get; set; }
+
     public BoardsResponse Boards;
 
     public ChanClient()
@@ -30,18 +32,18 @@ public class ChanClient
         return result;
     }
 
-    public async Task<Thread> GetThreadAsync(string board, string post)
+    public async Task<Thread> GetThreadAsync(string post)
     {
-        var url = $"https://{Domains.API}/{board}/thread/{post}.json";
+        var url = $"https://{Domains.API}/{CurrentBoard}/thread/{post}.json";
         var json = await m_httpClient.GetStringAsync(url);
 
         var result = JsonConvert.DeserializeObject<Thread>(json);
         return result;
     }
 
-    public async Task<SKBitmap?> DownloadThumbnailAsync(string board, long tim)
+    public async Task<SKBitmap?> DownloadThumbnailAsync(long tim)
     {
-        string url = $"https://{Domains.UserContent}/{board}/{tim}s.jpg";
+        string url = $"https://{Domains.UserContent}/{CurrentBoard}/{tim}s.jpg";
 
         try
         {
@@ -55,12 +57,37 @@ public class ChanClient
         }
     }
 
-    public void LoadThumbnail(string board, Post post, int storeIndex, Action<SKBitmap?, int> onComplete)
+    public async Task<SKBitmap?> DownloadAttachmentAsync(Post post)
+    {
+        string url = $"https://{Domains.UserContent}/{CurrentBoard}/{post.Tim}{post.Ext}";
+
+        try
+        {
+            byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
+            using MemoryStream ms = new MemoryStream(imageBytes);
+            return SKBitmap.Decode(ms); // Decode into SKBitmap
+        }
+        catch
+        {
+            return null; // Handle gracefully if image isn't available
+        }
+    }
+
+    public void LoadThumbnail(Post post, int storeIndex, Action<SKBitmap?, int> onComplete)
     {
         Task.Run(async () =>
         {
-            var thumb = await DownloadThumbnailAsync(board, (long)post.Tim!);
+            var thumb = await DownloadThumbnailAsync((long)post.Tim!);
             onComplete?.Invoke(thumb, storeIndex);
+        });
+    }
+
+    public void LoadAttachment(Post post, Action<SKBitmap?> onComplete)
+    {
+        Task.Run(async () =>
+        {
+            var attachment = await DownloadAttachmentAsync(post);
+            onComplete?.Invoke(attachment);
         });
     }
 }

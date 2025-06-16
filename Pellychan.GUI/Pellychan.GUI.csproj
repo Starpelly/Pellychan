@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
       <PackageReference Include="ppy.SDL2-CS" Version="1.0.741-alpha" />
       <PackageReference Include="SkiaSharp" Version="3.119.0" />
       <PackageReference Include="Svg.Skia" Version="3.0.3" />
