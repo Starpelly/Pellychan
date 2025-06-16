@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace Pellychan;
 
-public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler, IMouseDownHandler
+public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 {
     public static PellychanWindow Instance { get; private set; }
     public static ChanClient ChanClient => Instance.m_chanClient;
@@ -251,24 +251,6 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler, IMouse
         AddMenu("View", []);
         AddMenu("Tools", []);
         AddMenu("Help", []);
-    }
-
-    public void OnPaint(SKCanvas canvas)
-    {
-        canvas.Clear(EffectivePalette.Get(GUI.ColorGroup.Active, GUI.ColorRole.Window));
-
-        // Helpers.DrawSvg(canvas, m_flag, new SKRect(0, 0, 256, 256));
-        
-        /*
-        for (int i = 0; i < m_chanClient.Boards.Count; i++)
-        {
-            var board = m_chanClient.Boards[i];
-            var pos = new SKPoint(16, (i * 16) + 16 + 8);
-
-            canvas.DrawText($"/{board.URL}/", pos, m_font, m_labelPaint);
-            canvas.DrawText(board.Title, pos + new SKPoint(62, 0), m_font, m_labelPaint);
-        }
-        */
     }
 
     public new void OnResize(int width, int height)

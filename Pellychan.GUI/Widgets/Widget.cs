@@ -505,6 +505,23 @@ public class Widget : IDisposable
     internal void PerformUpdateLayout()
     {
         Layout?.PerformLayout(this);
+
+        if (Layout != null)
+        {
+            /*
+            var sizeHint = SizeHint;
+            var newWidth = m_width;
+            var newHeight = m_height;
+
+            if (SizePolicy.Horizontal == SizePolicy.Policy.Preferred)
+                newWidth = sizeHint.Width;
+            if (SizePolicy.Vertical == SizePolicy.Policy.Preferred)
+                newHeight = sizeHint.Height;
+
+            Resize(newWidth, newHeight);
+            */
+        }
+
         OnLayoutUpdate?.Invoke();
     }
 
@@ -560,7 +577,10 @@ public class Widget : IDisposable
 
     private void dispatchResize()
     {
-        InvalidateLayout();
+        if (Layout != null)
+        {
+            InvalidateLayout();
+        }
         NotifyLayoutChange();
         
         m_nativeWindow?.Resize(m_width, m_height);

@@ -11,6 +11,7 @@ namespace Pellychan.GUI.Widgets
         };
 
         public SKColor Color { get; set; } = SKColors.Black;
+        public float Rounding = 0;
 
         public Rect(SKColor color, Widget? parent = null) : base(parent)
         {
@@ -20,14 +21,13 @@ namespace Pellychan.GUI.Widgets
 
         public void OnPaint(SKCanvas canvas)
         {
-            var roundness = 0;
-            if (roundness == 0)
+            if (Rounding == 0)
             {
                 canvas.DrawRect(new SKRect(0, 0, Width, Height), m_paint);
             }
             else
             {
-                canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), roundness), m_paint);
+                canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), Rounding), m_paint);
             }
         }
     }

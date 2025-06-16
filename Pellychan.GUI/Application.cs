@@ -51,7 +51,7 @@ public class Application : IDisposable
             if (widget.Layout == null)
                 return;
 
-            // Console.WriteLine($"Enqued: {widget.GetType().Name}");
+            Console.WriteLine($"Enqued: {widget.GetType().Name}");
 
             s_dirtyWidgets.Add(widget);
         }
@@ -60,7 +60,7 @@ public class Application : IDisposable
         {
             if (s_dirtyWidgets.Count > 0)
             {
-                // Console.WriteLine("==================Layout Flush==================");
+                Console.WriteLine("==================Layout Flush==================");
             }
 
             IsFlusing = true;
