@@ -1,7 +1,6 @@
 ﻿using Pellychan.GUI.Input;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Platform.Skia;
-using SDL2;
 using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
@@ -67,6 +66,7 @@ public class Widget : IDisposable
         set
         {
             m_x = value;
+            m_globalPosition = getGlobalPosition();
         }
     }
     public int Y
@@ -75,6 +75,7 @@ public class Widget : IDisposable
         set
         {
             m_y = value;
+            m_globalPosition = getGlobalPosition();
         }
     }
     public int Width
@@ -96,6 +97,11 @@ public class Widget : IDisposable
         }
     }
     
+    // @NOTE
+    // I'm not completely sure how well this is would work if used.
+    // We might need a better caching system for this...?
+    private SKPoint m_globalPosition;
+    
     public SKRect Rect => new(m_x, m_y, m_x + m_width, m_y + m_height);
 
     private bool m_visible = true;
@@ -112,7 +118,12 @@ public class Widget : IDisposable
         }
         set
         {
-            m_visible = value;
+            if (m_visible != value)
+            {
+                m_visible = value;
+                InvalidateLayout();
+                NotifyLayoutChange();
+            }
         }
     }
 
@@ -130,7 +141,12 @@ public class Widget : IDisposable
         }
         set
         {
-            m_enabled = value;
+            if (m_enabled != value)
+            {
+                m_enabled = value;
+                // Invalidate();
+                // NotifyLayoutChange();
+            }
         }
     }
 
@@ -147,7 +163,20 @@ public class Widget : IDisposable
     // Layout
     public Layout? Layout { get; set; }
 
-    public SizePolicy SizePolicy { get; set; } = SizePolicy.FixedPolicy;
+    private SizePolicy m_sizePolicy = SizePolicy.FixedPolicy;
+    public SizePolicy SizePolicy
+    {
+        get => m_sizePolicy;
+        set
+        {
+            if (m_sizePolicy != value)
+            {
+                m_sizePolicy = value;
+                InvalidateLayout();
+                NotifyLayoutChange();
+            }
+        }
+    }
 
     public virtual SKSizeI SizeHint => Layout?.SizeHint(this) ?? new(m_width, m_height);
     public virtual SKSizeI MinimumSizeHint => new(0, 0);
@@ -158,9 +187,7 @@ public class Widget : IDisposable
     public int MinimumHeight { get; set; } = 0;
     public int MaximumHeight { get; set; } = int.MaxValue;
 
-    public bool AutoResizeToFit { get; set; } = false;
-
-    public Action? OnResize;
+    public Action? OnLayoutResize;
     public Action? OnLayoutUpdate;
 
     // Palette
@@ -204,12 +231,7 @@ public class Widget : IDisposable
     /// </summary>
     public void Show()
     {
-        Visible = true;
-
-        foreach (var child in m_children)
-        {
-            child.Show();
-        }
+        m_visible = true;
 
         if (IsTopLevel)
         {
@@ -221,7 +243,22 @@ public class Widget : IDisposable
             m_nativeWindow?.Show();
         }
 
-        updateLayout();
+        InvalidateLayout();
+
+        /*
+        void invalidateChildren(Widget parent)
+        {
+            foreach (var child in parent.m_children)
+            {
+                child.InvalidateLayout();
+
+                invalidateChildren(child);
+            }
+        }
+
+        invalidateChildren(this);
+        //NotifyLayoutChange();
+        */
     }
 
     /// <summary>
@@ -234,16 +271,27 @@ public class Widget : IDisposable
         if (m_parent == parent)
             return;
 
-        m_parent?.m_children.Remove(this);
+        if (m_parent != null)
+        {
+            m_parent.Children.Remove(this);
+            if (m_parent.Layout != null)
+                m_parent.InvalidateLayout();
+        }
 
         m_parent = parent;
-        m_parent?.m_children.Add(this);
 
         if (m_parent != null)
         {
-            if (m_parent.Visible)
-                m_parent.updateLayout();
+            m_parent.Children.Add(this);
+
+            if (m_parent.Layout != null && m_parent.Visible)
+                m_parent.InvalidateLayout();
+
+            if (Layout != null)
+                InvalidateLayout();
         }
+
+        NotifyLayoutChange(); // In case grandparent needs to update layout too
     }
 
     public void SetPosition(int x, int y)
@@ -292,6 +340,16 @@ public class Widget : IDisposable
         return Visible && (x >= 0 && y >= 0 && x < m_width && y < m_height);
     }
 
+    /// <summary>
+    /// Forces this widget and its layout hierarchy to update sizes and positions.
+    /// Should be called when geometry-affecting state changes (e.g. size policy, size hint).
+    /// </summary>
+    public void UpdateGeometry()
+    {
+        InvalidateLayout();
+        NotifyLayoutChange();
+    }
+
     public virtual void Dispose()
     {
         m_nativeWindow?.Dispose();
@@ -303,28 +361,38 @@ public class Widget : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    #region Virtual methods
-
-    private void updateLayout()
-    {
-        if (AutoResizeToFit && Layout != null)
-        {
-            var hint = Layout.SizeHint(this);
-            Resize(hint.Width, hint.Height);
-        }
-
-        Layout?.PerformLayout(this);
-        OnLayoutUpdate?.Invoke();
-    }
-
-    #endregion
-
     #region Internal methods
 
-    internal void Paint(SKCanvas canvas)
+    internal void Paint(SKCanvas canvas, SKRect clipRect)
     {
         if (m_height <= 0 || m_height <= 0 || !Visible)
             return;
+
+        var globalPos = getGlobalPosition();
+        
+        var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
+        var currentClip = SKRect.Intersect(clipRect, thisRect);
+
+        var a = this;
+
+
+        if (currentClip.IsEmpty)
+            return;
+
+        /*
+        foreach (var clip in clipStack)
+        {
+            var a = this;
+            if (!clip.IntersectsWith(thisRect))
+                return;
+        }
+        
+        clipStack.Push(thisRect);
+        */
+
+        canvas.Save();
+        canvas.Translate(m_x, m_y);
+        canvas.ClipRect(new(0, 0, m_width, m_height));
 
         if (ShouldCache)
         {
@@ -374,88 +442,27 @@ public class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
-                // Don't paint anything that isn't set as visible.
                 if (!child.Visible)
                     continue;
-                
-                // Don't paint anything that is outside the view bounds
-                //if (!child.Rect.IntersectsWith(Rect))
-                //    continue;
 
-                canvas.Save();
-
-                // Clip to the child's bounds relative to the parent
-                // canvas.ClipRect(new SKRect(child.m_x, child.m_y, child.m_x + child.m_width, child.m_y + child.m_height));
-                canvas.Translate(child.m_x, child.m_y);
-
-                // Paint the child with the canvas offset to its local space
-                child.Paint(canvas);
-
-                canvas.Restore();
+                child.Paint(canvas, clipRect);
             }
         }
 
-        m_hasDirtyDescendants = false;
-    }
-
-    [Obsolete]
-    internal void Paint_OLD(SKCanvas canvas)
-    {
-        if (m_height <= 0 || m_height <= 0)
-            return;
-
-        SKSurface? GetPaintSurface()
+        // Debug shit
+        if (false)
         {
-            return (IsTopLevel) ? canvas.Surface : m_cachedSurface!;
+            canvas.Save();
+            canvas.ResetMatrix();
+
+            using var debugPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Red };
+            canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), debugPaint);
+
+            canvas.Restore();
         }
 
-        if (m_isDirty)
-        {
-            m_isDirty = false;
-
-            // We'll only recreate the surface when the widget is resized
-            // AND only if we're not a top level widget, as the surface for a top level widget is the window itself
-            if (!IsTopLevel)
-            {
-                if (m_cachedSurface == null || m_height != m_cachedWidth || m_height != m_cachedHeight)
-                {
-                    m_cachedSurface?.Dispose();
-
-                    m_cachedSurface = SKSurface.Create(new SKImageInfo(m_height, m_height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-                    m_cachedWidth = m_height;
-                    m_cachedHeight = m_height;
-                }
-            }
-
-            var paintSurface = GetPaintSurface()!;
-
-            var sc = paintSurface.Canvas;
-            sc.Clear(SKColors.Transparent);
-            var paint = this as IPaintHandler;
-            paint?.OnPaint(sc);
-
-            // We can recreate the image every paint, that's fine.
-            m_cachedImage?.Dispose();
-            m_cachedImage = paintSurface.Snapshot();
-        }
-
-        // Draw the cached image to the real canvas
-        // This is never actually null, but I don't want Rider yelling at me... :<
-        if (m_cachedImage != null)
-        {
-            canvas.DrawImage(m_cachedImage, m_x, m_y);
-        }
-
-        // Draw the children afterwards (obviously)
-        if (m_children.Count > 0)
-        {
-            var paintSurface = GetPaintSurface()!;
-
-            foreach (var child in m_children)
-            {
-                child.Paint(paintSurface.Canvas);
-            }
-        }
+        // clipStack.Pop();
+        canvas.Restore();
 
         m_hasDirtyDescendants = false;
     }
@@ -474,7 +481,11 @@ public class Widget : IDisposable
         {
             canvas.Clear(SKColors.White);
 
-            Paint(canvas);
+            //var rootStack = new Stack<SKRect>();
+            // rootStack.Push(new SKRect(0, 0, m_width, m_height));
+            var rootClip = new SKRect(0, 0, m_width, m_height);
+
+            Paint(canvas, rootClip);
 
             canvas.Flush();
         }
@@ -491,19 +502,71 @@ public class Widget : IDisposable
         return IsTopLevel && m_nativeWindow!.ShouldClose;
     }
 
+    internal void PerformUpdateLayout()
+    {
+        Layout?.PerformLayout(this);
+        OnLayoutUpdate?.Invoke();
+    }
+
+    internal void InvalidateLayout()
+    {
+        if (!Visible)
+            return;
+
+        Application.LayoutQueue.Enqueue(this);
+
+        foreach (var child in m_children)
+        {
+            child.InvalidateLayout();
+        }
+    }
+
+    /// <summary>
+    /// Tells all parents to update layouts (if they have layouts).
+    /// </summary>
+    internal void NotifyLayoutChange()
+    {
+        var p = Parent;
+        while (p != null)
+        {
+            if (p.Layout != null)
+            {
+                p.InvalidateLayout();
+                break;
+            }
+            p = p.Parent;
+        }
+    }
+
     #endregion
 
     #region Private Methods
 
+    private SKPoint getGlobalPosition()
+    {
+        var x = m_x;
+        var y = m_y;
+
+        Widget? current = m_parent;
+        while (current != null)
+        {
+            x += current.m_x;
+            y += current.m_y;
+            current = current.m_parent;
+        }
+
+        return new(x, y);
+    }
+
     private void dispatchResize()
     {
+        InvalidateLayout();
+        NotifyLayoutChange();
+        
         m_nativeWindow?.Resize(m_width, m_height);
-
+        
         (this as IResizeHandler)?.OnResize(m_width, m_height);
-
-        OnResize?.Invoke();
-
-        updateLayout();
+        OnLayoutResize?.Invoke();
     }
 
     private void initializeIfTopLevel()

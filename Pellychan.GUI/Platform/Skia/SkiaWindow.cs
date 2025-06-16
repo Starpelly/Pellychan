@@ -54,7 +54,7 @@ internal class SkiaWindow
 
         WindowID = SDL.SDL_GetWindowID(SdlWindow);
 
-        SdlRenderer = SDL.SDL_CreateRenderer(SdlWindow, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+        SdlRenderer = SDL.SDL_CreateRenderer(SdlWindow, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 
         m_windowCreated = true;
     }

@@ -1,40 +1,73 @@
 ﻿using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
+using Pellychan.Widgets;
 using SkiaSharp;
+using System.Xml.Linq;
 
 namespace Pellychan;
 
-public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
+public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler, IMouseDownHandler
 {
     private readonly ChanClient m_chanClient = new();
+    private API.Models.Thread m_thread;
 
     private readonly SKPaint m_labelPaint = new();
     private readonly SKPicture m_flag;
 
     private readonly List<Label> m_labels = [];
+    private readonly List<PostWidget> m_postWidgets = [];
 
     private Widget m_centralWidget;
+    private Widget m_mainContentWidget;
 
     private int m_clickCount = 0;
 
+    private int test_count = 40;
+
     public PellychanWindow() : base()
     {
-        // createMenubar();
+        createMenubar();
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
+        m_thread = m_chanClient.GetThreadAsync("vg", "527536942").GetAwaiter().GetResult();
+
         m_labelPaint.Color = SKColors.White;
 
         m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 
+        test_count = m_thread.Posts.Count;
+
         createUI();
+
+        for (var i = 0; i < test_count; i++)
+        {
+            var post = m_thread.Posts[i];
+
+            if (post.Tim == null) continue;
+
+            m_chanClient.LoadThumbnail("vg", post, i, (thumbnail, index) =>
+            {
+                if (thumbnail != null)
+                {
+                    Console.WriteLine($"Loaded {(long)post.Tim}");
+                    Done(index, thumbnail);
+                }
+            });
+        }
+    }
+
+    public void Done(int index, SKBitmap thumbnail)
+    {
+        m_postWidgets[index].SetBitmapPreview(thumbnail);
     }
 
     private void createUI()
     {
-        m_centralWidget = new Widget(this)
+        m_centralWidget = new NullWidget(this)
         {
             // Y = Menubar!.Height,
+            SizePolicy = SizePolicy.ExpandingPolicy,
             Layout = new HBoxLayout
             {
                 Align = HBoxLayout.VerticalAlignment.Top,
@@ -51,10 +84,11 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
                     Spacing = 0,
                 },
                 SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
+                // SizePolicy = SizePolicy.ExpandingPolicy,
                 Width = 200
             };
 
-            var boardsListContainer = new Widget(boardsContainer)
+            var boardsListContainer = new Rect(Application.Palette.Get(ColorRole.Base), boardsContainer)
             {
                 Layout = new HBoxLayout
                 {
@@ -86,9 +120,9 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
                     m_labels.Add(label);
                 }
 
-                for (int i = 0; i < m_chanClient.Boards.Count; i++)
+                for (int i = 0; i < m_chanClient.Boards.Boards.Count; i++)
                 {
-                    var board = m_chanClient.Boards[i];
+                    var board = m_chanClient.Boards.Boards[i];
 
                     createLabel(board.Title, 16, (i * 16) + 16);
                 }
@@ -107,7 +141,7 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
                 boardsListWidget.Y = -value;
             };
 
-            boardsListContainer.OnResize += delegate()
+            boardsListWidget.OnLayoutResize += boardsListContainer.OnLayoutResize += delegate()
             {
                 scroll.Maximum = Math.Max(0, boardsListWidget.Height - boardsContainer.Height);
                 scroll.PageStep = boardsContainer.Height;
@@ -130,66 +164,64 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
             };
         }
 
+        if (test_count == 0) return;
+        
         // Main content
         {
-            var mainContentWidget = new Widget(m_centralWidget)
+            m_mainContentWidget = new Widget(m_centralWidget)
             {
-                SizePolicy = SizePolicy.ExpandingPolicy
+                SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
+                Layout = new VBoxLayout
+                {
+                    Spacing = 1
+                },
+                Width = 100,
+                Height = 100
             };
 
-            for (int i = 0; i < 1; i++)
+            for (var i = 0; i < test_count; i++)
             {
-                var button = new PushButton("Test Notification", mainContentWidget)
+                var post = m_thread.Posts[i];
+                var widget = new PostWidget(post, m_mainContentWidget)
                 {
-                    X = 16,
-                    Y = 16 + (i * 29)
+                    SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed)
                 };
-                button.OnClicked += delegate ()
+                m_postWidgets.Add(widget);
+
+                /*
+                var widget = new Label(Application.DefaultFont, m_mainContentWidget)
                 {
-                    m_clickCount++;
-                    button.Text = $"Test Notification ({m_clickCount})";
+                    SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
+                    Text = "test"
                 };
-                button.Enabled = false;
+                */
             }
 
-            /*
-            new ScrollBar(mainContentWidget)
+            var scroll = new ScrollBar(m_centralWidget)
             {
                 X = 400,
                 Y = 16,
                 Width = 16,
-                Height = 400
-            };
-            */
-        }
-
-        // Idk lol
-        if (false)
-        {
-            var rect1 = new Rect(SKColors.Red, m_centralWidget)
-            {
-                X = 16,
-                Y = 32,
-                Width = 300,
-                Height = 300,
+                Height = 400,
                 SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding)
             };
-            var rect2 = new Rect(SKColors.Green, rect1)
+            scroll.OnValueChanged += delegate (int value)
             {
-                X = 16,
-                Y = 16,
-                Width = 200,
-                Height = 200,
-            };
-            var rect3 = new Rect(SKColors.Blue, rect2)
-            {
-                X = 16,
-                Y = 16,
-                Width = 100,
-                Height = 100,
+                m_mainContentWidget.Y = -value;
             };
 
-            rect1.Show();
+            m_mainContentWidget.OnLayoutResize += m_centralWidget.OnLayoutResize += delegate ()
+            {
+                scroll.Maximum = Math.Max(0, m_mainContentWidget.Height - m_centralWidget.Height);
+                scroll.PageStep = m_centralWidget.Height;
+
+                scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
+                scroll.Enabled = scroll.Maximum > 0;
+            };
+            m_mainContentWidget.OnLayoutUpdate += delegate ()
+            {
+                m_mainContentWidget.Resize(m_mainContentWidget.Width, m_mainContentWidget.SizeHint.Height);
+            };
         }
     }
 
@@ -197,10 +229,9 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
     {
         Menubar = new(this)
         {
-            Width = 1280,
+            Width = this.Width,
             ScreenPosition = MenuBar.Orientation.Top,
         };
-
         void AddMenu(string title, List<MenuItem> items)
         {
             var menu = new Menu(title, Menubar);
@@ -210,20 +241,8 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
             }
             Menubar!.AddMenu(menu);
         }
-        AddMenu("File",
-        [
-            new ("Open", () => Console.WriteLine("Open clicked!"))
-        ]);
-        AddMenu("Edit",
-        [
-            new ("Undo"),
-            new ("Redo"),
-        ]);
         AddMenu("View", []);
-        AddMenu("Build", []);
-        AddMenu("Debug", []);
-        AddMenu("Test", []);
-        AddMenu("Window", []);
+        AddMenu("Tools", []);
         AddMenu("Help", []);
     }
 
@@ -247,7 +266,20 @@ public class PellychanWindow : MainWindow, IPaintHandler, IResizeHandler
 
     public new void OnResize(int width, int height)
     {
+        // Console.Clear();
+        // Console.WriteLine("\x1b[3J");
+
         base.OnResize(width, height);
-        m_centralWidget?.Resize(width, height);
+
+        var menubarHeight = Menubar != null ? Menubar.Height : 0;
+
+        m_centralWidget.Y = menubarHeight;
+        m_centralWidget.Width = width;
+        m_centralWidget.Height = height - menubarHeight;
+    }
+
+    public void OnMouseDown(int x, int y)
+    {
+
     }
 }

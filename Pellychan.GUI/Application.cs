@@ -38,6 +38,41 @@ public class Application : IDisposable
     /// </summary>
     public static ColorPalette Palette => Instance!.m_palette;
 
+    internal static class LayoutQueue
+    {
+        private static readonly HashSet<Widget> s_dirtyWidgets = [];
+        public static bool IsFlusing { get; private set; } = false;
+
+        public static void Enqueue(Widget widget)
+        {
+            if (IsFlusing)
+                return;
+
+            if (widget.Layout == null)
+                return;
+
+            // Console.WriteLine($"Enqued: {widget.GetType().Name}");
+
+            s_dirtyWidgets.Add(widget);
+        }
+
+        public static void Flush()
+        {
+            if (s_dirtyWidgets.Count > 0)
+            {
+                // Console.WriteLine("==================Layout Flush==================");
+            }
+
+            IsFlusing = true;
+            foreach (var widget in s_dirtyWidgets.ToList())
+            {
+                widget.PerformUpdateLayout();
+            }
+            s_dirtyWidgets.Clear();
+            IsFlusing = false;
+        }
+    }
+
     public Application()
     {
         if (Instance != null)
@@ -76,6 +111,9 @@ public class Application : IDisposable
         {
             pumpEvents();
 
+            // Flush any pending layout requests
+            LayoutQueue.Flush();
+
             foreach (var w in TopLevelWidgets.ToArray())
             {
                 if (w.ShouldClose())
@@ -86,10 +124,10 @@ public class Application : IDisposable
                 else
                 {
                     w.RenderTopLevel();
-                    // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
                 }
             }
 
+            // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
             // SDL.SDL_Delay(16); // ~60fps
         }
     }

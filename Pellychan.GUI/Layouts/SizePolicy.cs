@@ -58,4 +58,24 @@ public struct SizePolicy
     public static SizePolicy FixedPolicy => new(Policy.Fixed, Policy.Fixed);
     public static SizePolicy PreferredPolicy => new(Policy.Preferred, Policy.Preferred);
     public static SizePolicy ExpandingPolicy => new(Policy.Expanding, Policy.Expanding);
+
+    public static bool operator == (SizePolicy left, SizePolicy right)
+        => left.Equals(right);
+
+    public static bool operator != (SizePolicy left, SizePolicy right)
+        => !left.Equals(right);
+
+    public override readonly bool Equals(object? obj)
+    {
+        if (obj == null) return false;
+        if (typeof(SizePolicy) != obj.GetType()) return false;
+
+        var other = (SizePolicy)obj;
+        return other.Horizontal == Horizontal && other.Vertical == Vertical;
+    }
+
+    public override readonly int GetHashCode()
+    {
+        return HashCode.Combine(Horizontal, Vertical);
+    }
 }
