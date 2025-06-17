@@ -163,8 +163,23 @@ public class Widget : IDisposable
     // Layout
     public Layout? Layout { get; set; }
 
+    private FitPolicy m_fitPolicy = FitPolicy.FixedPolicy;
+    public FitPolicy Fitting
+    {
+        get => m_fitPolicy;
+        set
+        {
+            if (m_fitPolicy != value)
+            {
+                m_fitPolicy = value;
+                InvalidateLayout();
+                NotifyLayoutChange();
+            }
+        }
+    }
+
     private SizePolicy m_sizePolicy = SizePolicy.FixedPolicy;
-    public SizePolicy SizePolicy
+    public SizePolicy Sizing
     {
         get => m_sizePolicy;
         set
@@ -243,7 +258,8 @@ public class Widget : IDisposable
             m_nativeWindow?.Show();
         }
 
-        InvalidateLayout();
+        InvalidateLayout(true);
+        NotifyLayoutChange();
 
         /*
         void invalidateChildren(Widget parent)
@@ -365,16 +381,13 @@ public class Widget : IDisposable
 
     internal void Paint(SKCanvas canvas, SKRect clipRect)
     {
-        if (m_height <= 0 || m_height <= 0 || !Visible)
+        if (m_height <= 0 || m_height <= 0 || !m_visible)
             return;
 
         var globalPos = getGlobalPosition();
         
         var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
         var currentClip = SKRect.Intersect(clipRect, thisRect);
-
-        var a = this;
-
 
         if (currentClip.IsEmpty)
             return;
@@ -442,7 +455,7 @@ public class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
-                if (!child.Visible)
+                if (!child.m_visible)
                     continue;
 
                 child.Paint(canvas, clipRect);
@@ -450,10 +463,11 @@ public class Widget : IDisposable
         }
 
         // Debug shit
-        if (false)
+        if (Application.DebugDrawing)
         {
             canvas.Save();
             canvas.ResetMatrix();
+            canvas.ClipRect(new SKRect(0, 0, 2000, 2000));
 
             using var debugPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Red };
             canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), debugPaint);
@@ -504,7 +518,10 @@ public class Widget : IDisposable
 
     internal void PerformUpdateLayout()
     {
-        Layout?.PerformLayout(this);
+        Layout?.FitSizingPass(this);
+        Layout?.GrowSizingPass(this);
+        Layout?.PositionsPass(this);
+        // Layout?.PerformLayout(this);
 
         if (Layout != null)
         {
@@ -525,16 +542,25 @@ public class Widget : IDisposable
         OnLayoutUpdate?.Invoke();
     }
 
-    internal void InvalidateLayout()
+    internal void InvalidateLayout(bool doChildrenAnyway = false)
     {
         if (!Visible)
             return;
+        if (Layout == null)
+        {
+            if (doChildrenAnyway)
+            {
+                goto Children;
+            }
+            return;
+        }
 
         Application.LayoutQueue.Enqueue(this);
 
+    Children:
         foreach (var child in m_children)
         {
-            child.InvalidateLayout();
+            child.InvalidateLayout(doChildrenAnyway);
         }
     }
 

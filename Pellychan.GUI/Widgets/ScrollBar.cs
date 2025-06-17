@@ -85,7 +85,7 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
 
     public ScrollBar(Widget? parent = null) : base(parent)
     {
-        SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Minimum);
+        Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Minimum);
     }
 
     public void OnPaint(SKCanvas canvas)

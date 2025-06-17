@@ -21,7 +21,6 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     private readonly List<Label> m_labels = [];
     private readonly List<PostWidget> m_postWidgets = [];
 
-    private Widget m_centralWidget;
     private Widget m_mainContentWidget;
 
     private int m_clickCount = 0;
@@ -32,7 +31,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     {
         Instance = this;
 
-        createMenubar();
+        // createMenubar();
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
         m_chanClient.CurrentBoard = "vg";
@@ -43,7 +42,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 
-        test_count = m_thread.Posts.Count;
+        // test_count = m_thread.Posts.Count;
 
         createUI();
 
@@ -71,27 +70,19 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     private void createUI()
     {
-        m_centralWidget = new NullWidget(this)
+        Layout = new HBoxLayout
         {
-            // Y = Menubar!.Height,
-            SizePolicy = SizePolicy.ExpandingPolicy,
-            Layout = new HBoxLayout
-            {
-                Align = HBoxLayout.VerticalAlignment.Top,
-                Padding = new()
-            }
         };
 
         // Boards
         {
-            var boardsContainer = new Widget(m_centralWidget)
+            var boardsContainer = new Widget(this)
             {
                 Layout = new HBoxLayout
                 {
                     Spacing = 0,
                 },
-                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
-                // SizePolicy = SizePolicy.ExpandingPolicy,
+                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                 Width = 200
             };
 
@@ -100,7 +91,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 Layout = new HBoxLayout
                 {
                 },
-                SizePolicy = SizePolicy.ExpandingPolicy
+                Fitting = FitPolicy.ExpandingPolicy
             };
             Widget boardsListWidget;
 
@@ -108,7 +99,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             {
                 boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), boardsListContainer)
                 {
-                    SizePolicy = new SizePolicy(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
+                    Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                     Layout = new VBoxLayout
                     {
                         Spacing = 2,
@@ -141,7 +132,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 Y = 16,
                 Width = 16,
                 Height = 400,
-                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding)
+                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
             };
             scroll.OnValueChanged += delegate(int value)
             {
@@ -164,9 +155,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         // Separator (temp?)
         {
-            new Rect(new SKColor(42, 42, 45), m_centralWidget)
+            new Rect(new SKColor(42, 42, 45), this)
             {
-                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
+                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                 Width = 1
             };
         }
@@ -175,15 +166,13 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         
         // Main content
         {
-            m_mainContentWidget = new Widget(m_centralWidget)
+            m_mainContentWidget = new Widget(this)
             {
-                SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
+                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                 Layout = new VBoxLayout
                 {
                     Spacing = 1
                 },
-                Width = 100,
-                Height = 100
             };
 
             for (var i = 0; i < test_count; i++)
@@ -191,7 +180,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 var post = m_thread.Posts[i];
                 var widget = new PostWidget(post, m_mainContentWidget)
                 {
-                    SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed)
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
                 };
                 m_postWidgets.Add(widget);
 
@@ -204,23 +193,23 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 */
             }
 
-            var scroll = new ScrollBar(m_centralWidget)
+            var scroll = new ScrollBar(this)
             {
                 X = 400,
                 Y = 16,
                 Width = 16,
                 Height = 400,
-                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding)
+                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
             };
             scroll.OnValueChanged += delegate (int value)
             {
                 m_mainContentWidget.Y = -value;
             };
 
-            m_mainContentWidget.OnLayoutResize += m_centralWidget.OnLayoutResize += delegate ()
+            m_mainContentWidget.OnLayoutResize += this.OnLayoutResize += delegate ()
             {
-                scroll.Maximum = Math.Max(0, m_mainContentWidget.Height - m_centralWidget.Height);
-                scroll.PageStep = m_centralWidget.Height;
+                scroll.Maximum = Math.Max(0, m_mainContentWidget.Height - this.Height);
+                scroll.PageStep = this.Height;
 
                 scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
                 scroll.Enabled = scroll.Maximum > 0;
@@ -262,9 +251,11 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         var menubarHeight = Menubar != null ? Menubar.Height : 0;
 
+        /*
         m_centralWidget.Y = menubarHeight;
         m_centralWidget.Width = width;
         m_centralWidget.Height = height - menubarHeight;
+        */
     }
 
     public void OnMouseDown(int x, int y)

@@ -33,6 +33,8 @@ public class Application : IDisposable
     public static SKFont DefaultFont => Instance!.m_defaultFont;
     public static Style DefaultStyle => Instance!.m_defaultStyle;
 
+    internal static bool DebugDrawing = false;
+
     /// <summary>
     /// 
     /// </summary>
@@ -149,6 +151,14 @@ public class Application : IDisposable
     {
         while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
         {
+            if (e.type == SDL.SDL_EventType.SDL_KEYDOWN)
+            {
+                if (e.key.keysym.scancode == SDL.SDL_Scancode.SDL_SCANCODE_F2)
+                {
+                    Application.DebugDrawing = !Application.DebugDrawing;
+                }
+            }
+
             uint id = e.type switch
             {
                 SDL.SDL_EventType.SDL_MOUSEMOTION => e.motion.windowID,

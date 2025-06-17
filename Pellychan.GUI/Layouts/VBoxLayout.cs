@@ -30,19 +30,19 @@ public class VBoxLayout : Layout
         // First pass: calculate total fixed height
         foreach (var child in visibleChildren)
         {
-            switch (child.SizePolicy.Vertical)
+            switch (child.Fitting.Vertical)
             {
-                case SizePolicy.Policy.Fixed:
-                case SizePolicy.Policy.Minimum:
-                case SizePolicy.Policy.Preferred:
+                case FitPolicy.Policy.Fixed:
+                case FitPolicy.Policy.Minimum:
+                case FitPolicy.Policy.Preferred:
                     totalFixedHeight += child.Height;
                     break;
-                case SizePolicy.Policy.Maximum:
-                case SizePolicy.Policy.Ignored:
+                case FitPolicy.Policy.Maximum:
+                case FitPolicy.Policy.Ignored:
                     totalFixedHeight += child.MinimumHeight;
                     break;
-                case SizePolicy.Policy.Expanding:
-                case SizePolicy.Policy.MinimumExpanding:
+                case FitPolicy.Policy.Expanding:
+                case FitPolicy.Policy.MinimumExpanding:
                     totalFixedHeight += child.MinimumHeight;
                     expandCount++;
                     break;
@@ -59,32 +59,32 @@ public class VBoxLayout : Layout
         {
             var finalHeight = child.Height;
 
-            switch (child.SizePolicy.Vertical)
+            switch (child.Fitting.Vertical)
             {
-                case SizePolicy.Policy.Fixed:
+                case FitPolicy.Policy.Fixed:
                     finalHeight = child.Height;
                     break;
-                case SizePolicy.Policy.Minimum:
-                case SizePolicy.Policy.Maximum:
-                case SizePolicy.Policy.Ignored:
+                case FitPolicy.Policy.Minimum:
+                case FitPolicy.Policy.Maximum:
+                case FitPolicy.Policy.Ignored:
                     finalHeight = child.MinimumHeight;
                     break;
-                case SizePolicy.Policy.Preferred:
+                case FitPolicy.Policy.Preferred:
                     finalHeight = child.SizeHint.Height;
                     break;
-                case SizePolicy.Policy.Expanding:
-                case SizePolicy.Policy.MinimumExpanding:
+                case FitPolicy.Policy.Expanding:
+                case FitPolicy.Policy.MinimumExpanding:
                     finalHeight = child.MinimumHeight + (expandCount > 0 ? extraHeight / expandCount : 0);
                     break;
             }
 
             // Determine horizontal placement
             var finalWidth = child.Width;
-            var hPolicy = child.SizePolicy.Horizontal;
+            var hPolicy = child.Fitting.Horizontal;
 
-            if (hPolicy == SizePolicy.Policy.Expanding ||
-                hPolicy == SizePolicy.Policy.MinimumExpanding ||
-                hPolicy == SizePolicy.Policy.Ignored)
+            if (hPolicy == FitPolicy.Policy.Expanding ||
+                hPolicy == FitPolicy.Policy.MinimumExpanding ||
+                hPolicy == FitPolicy.Policy.Ignored)
             {
                 finalWidth = parent.Width - Padding.Horizontal;
             }
@@ -120,5 +120,20 @@ public class VBoxLayout : Layout
         width += Padding.Left + Padding.Right;
 
         return new(width, height);
+    }
+
+    public override void FitSizingPass(Widget parent)
+    {
+
+    }
+
+    public override void GrowSizingPass(Widget parent)
+    {
+
+    }
+
+    public override void PositionsPass(Widget parent)
+    {
+
     }
 }

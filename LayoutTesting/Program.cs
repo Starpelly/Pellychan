@@ -9,9 +9,9 @@ namespace LayoutTesting
         {
             using var app = new Application();
 
-            var mainWindow = new MinMaxSizing();
+            var mainWindow = new Fitting();
             mainWindow.SetWindowTitle("Layout Testing");
-            mainWindow.Resize(2000, 720);
+            mainWindow.Resize(1280, 720);
             mainWindow.Show();
 
             app.Run();

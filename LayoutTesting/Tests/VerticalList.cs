@@ -16,7 +16,7 @@ namespace LayoutTesting.Tests
                 Width = 400,
                 Height = 400,
 
-                SizePolicy = SizePolicy.FixedPolicy,
+                Fitting = FitPolicy.FixedPolicy,
                 Layout = new HBoxLayout
                 {
                     Padding = new(16),
@@ -26,7 +26,7 @@ namespace LayoutTesting.Tests
 
             var list = new Rect(SKColors.Black, container)
             {
-                SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Preferred),
+                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Preferred),
                 Layout = new VBoxLayout
                 {
                     Padding = new(8),
@@ -39,13 +39,13 @@ namespace LayoutTesting.Tests
                 new Rect(SKColors.White, list)
                 {
                     Height = 32,
-                    SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                 };
             }
 
             var scrollbar = new ScrollBar(container)
             {
-                SizePolicy = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Expanding),
+                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                 Width = 16,
             };
             scrollbar.Minimum = 0;
