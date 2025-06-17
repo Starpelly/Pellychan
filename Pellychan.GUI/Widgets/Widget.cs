@@ -472,7 +472,9 @@ public class Widget : IDisposable
         {
             canvas.Save();
             canvas.ResetMatrix();
-            canvas.ClipRect(new SKRect(0, 0, 2000, 2000));
+
+            // Skia unfortunately doesn't have an API for clearing the clip rect. SO if you have a monitor bigger than this, God help you.
+            canvas.ClipRect(new SKRect(0, 0, 40000, 40000));
 
             using var debugPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Red };
             canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), debugPaint);
@@ -523,9 +525,14 @@ public class Widget : IDisposable
 
     internal void PerformLayoutUpdate()
     {
-        Layout?.FitSizingPass(this);
-        Layout?.GrowSizingPass(this);
-        Layout?.PositionsPass(this);
+        if (Layout != null)
+        {
+            Layout.Start();
+            Layout.FitSizingPass(this);
+            Layout.GrowSizingPass(this);
+            Layout.PositionsPass(this);
+            Layout.End();
+        }
 
         OnLayoutUpdate?.Invoke();
     }
@@ -541,6 +548,11 @@ public class Widget : IDisposable
                 goto Children;
             }
             return;
+        }
+        else
+        {
+            if (Layout.PerformingPasses)
+                return;
         }
 
         Application.LayoutQueue.Enqueue(this);
@@ -565,20 +577,14 @@ public class Widget : IDisposable
                 p.InvalidateLayout();
                 // break;
             }
-            // Commented out because we only want to go
-            // one node upwards
+            // Commented out because we only want to go one node upwards
             // p = p.Parent;
         }
     }
 
     internal void CallResizeEvents()
     {
-        Console.WriteLine($"Calling resize events for type: {GetType().Name}");
-
-        if (GetType() == typeof(NullWidget))
-        {
-            var a = 0;
-        }
+        // Console.WriteLine($"Calling resize events for type: {GetType().Name}");
 
         (this as IResizeHandler)?.OnResize(m_width, m_height);
         OnLayoutResize?.Invoke();
@@ -606,7 +612,12 @@ public class Widget : IDisposable
 
     private void dispatchResize()
     {
-        if (!Application.LayoutQueue.IsFlusing)
+        var isFlusing = Application.LayoutQueue.IsFlusing;
+
+        if (Layout != null)
+            isFlusing = Layout.PerformingPasses;
+
+        if (!isFlusing)
         {
             if (Layout != null)
             {

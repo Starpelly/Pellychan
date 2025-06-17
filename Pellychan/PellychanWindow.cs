@@ -35,9 +35,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         // createMenubar();
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-        m_chanClient.CurrentBoard = "vg";
+        m_chanClient.CurrentBoard = "g";
 
-        m_thread = m_chanClient.GetThreadAsync("527536942").GetAwaiter().GetResult();
+        m_thread = m_chanClient.GetThreadAsync("105610395").GetAwaiter().GetResult();
 
         m_labelPaint.Color = SKColors.White;
 
@@ -101,6 +101,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), boardsListContainer)
                 {
                     Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Sizing = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Fit),
                     Layout = new VBoxLayout
                     {
                         Spacing = 2,
@@ -142,15 +143,11 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
             boardsListWidget.OnLayoutResize += boardsListContainer.OnLayoutResize += delegate()
             {
-                scroll.Maximum = Math.Max(0, boardsListWidget.Height - boardsContainer.Height);
-                scroll.PageStep = boardsContainer.Height;
+                scroll.Maximum = Math.Max(0, boardsListWidget.Height - boardsListContainer.Height);
+                scroll.PageStep = boardsListContainer.Height;
 
                 scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
                 scroll.Enabled = scroll.Maximum > 0;
-            };
-            boardsListWidget.OnLayoutUpdate += delegate()
-            {
-                boardsListWidget.Resize(boardsListWidget.Width, boardsListWidget.SizeHint.Height);
             };
         }
 
@@ -216,9 +213,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
                 scroll.Enabled = scroll.Maximum > 0;
 
-                // So the reason it looks as if the list scrolls back up to the top
-                // When the window is resized (or equivalent) is because
-                // The layout for m_mainContentWidget is setting the position of the list in the Layout?.PositionsPass()
+                // So the reason it looks as if the list scrolls back up to the top when the window is resized (or equivalent)-
+                // is because the layout for m_mainContentWidget is setting the position of the list in the Layout?.PositionsPass().
                 // Dunno what to do about that, maybe create a flag or something?
             };
         }

@@ -23,7 +23,7 @@ public class Label : Widget, IPaintHandler
 
     private SKPaint m_paint { get; set; } = new SKPaint
     {
-        Color = SKColors.White,
+        Color = Application.Palette.Get(ColorRole.Text),
         IsAntialias = true
     };
 
@@ -53,8 +53,6 @@ public class Label : Widget, IPaintHandler
 
     public void OnPaint(SKCanvas canvas)
     {
-        m_paint.Color = Application.Palette.Get(ColorRole.Text);
-
         float x = 0, y = m_font.Size;
         
         // canvas.DrawText(Text, new SKPoint(0, m_font.Size), m_font, m_paint);

@@ -1,5 +1,6 @@
 ﻿using Pellychan.API.Models;
 using Pellychan.GUI;
+using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 using SkiaSharp;
 using System.Net;
@@ -103,10 +104,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
 
     private readonly Thumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
-
-    private Label m_commentLabel;
-
     private NullWidget m_commentHolder;
+    private readonly Label m_commentLabel;
 
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
     {
@@ -120,14 +119,18 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
             Text = $"<span class=\"name\">{post.Name}</span>"
         };
 
-        m_commentHolder = new(this)
-        {
-            Y = m_nameLabel.Y + m_nameLabel.Height + 4
-        };
-
         var rawComment = post.Com == null ? string.Empty : post.Com;
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
+
+        m_commentHolder = new(this)
+        {
+            Y = m_nameLabel.Y + m_nameLabel.Height + 4,
+
+            Layout = new VBoxLayout
+            {
+            }
+        };
 
         m_previewBitmap = new(APIPost, this)
         {
@@ -138,9 +141,10 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
         m_commentLabel = new Label(Application.DefaultFont, m_commentHolder)
         {
             Text = decoded,
-        };
+            WordWrap = true,
 
-        // Height = m_previewBitmap.Height + (Padding.Bottom * 2) + 1;
+            Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed)
+        };
 
         SetTempShit(true);
     }
@@ -156,14 +160,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
     {
         using var paint = new SKPaint();
 
-        // BG
-        // paint.Color = Palette.Get(ColorRole.Window).Lighter(0.9f);
         paint.Color = Palette.Get(ColorRole.Base);
         canvas.DrawRect(new(0, 0, Width, Height), paint);
-
-        // Separator
-        // paint.Color = Palette.Get(ColorRole.HighlightedText);
-        // canvas.DrawLine(0, Rect.Bottom - 1, Rect.Right, Rect.Bottom - 1, paint);
     }
 
     public void SetTempShit(bool setHeight)

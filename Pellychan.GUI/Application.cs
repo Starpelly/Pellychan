@@ -47,8 +47,8 @@ public class Application : IDisposable
 
         public static void Enqueue(Widget widget)
         {
-            if (IsFlusing)
-                return;
+            // if (IsFlusing)
+            //    return;
 
             if (widget.Layout == null)
                 return;
@@ -60,24 +60,21 @@ public class Application : IDisposable
 
         public static void Flush()
         {
-            var started = s_dirtyWidgets.Count > 0;
-            if (started)
+            IsFlusing = true;
+            while (s_dirtyWidgets.Count > 0)
             {
                 Console.WriteLine("==================Layout Flush Start==================");
-            }
 
-            IsFlusing = true;
-            foreach (var widget in s_dirtyWidgets.ToList())
-            {
-                widget.PerformLayoutUpdate();
+                foreach (var widget in s_dirtyWidgets.ToList())
+                {
+                    widget.PerformLayoutUpdate();
+                    s_dirtyWidgets.Remove(widget);
+                }
+
+                Console.WriteLine("===================Layout Flush End===================");
             }
             s_dirtyWidgets.Clear();
             IsFlusing = false;
-
-            if (started)
-            {
-                Console.WriteLine("===================Layout Flush End===================");
-            }
         }
     }
 
