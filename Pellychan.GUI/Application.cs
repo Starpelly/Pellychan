@@ -3,29 +3,32 @@ using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
 using Pellychan.Resources;
-using SDL2;
+using SDL;
 using SkiaSharp;
 
 namespace Pellychan.GUI;
 
 internal static class WindowRegistry
 {
-    private static readonly Dictionary<uint, SkiaWindow> Windows = [];
+    private static readonly Dictionary<SDL.SDL_WindowID, SkiaWindow> Windows = [];
 
     public static void Register(SkiaWindow window)
     {
         Windows[window.WindowID] = window;
     }
 
-    public static SkiaWindow? Get(uint id) =>
+    public static SkiaWindow? Get(SDL.SDL_WindowID id) =>
         Windows.GetValueOrDefault(id);
 }
 
 public class Application : IDisposable
 {
     internal static Application? Instance { get; private set; }
+    
     internal readonly List<Widget> TopLevelWidgets = [];
 
+    internal ToolTip ToolTip;
+    
     private readonly SKFont m_defaultFont;
     private readonly Style m_defaultStyle;
     private ColorPalette m_palette;
@@ -85,8 +88,8 @@ public class Application : IDisposable
             throw new InvalidOperationException("Application already exists.");
         }
         Instance = this;
-        
-        SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+
+        SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO);
 
         using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
         // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
@@ -133,8 +136,10 @@ public class Application : IDisposable
             }
 
             // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
-            // SDL.SDL_Delay(16); // ~60fps
+            // SDL3.SDL_Delay(16); // ~60fps
         }
+        
+        // ToolTip.Show();
     }
 
     public void Dispose()
@@ -146,33 +151,44 @@ public class Application : IDisposable
         
         MouseCursor.Cleanup();
 
-        SDL.SDL_Quit();
+        SDL3.SDL_Quit();
         GC.SuppressFinalize(this);
     }
 
     private static void pumpEvents()
     {
-        while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
+        unsafe
         {
-            if (e.type == SDL.SDL_EventType.SDL_KEYDOWN)
+            SDL_Event e;
+            while (SDL3.SDL_PollEvent(&e) != false)
             {
-                if (e.key.keysym.scancode == SDL.SDL_Scancode.SDL_SCANCODE_F2)
+                /*
+
+                */
+
+                if (e.Type == SDL.SDL_EventType.SDL_EVENT_KEY_DOWN)
                 {
-                    Application.DebugDrawing = !Application.DebugDrawing;
+                    if (e.key.scancode == SDL.SDL_Scancode.SDL_SCANCODE_F2)
+                    {
+                        Application.DebugDrawing = !Application.DebugDrawing;
+                    }
                 }
-            }
 
-            uint id = e.type switch
-            {
-                SDL.SDL_EventType.SDL_MOUSEMOTION => e.motion.windowID,
-                SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN or SDL.SDL_EventType.SDL_MOUSEBUTTONUP => e.button.windowID,
-                SDL.SDL_EventType.SDL_WINDOWEVENT => e.window.windowID,
-                _ => 0
-            };
+                SDL_WindowID id = e.Type switch
+                {
+                    SDL_EventType.SDL_EVENT_MOUSE_MOTION => e.motion.windowID,
+                    SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN or SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP => e.button.windowID,
 
-            if (WindowRegistry.Get(id) is { } win)
-            {
-                win.HandleEvent(e);
+
+                    SDL_EventType.SDL_EVENT_WINDOW_RESIZED => e.window.windowID,
+                    SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED => e.window.windowID,
+                    _ => 0
+                };
+
+                if (WindowRegistry.Get(id) is { } win)
+                {
+                    win.HandleEvent(e);
+                }
             }
         }
     }

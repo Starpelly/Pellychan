@@ -130,6 +130,9 @@ public class Label : Widget, IPaintHandler
                             // color = SKColor.Parse("#5F89AC");
                             // bold = true;
                             break;
+                        case "date":
+                            color = color.WithAlpha(50);
+                            break;
                     }
 
                     m_textFragments.Add(new TextFragment { Text = System.Net.WebUtility.HtmlDecode(node.InnerText), TextColor = color, IsBold = bold });

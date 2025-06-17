@@ -1,27 +1,29 @@
 ﻿using Pellychan.GUI.Input;
 using Pellychan.GUI.Widgets;
-using SDL2;
+using SDL;
 using SkiaSharp;
 
 namespace Pellychan.GUI.Platform.Skia;
 
-internal class SkiaWindow
+internal unsafe class SkiaWindow
 {
-    public uint WindowID { get; private set; }
+    public SDL_WindowID WindowID { get; private set; }
 
     public Widget ParentWidget { get; private set; } 
 
-    public readonly IntPtr SdlWindow;
-    public readonly IntPtr SdlRenderer;
-    public IntPtr SdlTexture;
+    public readonly SDL_Window* SdlWindow;
+    public SDL_Renderer* SdlRenderer;
+    public SDL_Texture* SdlTexture;
 
     public SKImageInfo ImageInfo { get; private set; }
-    public SKSurface? Surface { get; private set; }
 
     public bool ShouldClose = false;
 
     private IntPtr m_pixels;
     private int m_pitch;
+
+    public IntPtr Pixels => m_pixels;
+    public int Pitch => m_pitch;
 
     private MouseCursor.CursorType? m_currentCursor = null;
     private MouseCursor.CursorType? m_lastCursorShape = null;
@@ -44,17 +46,24 @@ internal class SkiaWindow
 
     #endregion
 
-    public SkiaWindow(Widget parent, int width, int height, string title)
+    public SkiaWindow(Widget parent, int width, int height, string title, bool tooltip, SkiaWindow? parentWindow = null)
     {
         ParentWidget = parent;
 
-        SdlWindow = SDL.SDL_CreateWindow(title,
-            SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED,
-            width, height, SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN | SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+        var flags = SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN;
+        if (tooltip)
+        {
+            flags |= SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS | SDL.SDL_WindowFlags.SDL_WINDOW_TOOLTIP;
+        }
+        else
+        {
+            flags |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+        }
+        
+        SdlWindow = SDL3.SDL_CreateWindow(title, width, height, flags);
+        WindowID = SDL3.SDL_GetWindowID(SdlWindow);
 
-        WindowID = SDL.SDL_GetWindowID(SdlWindow);
-
-        SdlRenderer = SDL.SDL_CreateRenderer(SdlWindow, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+        SdlRenderer = SDL3.SDL_CreateRenderer(SdlWindow, (byte*)null);
 
         m_windowCreated = true;
     }
@@ -63,51 +72,49 @@ internal class SkiaWindow
     {
         ImageInfo = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
-        if (SdlTexture != IntPtr.Zero)
+        if (SdlTexture != null)
         {
-            SDL.SDL_DestroyTexture(SdlTexture);
+            SDL3.SDL_DestroyTexture(SdlTexture);
         }
 
         // Create SDL texture as the drawing target
-        SdlTexture = SDL.SDL_CreateTexture(SdlRenderer,
-            SDL.SDL_PIXELFORMAT_ARGB8888,
-            (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
+        SdlTexture = SDL3.SDL_CreateTexture(SdlRenderer,
+            SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888,
+            SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
             w, h);
-
-        Lock();
-
-        Surface?.Dispose();
-        Surface = SKSurface.Create(ImageInfo, m_pixels, m_pitch, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-
-        Unlock();
     }
 
     public void Dispose()
     {
-        Surface?.Dispose();
+        // SkiaSurface?.Dispose();
 
-        SDL.SDL_DestroyTexture(SdlTexture);
-        SDL.SDL_DestroyRenderer(SdlRenderer);
-        SDL.SDL_DestroyWindow(SdlWindow);
+        SDL3.SDL_DestroyTexture(SdlTexture);
+        SDL3.SDL_DestroyRenderer(SdlRenderer);
+        SDL3.SDL_DestroyWindow(SdlWindow);
 
         m_windowCreated = false;
     }
 
     public void Lock()
     {
-        SDL.SDL_LockTexture(SdlTexture, IntPtr.Zero, out m_pixels, out m_pitch);
+        fixed (nint* pixelsPtr = &m_pixels)
+        fixed (int* pitchPtr = &m_pitch)
+        {
+            SDL3.SDL_LockTexture(SdlTexture, null, pixelsPtr, pitchPtr);
+        }
     }
 
     public void Unlock()
     {
-        SDL.SDL_UnlockTexture(SdlTexture);
+        SDL3.SDL_UnlockTexture(SdlTexture);
     }
 
     public void Present()
     {
-        SDL.SDL_RenderClear(SdlRenderer);
-        SDL.SDL_RenderCopy(SdlRenderer, SdlTexture, IntPtr.Zero, IntPtr.Zero);
-        SDL.SDL_RenderPresent(SdlRenderer);
+        SDL3.SDL_RenderClear(SdlRenderer);
+        SDL3.SDL_RenderTexture(SdlRenderer, SdlTexture, null, null);
+
+        SDL3.SDL_RenderPresent(SdlRenderer);
     }
 
     public void SetTitle(string title)
@@ -116,51 +123,38 @@ internal class SkiaWindow
         
         if (m_windowCreated)
         {
-            SDL.SDL_SetWindowTitle(SdlWindow, title);
+            SDL3.SDL_SetWindowTitle(SdlWindow, title);
         }
     }
 
     public void HandleEvent(SDL.SDL_Event e)
     {
-        switch (e.type)
+        switch (e.Type)
         {
-            case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
-                OnMouseEvent?.Invoke(e.button.x, e.button.y, MouseEventType.Down);
+            case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+                OnMouseEvent?.Invoke((int)e.button.x, (int)e.button.y, MouseEventType.Down);
                 break;
 
-            case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
+            case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
                 // dispatchMouseEvent(e.button.x, e.button.y, MouseEventType.Up);
-                OnMouseEvent?.Invoke(e.button.x, e.button.y, MouseEventType.Up);
+                OnMouseEvent?.Invoke((int)e.button.x, (int)e.button.y, MouseEventType.Up);
                 break;
 
-            case SDL.SDL_EventType.SDL_MOUSEMOTION:
-                OnMouseEvent?.Invoke(e.motion.x, e.motion.y, MouseEventType.Move);
+            case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
+                OnMouseEvent?.Invoke((int)e.motion.x, (int)e.motion.y, MouseEventType.Move);
                 break;
 
-            case SDL.SDL_EventType.SDL_WINDOWEVENT:
-
-                switch (e.window.windowEvent)
+            case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
                 {
-                    case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-                        {
-                            OnWindowResize?.Invoke(e.window.data1, e.window.data2);
-                        }
-                        break;
-
-                    case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED:
-                        {
-                        }
-                        break;
-
-
-                    case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE:
-                        {
-                            OnWindowClose?.Invoke();
-                            ShouldClose = true;
-                        }
-                        break;
+                    OnWindowResize?.Invoke(e.window.data1, e.window.data2);
                 }
+                break;
 
+            case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                {
+                    OnWindowClose?.Invoke();
+                    ShouldClose = true;
+                }
                 break;
         }
     }
@@ -170,7 +164,7 @@ internal class SkiaWindow
     /// </summary>
     public void Show()
     {
-        SDL.SDL_ShowWindow(SdlWindow);
+        SDL3.SDL_ShowWindow(SdlWindow);
     }
 
     /// <summary>
@@ -178,7 +172,7 @@ internal class SkiaWindow
     /// </summary>
     public void Resize(int width, int height)
     {
-        SDL.SDL_SetWindowSize(SdlWindow, width, height);
+        SDL3.SDL_SetWindowSize(SdlWindow, width, height);
     }
 
     /// <summary>
@@ -187,28 +181,28 @@ internal class SkiaWindow
     public void Center()
     {
         // Get the window's current display index
-        int displayIndex = SDL.SDL_GetWindowDisplayIndex(SdlWindow);
+        var displayIndex = SDL3.SDL_GetDisplayForWindow(SdlWindow);
         if (displayIndex < 0)
         {
-            throw new InvalidOperationException($"Failed to get window display index: {SDL.SDL_GetError()}");
+            throw new InvalidOperationException($"Failed to get window display index: {SDL3.SDL_GetError()}");
         }
 
         // Get the bounds of the display
         SDL.SDL_Rect displayBounds;
-        if (SDL.SDL_GetDisplayBounds(displayIndex, out displayBounds) != 0)
+        if (SDL3.SDL_GetDisplayBounds(displayIndex, &displayBounds) != true)
         {
-            throw new InvalidOperationException($"Failed to get display bounds: {SDL.SDL_GetError()}");
+            throw new InvalidOperationException($"Failed to get display bounds: {SDL3.SDL_GetError()}");
         }
 
         // Get the window size
         int windowWidth, windowHeight;
-        SDL.SDL_GetWindowSize(SdlWindow, out windowWidth, out windowHeight);
+        SDL3.SDL_GetWindowSize(SdlWindow, &windowWidth, &windowHeight);
 
         // Calculate the centered position
         int centeredX = displayBounds.x + (displayBounds.w - windowWidth) / 2;
         int centeredY = displayBounds.y + (displayBounds.h - windowHeight) / 2;
 
         // Set the window position
-        SDL.SDL_SetWindowPosition(SdlWindow, centeredX, centeredY);
+        SDL3.SDL_SetWindowPosition(SdlWindow, centeredX, centeredY);
     }
 }

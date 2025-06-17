@@ -100,7 +100,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             {
                 boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), boardsListContainer)
                 {
-                    Fitting = new FitPolicy(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                     Sizing = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Fit),
                     Layout = new VBoxLayout
                     {

@@ -1,10 +1,10 @@
-﻿using SDL2;
+﻿using SDL;
 
 namespace Pellychan.GUI;
 
-public static class MouseCursor
+public static unsafe class MouseCursor
 {
-    private static IntPtr _currentCursor = IntPtr.Zero;
+    private static SDL_Cursor* _currentCursor;
 
     public enum CursorType
     {
@@ -25,32 +25,32 @@ public static class MouseCursor
     public static void Set(CursorType type)
     {
         // Free the old cursor if any
-        if (_currentCursor != IntPtr.Zero)
+        if (_currentCursor != null)
         {
-            SDL.SDL_FreeCursor(_currentCursor);
-            _currentCursor = IntPtr.Zero;
+            SDL3.SDL_DestroyCursor(_currentCursor);
+            _currentCursor = null;
         }
 
         // Create the new system cursor
         SDL.SDL_SystemCursor systemCursor = type switch
         {
-            CursorType.Arrow => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_ARROW,
-            CursorType.IBeam => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_IBEAM,
+            CursorType.Arrow => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_DEFAULT,
+            CursorType.IBeam => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_TEXT,
             CursorType.Wait => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_WAIT,
             CursorType.Crosshair => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_CROSSHAIR,
-            CursorType.WaitArrow => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_WAITARROW,
-            CursorType.SizeNWSE => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_SIZENWSE,
-            CursorType.SizeNESW => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_SIZENESW,
-            CursorType.SizeWE => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_SIZEWE,
-            CursorType.SizeNS => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_SIZENS,
-            CursorType.SizeAll => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_SIZEALL,
-            CursorType.No => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_NO,
-            CursorType.Hand => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_HAND,
-            _ => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_ARROW
+            CursorType.WaitArrow => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_PROGRESS,
+            CursorType.SizeNWSE => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_NWSE_RESIZE,
+            CursorType.SizeNESW => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_NESW_RESIZE,
+            CursorType.SizeWE => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_EW_RESIZE,
+            CursorType.SizeNS => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_NS_RESIZE,
+            CursorType.SizeAll => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_MOVE,
+            CursorType.No => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_NOT_ALLOWED,
+            CursorType.Hand => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_POINTER,
+            _ => SDL.SDL_SystemCursor.SDL_SYSTEM_CURSOR_DEFAULT
         };
 
-        _currentCursor = SDL.SDL_CreateSystemCursor(systemCursor);
-        SDL.SDL_SetCursor(_currentCursor);
+        _currentCursor = SDL3.SDL_CreateSystemCursor(systemCursor);
+        SDL3.SDL_SetCursor(_currentCursor);
     }
 
     public static void Reset()
@@ -60,10 +60,10 @@ public static class MouseCursor
 
     public static void Cleanup()
     {
-        if (_currentCursor != IntPtr.Zero)
+        if (_currentCursor != null)
         {
-            SDL.SDL_FreeCursor(_currentCursor);
-            _currentCursor = IntPtr.Zero;
+            SDL3.SDL_DestroyCursor(_currentCursor);
+            _currentCursor = null;
         }
     }
 }

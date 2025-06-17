@@ -9,7 +9,7 @@ namespace Pellychan.Widgets;
 
 public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHandler, IMouseLeaveHandler
 {
-    public readonly Post APIPost;
+    private readonly Post m_ApiPost;
 
     private SKBitmap? m_thumbnailBitmap;
     private SKBitmap? m_fullBitmap;
@@ -17,9 +17,9 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
     private bool m_usingThumbnail = true;
     private bool m_loadedFull = false;
 
-    public Thumbnail(API.Models.Post post, Widget? parent = null) : base(parent)
+    public Thumbnail(Post post, Widget? parent = null) : base(parent)
     {
-        APIPost = post;
+        m_ApiPost = post;
 
         updateImage(m_usingThumbnail);
     }
@@ -50,7 +50,11 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
     {
         base.OnPaint(canvas);
 
-        using var paint = new SKPaint() { Color = Palette.Get(ColorRole.Base), IsStroke = true, StrokeWidth = 1 };
+        return;
+        using var paint = new SKPaint();
+        paint.Color = Palette.Get(ColorRole.Base);
+        paint.IsStroke = true;
+        paint.StrokeWidth = 1;
         canvas.DrawRect(new SKRect(0, 0, Width - 1, Height - 1), paint);
     }
 
@@ -81,7 +85,7 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
 
     private void loadFull()
     {
-        PellychanWindow.ChanClient.LoadAttachment(APIPost, (thumbnail) =>
+        PellychanWindow.ChanClient.LoadAttachment(m_ApiPost, (thumbnail) =>
         {
             if (thumbnail != null)
             {
@@ -100,16 +104,17 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
 {
     private static readonly Padding Padding = new(8);
 
-    public API.Models.Post APIPost { get; set; }
+    private readonly Post m_apiPost;
 
     private readonly Thumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
-    private NullWidget m_commentHolder;
+    private readonly Label m_dateLabel;
+    private readonly NullWidget m_commentHolder;
     private readonly Label m_commentLabel;
 
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
     {
-        APIPost = post;
+        m_apiPost = post;
 
         // UI Layout
         m_nameLabel = new Label(Application.DefaultFont, this)
@@ -117,6 +122,13 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
             X = Padding.Left,
             Y = Padding.Top,
             Text = $"<span class=\"name\">{post.Name}</span>"
+        };
+
+        m_dateLabel = new Label(Application.DefaultFont, this)
+        {
+            X = Padding.Left,
+            Y = Padding.Top,
+            Text = $"<span class=\"date\">{post.Now}</span>",
         };
 
         var rawComment = post.Com == null ? string.Empty : post.Com;
@@ -132,7 +144,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
             }
         };
 
-        m_previewBitmap = new(APIPost, this)
+        m_previewBitmap = new(m_apiPost, this)
         {
             X = Padding.Left,
             Y = m_commentHolder.Y,
@@ -168,22 +180,18 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
     {
         if (setHeight)
         {
-            var newHeight = Height;
-            if (m_previewBitmap != null)
-            {
-                newHeight = m_previewBitmap.Height + (m_previewBitmap.Y) + Padding.Bottom;
-                newHeight = Math.Max(100, newHeight);
-            }
-            else
-            {
-                newHeight = 100;
-            }
+            int newHeight;
+            newHeight = m_previewBitmap.Height + (m_previewBitmap.Y) + Padding.Bottom;
+            newHeight = Math.Max(100, newHeight);
             Height = newHeight;
         }
 
         m_commentHolder.X = Padding.Left + (m_previewBitmap.Image != null ? (m_previewBitmap.Width + 8) : 0);
         m_commentHolder.Width = Width - m_commentHolder.X - Padding.Right;
         m_commentHolder.Height = Height - m_commentHolder.Y - Padding.Bottom;
+
+        // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
+        m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
     }
 
     public void OnResize(int width, int height)

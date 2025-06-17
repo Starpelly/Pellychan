@@ -496,22 +496,22 @@ public class Widget : IDisposable
         // Lock texture to get pixel buffer
         m_nativeWindow!.Lock();
 
-        var surface = m_nativeWindow!.Surface!;
+        using var surface = SKSurface.Create(m_nativeWindow.ImageInfo, m_nativeWindow.Pixels, m_nativeWindow.Pitch, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
+
+        // var surface = m_nativeWindow!.SkiaSurface!;
         var canvas = surface.Canvas;
 
-        {
-            canvas.Clear(SKColors.White);
+        canvas.Clear(SKColors.White);
 
-            //var rootStack = new Stack<SKRect>();
-            // rootStack.Push(new SKRect(0, 0, m_width, m_height));
-            var rootClip = new SKRect(0, 0, m_width, m_height);
+        //var rootStack = new Stack<SKRect>();
+        // rootStack.Push(new SKRect(0, 0, m_width, m_height));
+        var rootClip = new SKRect(0, 0, m_width, m_height);
 
-            Paint(canvas, rootClip);
-
-            canvas.Flush();
-        }
+        Paint(canvas, rootClip);
 
         canvas.Flush();
+
+        // canvas.Flush();
 
         m_nativeWindow!.Unlock();
 
@@ -631,13 +631,15 @@ public class Widget : IDisposable
         }
     }
 
+    public Widget testThing;
+
     private void initializeIfTopLevel()
     {
         if (!IsTopLevel) return;
 
         Console.WriteLine($"Initialized top level widget of type: {GetType().Name}");
 
-        m_nativeWindow = new(this, m_height, m_height, GetType().Name);
+        m_nativeWindow = new(this, m_height, m_height, GetType().Name, GetType() == typeof(ToolTip), testThing?.m_nativeWindow);
         WindowRegistry.Register(m_nativeWindow);
 
         m_nativeWindow.OnWindowResize += onNativeWindowResizeEvent;
@@ -814,8 +816,8 @@ public class Widget : IDisposable
 
     private void onNativeWindowResizeEvent(int w, int h)
     {
-        m_nativeWindow!.CreateFrameBuffer(w, h);
         Resize(w, h);
+        m_nativeWindow!.CreateFrameBuffer(w, h);
 
         Invalidate();
     }
