@@ -170,15 +170,17 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
     {
         if (setHeight)
         {
+            var newHeight = Height;
             if (m_previewBitmap != null)
             {
-                Height = m_previewBitmap.Height + (m_previewBitmap.Y) + Padding.Bottom;
-                Height = Math.Max(100, Height);
+                newHeight = m_previewBitmap.Height + (m_previewBitmap.Y) + Padding.Bottom;
+                newHeight = Math.Max(100, newHeight);
             }
             else
             {
-                Height = 100;
+                newHeight = 100;
             }
+            Height = newHeight;
         }
 
         m_commentHolder.X = Padding.Left + (m_previewBitmap.Image != null ? (m_previewBitmap.Width + 8) : 0);

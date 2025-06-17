@@ -570,15 +570,30 @@ public class Widget : IDisposable
     internal void NotifyLayoutChange()
     {
         var p = Parent;
-        while (p != null)
+        if (p != null)
         {
             if (p.Layout != null)
             {
                 p.InvalidateLayout();
-                break;
+                // break;
             }
-            p = p.Parent;
+            // Commented out because we only want to go
+            // one node upwards
+            // p = p.Parent;
         }
+    }
+
+    /// <summary>
+    /// Actually resizes the widget, SHOULD only be called by the <see cref="Application.LayoutQueue"/>.
+    /// </summary>
+    internal void CatchResizeEvent()
+    {
+        Console.WriteLine($"Caught resize of type: {GetType().Name}");
+
+        OnLayoutResize?.Invoke();
+        m_nativeWindow?.Resize(m_width, m_height);
+
+        (this as IResizeHandler)?.OnResize(m_width, m_height);
     }
 
     #endregion
@@ -603,16 +618,14 @@ public class Widget : IDisposable
 
     private void dispatchResize()
     {
-        if (Layout != null)
+        if (!Application.LayoutQueue.IsFlusing)
         {
-            InvalidateLayout();
+            if (Layout != null)
+            {
+                InvalidateLayout();
+            }
+            NotifyLayoutChange();
         }
-        NotifyLayoutChange();
-        
-        m_nativeWindow?.Resize(m_width, m_height);
-        
-        (this as IResizeHandler)?.OnResize(m_width, m_height);
-        OnLayoutResize?.Invoke();
     }
 
     private void initializeIfTopLevel()
@@ -624,14 +637,8 @@ public class Widget : IDisposable
         m_nativeWindow = new(this, m_height, m_height, GetType().Name);
         WindowRegistry.Register(m_nativeWindow);
 
-        m_nativeWindow.OnWindowResize += delegate (int w, int h)
-        {
-            m_nativeWindow!.CreateFrameBuffer(w, h);
-            Resize(w, h);
-
-            Invalidate();
-        };
-        m_nativeWindow.OnMouseEvent += dispatchMouseEvent;
+        m_nativeWindow.OnWindowResize += onNativeWindowResizeEvent;
+        m_nativeWindow.OnMouseEvent += onNativeWindowMouseEvent;
         // m_nativeWindow.OnMouseMoved += dispatchMouseMove;
     }
 
@@ -725,7 +732,7 @@ public class Widget : IDisposable
         }
     }
 
-    private void dispatchMouseEvent(int mouseX, int mouseY, MouseEventType type)
+    private void onNativeWindowMouseEvent(int mouseX, int mouseY, MouseEventType type)
     {
         var hovered = findHoveredWidget(mouseX, mouseY);
 
@@ -800,6 +807,14 @@ public class Widget : IDisposable
                 }
             }
         }
+    }
+
+    private void onNativeWindowResizeEvent(int w, int h)
+    {
+        m_nativeWindow!.CreateFrameBuffer(w, h);
+        Resize(w, h);
+
+        Invalidate();
     }
 
     #endregion

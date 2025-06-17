@@ -42,7 +42,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 
-        // test_count = m_thread.Posts.Count;
+        test_count = m_thread.Posts.Count;
 
         createUI();
 
@@ -166,12 +166,13 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         
         // Main content
         {
-            m_mainContentWidget = new Widget(this)
+            m_mainContentWidget = new NullWidget(this)
             {
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                Sizing = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Fit),
                 Layout = new VBoxLayout
                 {
-                    Spacing = 1
+                    Spacing = 1,
                 },
             };
 
@@ -213,10 +214,6 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
                 scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
                 scroll.Enabled = scroll.Maximum > 0;
-            };
-            m_mainContentWidget.OnLayoutUpdate += delegate ()
-            {
-                m_mainContentWidget.Resize(m_mainContentWidget.Width, m_mainContentWidget.SizeHint.Height);
             };
         }
     }

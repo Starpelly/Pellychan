@@ -1,4 +1,5 @@
-﻿using Pellychan.GUI.Widgets;
+﻿using ExCSS;
+using Pellychan.GUI.Widgets;
 using SkiaSharp;
 using System.Drawing;
 
@@ -6,8 +7,6 @@ namespace Pellychan.GUI.Layouts;
 
 public class VBoxLayout : Layout
 {
-    public int Spacing { get; set; } = 0;
-
     public enum HorizontalAlignment
     {
         Left,
@@ -16,92 +15,6 @@ public class VBoxLayout : Layout
     }
 
     public HorizontalAlignment Align { get; set; } = HorizontalAlignment.Left;
-
-    public override void PerformLayout(Widget parent)
-    {
-        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
-
-        if (visibleChildren.Count == 0)
-            return;
-
-        var totalFixedHeight = 0;
-        var expandCount = 0;
-
-        // First pass: calculate total fixed height
-        foreach (var child in visibleChildren)
-        {
-            switch (child.Fitting.Vertical)
-            {
-                case FitPolicy.Policy.Fixed:
-                case FitPolicy.Policy.Minimum:
-                case FitPolicy.Policy.Preferred:
-                    totalFixedHeight += child.Height;
-                    break;
-                case FitPolicy.Policy.Maximum:
-                case FitPolicy.Policy.Ignored:
-                    totalFixedHeight += child.MinimumHeight;
-                    break;
-                case FitPolicy.Policy.Expanding:
-                case FitPolicy.Policy.MinimumExpanding:
-                    totalFixedHeight += child.MinimumHeight;
-                    expandCount++;
-                    break;
-            }
-        }
-
-        totalFixedHeight += Spacing * (visibleChildren.Count - 1);
-
-        var extraHeight = Math.Max(0, parent.Height - totalFixedHeight - Padding.Vertical);
-        var y = Padding.Top;
-
-        // Second pass: layout
-        foreach (var child in visibleChildren)
-        {
-            var finalHeight = child.Height;
-
-            switch (child.Fitting.Vertical)
-            {
-                case FitPolicy.Policy.Fixed:
-                    finalHeight = child.Height;
-                    break;
-                case FitPolicy.Policy.Minimum:
-                case FitPolicy.Policy.Maximum:
-                case FitPolicy.Policy.Ignored:
-                    finalHeight = child.MinimumHeight;
-                    break;
-                case FitPolicy.Policy.Preferred:
-                    finalHeight = child.SizeHint.Height;
-                    break;
-                case FitPolicy.Policy.Expanding:
-                case FitPolicy.Policy.MinimumExpanding:
-                    finalHeight = child.MinimumHeight + (expandCount > 0 ? extraHeight / expandCount : 0);
-                    break;
-            }
-
-            // Determine horizontal placement
-            var finalWidth = child.Width;
-            var hPolicy = child.Fitting.Horizontal;
-
-            if (hPolicy == FitPolicy.Policy.Expanding ||
-                hPolicy == FitPolicy.Policy.MinimumExpanding ||
-                hPolicy == FitPolicy.Policy.Ignored)
-            {
-                finalWidth = parent.Width - Padding.Horizontal;
-            }
-
-            var x = Padding.Left + (Align switch
-            {
-                HorizontalAlignment.Center => (parent.Width - Padding.Horizontal - finalWidth) / 2,
-                HorizontalAlignment.Right => (parent.Width - Padding.Right - finalWidth),
-                _ => 0
-            });
-
-            child.SetPosition(x, y);
-            child.Resize(finalWidth, finalHeight);
-
-            y += finalHeight + Spacing;
-        }
-    }
 
     public override SKSizeI SizeHint(Widget parent)
     {
@@ -122,18 +35,234 @@ public class VBoxLayout : Layout
         return new(width, height);
     }
 
-    public override void FitSizingPass(Widget parent)
+    public override void FitSizingPass(Widget widget)
     {
+        bool fitHorizontal = widget.Sizing.Horizontal == SizePolicy.Policy.Fit;
+        bool fitVertical = widget.Sizing.Vertical == SizePolicy.Policy.Fit;
 
+        if (!fitHorizontal && !fitVertical)
+            return;
+
+        var visibleChildren = widget.Children.Where(c => c.Visible).Reverse().ToList();
+        if (visibleChildren.Count == 0)
+            return;
+
+        var lastParentSize = new SKSizeI(widget.Width, widget.Height);
+
+        if (fitHorizontal)
+        {
+            widget.Width = 0;
+        }
+        if (fitVertical)
+        {
+            widget.Height = 0;
+        }
+
+        var childGap = (widget.Children.Count - 1) * Spacing;
+
+        foreach (var child in visibleChildren)
+        {
+            if (fitVertical)
+                widget.Height += child.Height;
+
+            if (widget.Sizing.Horizontal == SizePolicy.Policy.Fit)
+                widget.Width = Math.Max(child.Width, widget.Width);
+        }
+
+        if (fitHorizontal)
+        {
+            widget.Width += Padding.Left + Padding.Right;
+        }
+        if (fitVertical)
+        {
+            widget.Height += childGap;
+            widget.Height += Padding.Top + Padding.Bottom;
+        }
+
+        if (lastParentSize != new SKSizeI(widget.Width, widget.Height))
+            widget.CatchResizeEvent();
     }
 
     public override void GrowSizingPass(Widget parent)
     {
+        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
+        if (visibleChildren.Count == 0)
+            return;
 
+        // Collect sizes for actually sending resize events
+        var lastChildrenSizes = visibleChildren.Select(c => new SKSizeI(c.Width, c.Height)).ToList();
+
+        float remainingWidth = parent.Width;
+        float remainingHeight = parent.Height;
+
+        remainingWidth -= Padding.Left + Padding.Right;
+        remainingHeight -= Padding.Top + Padding.Bottom;
+
+        foreach (var child in visibleChildren)
+        {
+            // @Investigate
+            // This is sus...
+            if (child.Fitting.Vertical != FitPolicy.Policy.Fixed)
+                child.Height = 0;
+
+            remainingHeight -= child.Height;
+        }
+        remainingHeight -= (visibleChildren.Count - 1) * Spacing;
+
+        var growables = visibleChildren.Where(c => c.Fitting.Vertical != FitPolicy.Policy.Fixed).ToList();
+        var shrinkables = growables.ToList();
+
+        while (remainingHeight > 0 && growables.Count > 0) // Grow elements
+        {
+            float smallest = growables[0].Height;
+            float secondSmallest = float.PositiveInfinity;
+            float heightToAdd = remainingHeight;
+            foreach (var child in growables)
+            {
+                if (child.Height < smallest)
+                {
+                    secondSmallest = smallest;
+                    smallest = child.Height;
+                }
+                if (child.Height > smallest)
+                {
+                    secondSmallest = Math.Min(secondSmallest, child.Height);
+                    heightToAdd = (int)(secondSmallest - smallest);
+                }
+            }
+
+            heightToAdd = Math.Min(heightToAdd, (float)remainingHeight / growables.Count);
+
+            // This sucks
+            foreach (var child in shrinkables)
+            {
+                float previousHeight = child.Height;
+                float childHeightF = child.Height;
+
+                if (child.Height == smallest)
+                {
+                    child.Height += (int)heightToAdd;
+                    childHeightF += heightToAdd;
+
+                    if (childHeightF >= child.MaximumHeight)
+                    {
+                        child.Height = child.MaximumHeight;
+                        childHeightF = child.MaximumHeight;
+                        growables.Remove(child);
+                    }
+                    remainingHeight -= (childHeightF - previousHeight);
+                }
+            }
+
+            remainingHeight = MathF.Round(remainingHeight);
+        }
+
+        remainingHeight = MathF.Round(remainingHeight);
+
+        while (remainingHeight < 0 && shrinkables.Count > 0) // Shrink elements
+        {
+            float largest = shrinkables[0].Height;
+            float secondLargest = 0;
+            float heightToAdd = remainingHeight;
+            foreach (var child in shrinkables)
+            {
+                if (child.Height > largest)
+                {
+                    secondLargest = largest;
+                    largest = child.Height;
+                }
+                if (child.Height < largest)
+                {
+                    secondLargest = Math.Max(secondLargest, child.Height);
+                    heightToAdd = (int)(secondLargest - largest);
+                }
+            }
+
+            heightToAdd = Math.Max(heightToAdd, (float)remainingHeight / shrinkables.Count);
+
+            // This sucks
+            foreach (var child in growables)
+            {
+                float previousHeight = child.Height;
+                float childHeightF = child.Height;
+
+                if (child.Height == largest)
+                {
+                    child.Height += (int)heightToAdd;
+                    childHeightF += heightToAdd;
+
+                    if (childHeightF <= child.MinimumHeight)
+                    {
+                        child.Height = child.MinimumHeight;
+                        childHeightF = child.MinimumHeight;
+                        shrinkables.Remove(child);
+                    }
+                    remainingHeight -= (childHeightF - previousHeight);
+                }
+            }
+
+            // Idk how to feel about this hmmmmm
+            remainingHeight = MathF.Round(remainingHeight);
+        }
+
+        foreach (var child in visibleChildren)
+        {
+            switch (child.Fitting.Horizontal)
+            {
+                case FitPolicy.Policy.Minimum:
+                case FitPolicy.Policy.Maximum:
+                case FitPolicy.Policy.Preferred:
+                case FitPolicy.Policy.Expanding:
+                    child.Width += ((int)remainingWidth - child.Width);
+                    child.Width = Math.Clamp(child.Width, child.MinimumWidth, child.MaximumWidth);
+                    break;
+            }
+        }
+
+        // Send resize events
+        {
+            for (var i = 0; i < visibleChildren.Count; i++)
+            {
+                if (lastChildrenSizes[i] != new SKSizeI(visibleChildren[i].Width, visibleChildren[i].Height))
+                    visibleChildren[i].CatchResizeEvent();
+            }
+        }
     }
 
     public override void PositionsPass(Widget parent)
     {
+        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
 
+        if (visibleChildren.Count == 0)
+            return;
+
+        var y = Padding.Top;
+
+        foreach (var child in visibleChildren)
+        {
+            var finalHeight = child.Height;
+
+            // Determine vertical placement
+            var finalWidth = child.Width;
+            var hPolicy = child.Fitting.Horizontal;
+
+            if (hPolicy == FitPolicy.Policy.Expanding ||
+                hPolicy == FitPolicy.Policy.MinimumExpanding ||
+                hPolicy == FitPolicy.Policy.Ignored)
+            {
+                finalWidth = parent.Width - Padding.Horizontal;
+            }
+
+            var x = Padding.Left + (Align switch
+            {
+                HorizontalAlignment.Center => (parent.Width - Padding.Horizontal - finalWidth) / 2,
+                HorizontalAlignment.Right => (parent.Width - Padding.Right - finalWidth),
+                _ => 0
+            });
+
+            child.SetPosition(x, y);
+
+            y += finalHeight + Spacing;
+        }
     }
 }

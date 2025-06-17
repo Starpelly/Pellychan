@@ -28,7 +28,7 @@ public struct SizePolicy
     }
 
     public static SizePolicy FixedPolicy => new(Policy.Fixed, Policy.Fixed);
-    public static SizePolicy FitPolicy => new(Policy.Fit, Policy.Fit);
+    public static SizePolicy FitChildrenPolicy => new(Policy.Fit, Policy.Fit);
 
     public static bool operator ==(SizePolicy left, SizePolicy right)
         => left.Equals(right);

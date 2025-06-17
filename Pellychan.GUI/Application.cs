@@ -86,8 +86,8 @@ public class Application : IDisposable
         SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
         using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-        using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        // using var typeface = SKTypeface.FromStream(fontStream);
+        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        using var typeface = SKTypeface.FromStream(fontStream);
 
         const int dpi = 96;
         const float pixelsPerPoint = dpi / 72.0f;

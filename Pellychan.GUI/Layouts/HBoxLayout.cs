@@ -6,8 +6,6 @@ namespace Pellychan.GUI.Layouts;
 
 public class HBoxLayout : Layout
 {
-    public int Spacing { get; set; } = 0;
-
     public enum VerticalAlignment
     {
         Top,
@@ -16,28 +14,6 @@ public class HBoxLayout : Layout
     }
 
     public VerticalAlignment Align { get; set; } = VerticalAlignment.Top;
-
-    public override void PerformLayout(Widget parent)
-    {
-        var totalFixedWidth = 0;
-        var expandCount = 0;
-        int extraHeight = 0;
-
-        // First pass: calculate total fixed width
-        {
-            
-        }
-
-        // Second pass: calculate grow sizings for children
-        {
-            
-        }
-
-        // Third pass: layout positions
-        {
-
-        }
-    }
 
     public override SKSizeI SizeHint(Widget parent)
     {
@@ -102,70 +78,6 @@ public class HBoxLayout : Layout
         {
             widget.Height += Padding.Top + Padding.Bottom;
         }
-
-        /*
-        foreach (var child in visibleChildren)
-        {
-            // Cap children sizes
-            switch (child.SizePolicy.Horizontal)
-            {
-                case SizePolicy.Policy.Minimum:
-                case SizePolicy.Policy.Maximum:
-                case SizePolicy.Policy.Preferred:
-                    child.Width = Math.Clamp(child.Width, child.MinimumWidth, child.MaximumWidth);
-                    break;
-                default:
-                    break;
-            }
-
-            switch (child.SizePolicy.Horizontal)
-            {
-                case SizePolicy.Policy.Fixed:
-                case SizePolicy.Policy.Minimum:
-                case SizePolicy.Policy.Preferred:
-                    totalFixedWidth += child.Width;
-                    break;
-                case SizePolicy.Policy.Maximum:
-                case SizePolicy.Policy.Ignored:
-                    totalFixedWidth += child.MinimumWidth;
-                    break;
-                case SizePolicy.Policy.Expanding:
-                case SizePolicy.Policy.MinimumExpanding:
-                    totalFixedWidth += child.MinimumWidth;
-                    expandCount++;
-                    break;
-            }
-        }
-
-        totalFixedWidth += Spacing * (visibleChildren.Count - 1);
-
-        extraHeight = Math.Max(0, parent.Width - totalFixedWidth - Padding.Horizontal);
-
-        var sizeHint = SizeHint(parent);
-        var finalWidth = parent.Width;
-        var finalHeight = parent.Height;
-
-        switch (parent.SizePolicy.Horizontal)
-        {
-            case SizePolicy.Policy.Fixed:
-                finalWidth = parent.Width;
-                break;
-            case SizePolicy.Policy.Minimum:
-            case SizePolicy.Policy.Maximum:
-            case SizePolicy.Policy.Ignored:
-                finalWidth = parent.MinimumWidth;
-                break;
-            case SizePolicy.Policy.Preferred:
-                finalWidth = parent.SizeHint.Width;
-                break;
-            case SizePolicy.Policy.Expanding:
-            case SizePolicy.Policy.MinimumExpanding:
-                finalWidth = parent.MinimumWidth + (expandCount > 0 ? extraHeight / expandCount : 0);
-                break;
-        }
-
-        parent.Resize(finalWidth, finalHeight);
-        */
     }
 
     public override void GrowSizingPass(Widget parent)
@@ -178,10 +90,15 @@ public class HBoxLayout : Layout
         float remainingHeight = parent.Height;
 
         remainingWidth -= Padding.Left + Padding.Right;
-        remainingHeight -= Padding.Top + Padding.Top;
+        remainingHeight -= Padding.Top + Padding.Bottom;
 
         foreach (var child in visibleChildren)
         {
+            // @Investigate
+            // This is sus...
+            if (child.Fitting.Horizontal != FitPolicy.Policy.Fixed)
+                child.Width = 0;
+
             remainingWidth -= child.Width;
         }
         remainingWidth -= (visibleChildren.Count - 1) * Spacing;
@@ -295,44 +212,6 @@ public class HBoxLayout : Layout
                     break;
             }
         }
-
-#if false
-        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
-
-        if (visibleChildren.Count == 0)
-            return;
-
-        // @NOTE - pelly
-        // Needs to be floats because of division bullshit...
-        // I should better investigate!
-        float remainingWidth = parent.Width;
-        float remainingHeight = parent.Height;
-
-        remainingWidth -= Padding.Left + Padding.Right;
-        remainingHeight -= Padding.Top + Padding.Top;
-
-        foreach (var child in visibleChildren)
-        {
-            remainingWidth -= child.Width;
-        }
-        remainingWidth -= (visibleChildren.Count - 1) * Spacing;
-
-        
-
-        foreach (var child in visibleChildren)
-        {
-            switch (child.FitPolicy.Vertical)
-            {
-                case FitPolicy.Policy.Minimum:
-                case FitPolicy.Policy.Maximum:
-                case FitPolicy.Policy.Preferred:
-                case FitPolicy.Policy.Expanding:
-                    child.Height += ((int)remainingHeight - child.Height);
-                    child.Height = Math.Clamp(child.Height, child.MinimumHeight, child.MaximumHeight);
-                    break;
-            }
-        }
-#endif
     }
 
     public override void PositionsPass(Widget parent)
