@@ -80,7 +80,7 @@ public class VBoxLayout : Layout
         }
 
         if (lastParentSize != new SKSizeI(widget.Width, widget.Height))
-            widget.CatchResizeEvent();
+            widget.CallResizeEvents();
     }
 
     public override void GrowSizingPass(Widget parent)
@@ -224,7 +224,7 @@ public class VBoxLayout : Layout
             for (var i = 0; i < visibleChildren.Count; i++)
             {
                 if (lastChildrenSizes[i] != new SKSizeI(visibleChildren[i].Width, visibleChildren[i].Height))
-                    visibleChildren[i].CatchResizeEvent();
+                    visibleChildren[i].CallResizeEvents();
             }
         }
     }

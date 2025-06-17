@@ -1,4 +1,5 @@
-﻿using Pellychan.GUI;
+﻿using Newtonsoft.Json.Linq;
+using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 using Pellychan.Widgets;
@@ -214,6 +215,11 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
                 scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
                 scroll.Enabled = scroll.Maximum > 0;
+
+                // So the reason it looks as if the list scrolls back up to the top
+                // When the window is resized (or equivalent) is because
+                // The layout for m_mainContentWidget is setting the position of the list in the Layout?.PositionsPass()
+                // Dunno what to do about that, maybe create a flag or something?
             };
         }
     }

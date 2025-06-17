@@ -335,6 +335,11 @@ public class Widget : IDisposable
         m_width = width;
         m_height = height;
 
+        // This is fine because a native window can only exist on top level widgets and thus,
+        // can't be in a layout!
+        m_nativeWindow?.Resize(m_width, m_height);
+        CallResizeEvents();
+
         dispatchResize();
     }
 
@@ -516,28 +521,11 @@ public class Widget : IDisposable
         return IsTopLevel && m_nativeWindow!.ShouldClose;
     }
 
-    internal void PerformUpdateLayout()
+    internal void PerformLayoutUpdate()
     {
         Layout?.FitSizingPass(this);
         Layout?.GrowSizingPass(this);
         Layout?.PositionsPass(this);
-        // Layout?.PerformLayout(this);
-
-        if (Layout != null)
-        {
-            /*
-            var sizeHint = SizeHint;
-            var newWidth = m_width;
-            var newHeight = m_height;
-
-            if (SizePolicy.Horizontal == SizePolicy.Policy.Preferred)
-                newWidth = sizeHint.Width;
-            if (SizePolicy.Vertical == SizePolicy.Policy.Preferred)
-                newHeight = sizeHint.Height;
-
-            Resize(newWidth, newHeight);
-            */
-        }
 
         OnLayoutUpdate?.Invoke();
     }
@@ -583,17 +571,17 @@ public class Widget : IDisposable
         }
     }
 
-    /// <summary>
-    /// Actually resizes the widget, SHOULD only be called by the <see cref="Application.LayoutQueue"/>.
-    /// </summary>
-    internal void CatchResizeEvent()
+    internal void CallResizeEvents()
     {
-        Console.WriteLine($"Caught resize of type: {GetType().Name}");
+        Console.WriteLine($"Calling resize events for type: {GetType().Name}");
 
-        OnLayoutResize?.Invoke();
-        m_nativeWindow?.Resize(m_width, m_height);
+        if (GetType() == typeof(NullWidget))
+        {
+            var a = 0;
+        }
 
         (this as IResizeHandler)?.OnResize(m_width, m_height);
+        OnLayoutResize?.Invoke();
     }
 
     #endregion
@@ -623,6 +611,10 @@ public class Widget : IDisposable
             if (Layout != null)
             {
                 InvalidateLayout();
+            }
+            else
+            {
+                CallResizeEvents();
             }
             NotifyLayoutChange();
         }

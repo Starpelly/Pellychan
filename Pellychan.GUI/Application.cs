@@ -60,18 +60,24 @@ public class Application : IDisposable
 
         public static void Flush()
         {
-            if (s_dirtyWidgets.Count > 0)
+            var started = s_dirtyWidgets.Count > 0;
+            if (started)
             {
-                Console.WriteLine("==================Layout Flush==================");
+                Console.WriteLine("==================Layout Flush Start==================");
             }
 
             IsFlusing = true;
             foreach (var widget in s_dirtyWidgets.ToList())
             {
-                widget.PerformUpdateLayout();
+                widget.PerformLayoutUpdate();
             }
             s_dirtyWidgets.Clear();
             IsFlusing = false;
+
+            if (started)
+            {
+                Console.WriteLine("===================Layout Flush End===================");
+            }
         }
     }
 
