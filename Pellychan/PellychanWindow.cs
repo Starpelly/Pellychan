@@ -35,9 +35,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         // createMenubar();
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-        m_chanClient.CurrentBoard = "g";
+        m_chanClient.CurrentBoard = "v";
 
-        m_thread = m_chanClient.GetThreadAsync("105610395").GetAwaiter().GetResult();
+        m_thread = m_chanClient.GetThreadAsync("712960801").GetAwaiter().GetResult();
 
         m_labelPaint.Color = SKColors.White;
 
