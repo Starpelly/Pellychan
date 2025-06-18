@@ -22,7 +22,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     private readonly List<Label> m_labels = [];
     private readonly List<PostWidget> m_postWidgets = [];
 
-    private Widget m_mainContentWidget;
+    private ScrollArea m_mainContentWidget;
 
     private int m_clickCount = 0;
 
@@ -101,7 +101,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 boardsListWidget = new Rect(Application.Palette.Get(ColorRole.Base), boardsListContainer)
                 {
                     Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                    Sizing = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Fit),
+                    Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
                     Layout = new VBoxLayout
                     {
                         Spacing = 2,
@@ -141,7 +141,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 boardsListWidget.Y = -value;
             };
 
-            boardsListWidget.OnLayoutResize += boardsListContainer.OnLayoutResize += delegate()
+            boardsListWidget.OnPostLayoutUpdate += boardsListContainer.OnPostLayoutUpdate += delegate()
             {
                 scroll.Maximum = Math.Max(0, boardsListWidget.Height - boardsListContainer.Height);
                 scroll.PageStep = boardsListContainer.Height;
@@ -164,59 +164,32 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         
         // Main content
         {
-            m_mainContentWidget = new NullWidget(this)
+            m_mainContentWidget = new ScrollArea(this)
+            {
+                Fitting = FitPolicy.ExpandingPolicy,
+            };
+            m_mainContentWidget.ContentFrame.Layout = new HBoxLayout
+            {
+            };
+            m_mainContentWidget.ChildWidget = new NullWidget(m_mainContentWidget.ContentFrame)
             {
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                Sizing = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Fit),
+                Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
                 Layout = new VBoxLayout
                 {
                     Spacing = 1,
-                },
+                }
             };
 
             for (var i = 0; i < test_count; i++)
             {
                 var post = m_thread.Posts[i];
-                var widget = new PostWidget(post, m_mainContentWidget)
+                var widget = new PostWidget(post, m_mainContentWidget.ChildWidget)
                 {
                     Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
                 };
                 m_postWidgets.Add(widget);
-
-                /*
-                var widget = new Label(Application.DefaultFont, m_mainContentWidget)
-                {
-                    SizePolicy = new(SizePolicy.Policy.Expanding, SizePolicy.Policy.Fixed),
-                    Text = "test"
-                };
-                */
             }
-
-            var scroll = new ScrollBar(this)
-            {
-                X = 400,
-                Y = 16,
-                Width = 16,
-                Height = 400,
-                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
-            };
-            scroll.OnValueChanged += delegate (int value)
-            {
-                m_mainContentWidget.Y = -value;
-            };
-
-            m_mainContentWidget.OnLayoutResize += this.OnLayoutResize += delegate ()
-            {
-                scroll.Maximum = Math.Max(0, m_mainContentWidget.Height - this.Height);
-                scroll.PageStep = this.Height;
-
-                scroll.Value = Math.Clamp(scroll.Value, scroll.Minimum, scroll.Maximum);
-                scroll.Enabled = scroll.Maximum > 0;
-
-                // So the reason it looks as if the list scrolls back up to the top when the window is resized (or equivalent)-
-                // is because the layout for m_mainContentWidget is setting the position of the list in the Layout?.PositionsPass().
-                // Dunno what to do about that, maybe create a flag or something?
-            };
         }
     }
 

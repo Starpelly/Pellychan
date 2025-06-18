@@ -41,6 +41,11 @@ public interface IMouseClickHandler
     public void OnMouseClick(int x, int y);
 }
 
+public interface IMouseWheelHandler
+{
+    public void OnMouseScroll(int x, int y, int deltaX, int deltaY);
+}
+
 public interface IResizeHandler
 {
     public void OnResize(int width, int height);
@@ -96,6 +101,38 @@ public class Widget : IDisposable
             m_height = value;
             dispatchResize();
         }
+    }
+
+    /// <summary>
+    /// If true, no events will be called.
+    /// OnResize, OnPaint, etc...
+    /// (False by default)
+    /// </summary>
+    public bool DisableEvents { get; set; } = false;
+
+    private bool m_catchCursorEvents = true;
+
+    /// <summary>
+    /// If true, the widget will block other UI from catching cursor events.
+    /// This widget will also not catch cursor events.
+    /// (True by default)
+    /// </summary>
+    public bool CatchCursorEvents
+    {
+        // I don't think I want it to stop ALL children from collecting events...
+        /*
+        get
+        {
+            if (m_parent != null)
+            {
+                if (!m_parent.CatchCursorEvents)
+                    return false;
+            }
+            return m_catchCursorEvents;
+        }
+        */
+        get => m_catchCursorEvents;
+        set => m_catchCursorEvents = value;
     }
     
     // @NOTE
@@ -203,8 +240,8 @@ public class Widget : IDisposable
     public int MinimumHeight { get; set; } = 0;
     public int MaximumHeight { get; set; } = int.MaxValue;
 
-    public Action? OnLayoutResize;
-    public Action? OnLayoutUpdate;
+    public Action? OnPostLayoutUpdate;
+    public Action? OnResized;
 
     // Palette
     public ColorPalette Palette => Application.Palette;
@@ -342,9 +379,9 @@ public class Widget : IDisposable
         {
             m_nativeWindow.Size = new System.Drawing.Size(m_width, m_height);
         }
-        CallResizeEvents();
 
         dispatchResize();
+        CallResizeEvents();
     }
 
     public void Invalidate()
@@ -388,6 +425,24 @@ public class Widget : IDisposable
 
         GC.SuppressFinalize(this);
     }
+
+    #region Virtual methods
+
+    /// <summary>
+    /// Called immediately before being updated by the layout engine.
+    /// </summary>
+    public virtual void OnPreLayout()
+    {
+    }
+
+    /// <summary>
+    /// Called immediately after being updated by the layout engine.
+    /// </summary>
+    public virtual void OnPostLayout()
+    {
+    }
+
+    #endregion
 
     #region Internal methods
 
@@ -534,14 +589,22 @@ public class Widget : IDisposable
     {
         if (Layout != null)
         {
+            var oldSize = (Width, Height);
+
+            OnPreLayout();
+
             Layout.Start();
             Layout.FitSizingPass(this);
             Layout.GrowSizingPass(this);
             Layout.PositionsPass(this);
             Layout.End();
-        }
 
-        OnLayoutUpdate?.Invoke();
+            OnPostLayout();
+            OnPostLayoutUpdate?.Invoke();
+
+            if (Width != oldSize.Width || Height != oldSize.Height)
+                dispatchResize();
+        }
     }
 
     internal void InvalidateLayout(bool doChildrenAnyway = false)
@@ -594,7 +657,6 @@ public class Widget : IDisposable
         // Console.WriteLine($"Calling resize events for type: {GetType().Name}");
 
         (this as IResizeHandler)?.OnResize(m_width, m_height);
-        OnLayoutResize?.Invoke();
     }
 
     #endregion
@@ -635,6 +697,8 @@ public class Widget : IDisposable
                 CallResizeEvents();
             }
             NotifyLayoutChange();
+
+            OnResized?.Invoke();
         }
     }
 
@@ -662,6 +726,10 @@ public class Widget : IDisposable
         m_nativeWindow.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Up);
+        };
+        m_nativeWindow.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
+        {
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Wheel, (int)delta.X, (int)delta.Y);
         };
     }
 
@@ -695,7 +763,7 @@ public class Widget : IDisposable
         return (lx, ly);
     }
 
-    private Widget? findHoveredWidget(int x, int y)
+    private Widget? findHoveredWidget(int x, int y, bool checkRaycast)
     {
         var thisX = (IsTopLevel) ? 0 : this.m_x;
         var thisY = (IsTopLevel) ? 0 : this.m_y;
@@ -703,17 +771,28 @@ public class Widget : IDisposable
         int localX = x - thisX;
         int localY = y - thisY;
 
+        bool canCatchEvents = true;
+        if (checkRaycast)
+        {
+            if (!CatchCursorEvents)
+            {
+                canCatchEvents = false;
+            }
+        }
+
+        if (canCatchEvents)
         if (!HitTest(localX, localY))
             return null;
 
+        // If we can't catch any events, skip the hit test and skip immediately to the children
         foreach (var child in m_children.AsReadOnly().Reverse()) // top-most first
         {
-            var result = child.findHoveredWidget(localX, localY);
+            var result = child.findHoveredWidget(localX, localY, checkRaycast);
             if (result != null)
                 return result;
         }
 
-        return this;
+        return canCatchEvents ? this : null;
     }
 
     /// <summary>
@@ -755,9 +834,9 @@ public class Widget : IDisposable
         }
     }
 
-    private void onNativeWindowMouseEvent(int mouseX, int mouseY, MouseEventType type)
+    private void onNativeWindowMouseEvent(int mouseX, int mouseY, MouseEventType type, int deltaX = 0, int deltaY = 0)
     {
-        var hovered = findHoveredWidget(mouseX, mouseY);
+        var hovered = findHoveredWidget(mouseX, mouseY, true);
 
         if (hovered != m_lastHovered)
         {
@@ -793,6 +872,9 @@ public class Widget : IDisposable
 
                         s_mouseGrabber = null;
                         break;
+                    case MouseEventType.Wheel:
+                        (s_mouseGrabber as IMouseWheelHandler)?.OnMouseScroll(localX, localY, deltaX, deltaY);
+                        break;
                 }
             }
 
@@ -826,6 +908,9 @@ public class Widget : IDisposable
                         }
 
                         s_mouseGrabber = null;
+                        break;
+                    case MouseEventType.Wheel:
+                        (hovered as IMouseWheelHandler)?.OnMouseScroll(localX, localY, deltaX, deltaY);
                         break;
                 }
             }

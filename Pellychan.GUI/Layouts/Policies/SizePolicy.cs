@@ -10,7 +10,7 @@ public struct SizePolicy
         /// <summary>
         /// Will not be affected by its children.
         /// </summary>
-        Fixed,
+        Ignore,
 
         /// <summary>
         /// Will size itself to fit its children.
@@ -27,7 +27,7 @@ public struct SizePolicy
         Vertical = vertical;
     }
 
-    public static SizePolicy FixedPolicy => new(Policy.Fixed, Policy.Fixed);
+    public static SizePolicy FixedPolicy => new(Policy.Ignore, Policy.Ignore);
     public static SizePolicy FitChildrenPolicy => new(Policy.Fit, Policy.Fit);
 
     public static bool operator ==(SizePolicy left, SizePolicy right)

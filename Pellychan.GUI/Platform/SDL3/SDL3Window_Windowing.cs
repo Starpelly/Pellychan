@@ -34,7 +34,7 @@ namespace Pellychan.GUI.Platform.SDL3
         }
 
         // This had another default value, but it creates like a white flash before the window draws the first frame.
-        // So I shrinked it down to 0,0. Which still creates a pixel but it's less noticable I feel.
+        // So I shrunk it down to 0,0. Which still creates a pixel but it's less noticable I feel.
         // @Investigate
         private Size m_size = new(0, 0);
 

@@ -28,7 +28,7 @@ namespace Pellychan.GUI.Platform.SDL3
             }
 
             // SDL reports horizontal scroll opposite of what we expect (in non-"natural" mode, scrolling to the right gives positive deltas while we want negative).
-            MouseWheel?.Invoke(new Vector2(-evtWheel.x, evtWheel.y), precise);
+            MouseWheel?.Invoke(new Vector2(evtWheel.mouse_x, evtWheel.mouse_y), new Vector2(-evtWheel.x, evtWheel.y), precise);
         }
 
         private void handleMouseButtonEvent(SDL_MouseButtonEvent evtButton)
@@ -84,7 +84,7 @@ namespace Pellychan.GUI.Platform.SDL3
         public event Action<Vector2>? MouseMove;
         public event Action<Vector2, MouseButton>? MouseDown;
         public event Action<Vector2, MouseButton>? MouseUp;
-        public event Action<Vector2, bool> MouseWheel;
+        public event Action<Vector2, Vector2, bool>? MouseWheel;
 
         #endregion
     }

@@ -35,7 +35,7 @@ namespace LayoutTesting.Tests
                 Height = 540,
 
                 Fitting = FitPolicy.FixedPolicy,
-                Sizing = new(SizePolicy.Policy.Fixed, SizePolicy.Policy.Fit),
+                Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
 
                 Layout = new VBoxLayout
                 {

@@ -18,11 +18,5 @@ public class Bitmap : Widget, IPaintHandler
             // by default and the widget should take care of where to draw itself.
             canvas.DrawBitmap(Image, new SKRect(0, 0, Width, Height));
         }
-
-        /*
-        using var paint = new SKPaint();
-        paint.Color = SKColors.Red.WithAlpha(50);
-        canvas.DrawRect(Rect, paint);
-        */
     }
 }

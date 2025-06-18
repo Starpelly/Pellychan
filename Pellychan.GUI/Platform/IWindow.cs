@@ -57,7 +57,7 @@ namespace Pellychan.GUI.Platform
         /// <remarks>
         /// Delta is positive when mouse wheel scrolled to the up or left, in non-"natural" scroll mode (ie. the classic way).
         /// </remarks>
-        public event Action<Vector2, bool> MouseWheel;
+        public event Action<Vector2, Vector2, bool> MouseWheel;
 
         /// <summary>
         /// Controls the state of the window.

@@ -4,5 +4,6 @@ public enum MouseEventType
 {
     Down,
     Up,
-    Move
+    Move,
+    Wheel
 }

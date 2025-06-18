@@ -1,4 +1,5 @@
 ﻿using Pellychan.GUI.Utils;
+using Pellychan.Resources;
 using SDL;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -147,6 +148,14 @@ namespace Pellychan.GUI.Platform.SDL3
             {
                 case SDL_EventType.SDL_EVENT_QUIT:
                     ExitRequested?.Invoke();
+                    break;
+
+                    // @HACK
+                case SDL_EventType.SDL_EVENT_KEY_DOWN:
+                    if (e.key.key == SDL_Keycode.SDLK_F2)
+                    {
+                        Application.DebugDrawing = !Application.DebugDrawing;
+                    }
                     break;
             }
         }

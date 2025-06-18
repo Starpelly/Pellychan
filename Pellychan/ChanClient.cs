@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ImageMagick;
+using Newtonsoft.Json;
 using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.API.Responses;
@@ -89,5 +90,39 @@ public class ChanClient
             var attachment = await DownloadAttachmentAsync(post);
             onComplete?.Invoke(attachment);
         });
+    }
+
+    public class GifFrame
+    {
+        public SKBitmap Bitmap;
+        public int Delay; // in milliseconds
+    }
+
+    public async Task<List<GifFrame>> LoadGifFromUrlAsync(string url)
+    {
+        byte[] data = await m_httpClient.GetByteArrayAsync(url);
+
+        var frames = new List<GifFrame>();
+        using var collection = new MagickImageCollection(data);
+        collection.Coalesce();
+
+        foreach (var frame in collection)
+        {
+            using var ms = new MemoryStream();
+            frame.Format = MagickFormat.Png; // Convert each frame to PNG for Skia
+            frame.Write(ms);
+            ms.Position = 0;
+
+            // using var skStream = new SKManagedStream(ms);
+            var bitmap = SKBitmap.Decode(ms);
+
+            frames.Add(new GifFrame
+            {
+                Bitmap = bitmap,
+                Delay = (int)(frame.AnimationDelay * 10) // ms
+            });
+        }
+
+        return frames;
     }
 }

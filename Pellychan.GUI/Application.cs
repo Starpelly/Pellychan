@@ -48,9 +48,9 @@ public class Application : IDisposable
 
         public static void Enqueue(Widget widget)
         {
-            // if (IsFlusing)
-            //    return;
-
+            // Why would this be the case? Idk...
+            if (widget == null)
+                return;
             if (widget.Layout == null)
                 return;
 
@@ -96,8 +96,8 @@ public class Application : IDisposable
                           SDL3 Video driver: {SDL3.SDL_GetCurrentVideoDriver()}");
 
         using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        using var typeface = SKTypeface.FromStream(fontStream);
+        using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        // using var typeface = SKTypeface.FromStream(fontStream);
 
         const int dpi = 96;
         const float pixelsPerPoint = dpi / 72.0f;

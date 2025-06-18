@@ -1,4 +1,5 @@
-﻿using Pellychan.API.Models;
+﻿using Pellychan.API;
+using Pellychan.API.Models;
 using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
@@ -16,18 +17,22 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
 
     private bool m_usingThumbnail = true;
     private bool m_loadedFull = false;
+    private bool m_triedLoadingFull = false;
+
+    private GifPlayer? m_gifPlayer;
 
     public Thumbnail(Post post, Widget? parent = null) : base(parent)
     {
         m_ApiPost = post;
 
-        updateImage(m_usingThumbnail);
+        updateImage(null);
     }
 
     public void SetThumbnail(SKBitmap? thumbnail)
     {
         m_thumbnailBitmap = thumbnail;
-        updateImage(m_usingThumbnail);
+
+        updateImage(m_thumbnailBitmap);
     }
 
     public void OnMouseDown(int x, int y)
@@ -43,12 +48,29 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
         if (!m_loadedFull) return;
 
         m_usingThumbnail = !m_usingThumbnail;
-        updateImage(m_usingThumbnail);
+
+        if (!m_usingThumbnail)
+        {
+            m_gifPlayer?.Stop();
+        }
+        else
+        {
+            m_gifPlayer?.Start();
+        }
+        updateImage((m_usingThumbnail) ? m_thumbnailBitmap : m_fullBitmap);
     }
 
     public new void OnPaint(SKCanvas canvas)
     {
+        canvas.Save();
+
+        using var path = new SKPath();
+        path.AddRoundRect(new SKRect(0, 0, Width, Height), 6, 6);
+        canvas.ClipPath(path, SKClipOperation.Intersect, true);
+
         base.OnPaint(canvas);
+
+        canvas.Restore();
 
         return;
         using var paint = new SKPaint();
@@ -68,9 +90,9 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
         MouseCursor.Set(MouseCursor.CursorType.Arrow);
     }
 
-    private void updateImage(bool thumbnail)
+    private void updateImage(SKBitmap? bitmap)
     {
-        Image = thumbnail ? m_thumbnailBitmap : m_fullBitmap;
+        Image = bitmap;
 
         if (Image == null)
         {
@@ -85,22 +107,49 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
 
     private void loadFull()
     {
-        PellychanWindow.ChanClient.LoadAttachment(m_ApiPost, (thumbnail) =>
+        if (m_triedLoadingFull) return;
+        m_triedLoadingFull = true;
+
+        if (m_ApiPost.Ext == ".gif")
         {
-            if (thumbnail != null)
+            m_gifPlayer = new();
+
+            var post = m_ApiPost;
+            string url = $"https://{Domains.UserContent}/{PellychanWindow.ChanClient.CurrentBoard}/{post.Tim}{post.Ext}";
+
+            Console.WriteLine(url);
+            Task.Run(async () =>
             {
-                m_fullBitmap = thumbnail;
-
-                m_usingThumbnail = !m_usingThumbnail;
-                updateImage(m_usingThumbnail);
-
+                await m_gifPlayer.LoadAsync(url);
                 m_loadedFull = true;
-            }
-        });
+                m_usingThumbnail = !m_usingThumbnail;
+            });
+
+            m_gifPlayer.OnFrameChanged += delegate ()
+            {
+                if (!m_usingThumbnail)
+                    updateImage(m_gifPlayer.CurrentBitmap);
+            };
+        }
+        else
+        {
+            PellychanWindow.ChanClient.LoadAttachment(m_ApiPost, (thumbnail) =>
+            {
+                if (thumbnail != null)
+                {
+                    m_fullBitmap = thumbnail;
+
+                    m_usingThumbnail = !m_usingThumbnail;
+                    updateImage(m_fullBitmap);
+
+                    m_loadedFull = true;
+                }
+            });
+        }
     }
 }
 
-public class PostWidget : Widget, IPaintHandler, IResizeHandler
+public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
 {
     private static readonly Padding Padding = new(8);
 
@@ -121,7 +170,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
         {
             X = Padding.Left,
             Y = Padding.Top,
-            Text = $"<span class=\"name\">{post.Name}</span>"
+            Text = $"<span class=\"name\">{post.Name}</span>",
+            CatchCursorEvents = false
         };
 
         m_dateLabel = new Label(Application.DefaultFont, this)
@@ -129,6 +179,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
             X = Padding.Left,
             Y = Padding.Top,
             Text = $"<span class=\"date\">{post.Now}</span>",
+            CatchCursorEvents = false
         };
 
         var rawComment = post.Com == null ? string.Empty : post.Com;
@@ -141,7 +192,9 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
 
             Layout = new VBoxLayout
             {
-            }
+            },
+
+            CatchCursorEvents = false,
         };
 
         m_previewBitmap = new(m_apiPost, this)
@@ -155,7 +208,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler
             Text = decoded,
             WordWrap = true,
 
-            Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed)
+            Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed),
+            CatchCursorEvents = false,
         };
 
         SetTempShit(true);
