@@ -1,5 +1,6 @@
 ﻿using Pellychan.GUI.Input;
 using Pellychan.GUI.Layouts;
+using Pellychan.GUI.Platform.Input;
 using Pellychan.GUI.Platform.Skia;
 using SkiaSharp;
 
@@ -248,14 +249,14 @@ public class Widget : IDisposable
     {
         m_visible = true;
 
-        if (IsTopLevel)
+        if (IsTopLevel && m_nativeWindow != null)
         {
             Application.Instance!.TopLevelWidgets.Add(this);
 
-            m_nativeWindow?.Resize(m_width, m_height);
-            m_nativeWindow?.CreateFrameBuffer(m_width, m_height);
-            m_nativeWindow?.Center();
-            m_nativeWindow?.Show();
+            m_nativeWindow.Size = new System.Drawing.Size(m_width, m_height);
+            m_nativeWindow.CreateFrameBuffer(m_width, m_height);
+            m_nativeWindow.Center();
+            m_nativeWindow.Show();
         }
 
         InvalidateLayout(true);
@@ -337,7 +338,10 @@ public class Widget : IDisposable
 
         // This is fine because a native window can only exist on top level widgets and thus,
         // can't be in a layout!
-        m_nativeWindow?.Resize(m_width, m_height);
+        if (m_nativeWindow != null)
+        {
+            m_nativeWindow.Size = new System.Drawing.Size(m_width, m_height);
+        }
         CallResizeEvents();
 
         dispatchResize();
@@ -353,7 +357,10 @@ public class Widget : IDisposable
     /// </summary>
     public void SetWindowTitle(string title)
     {
-        m_nativeWindow?.SetTitle(title);
+        if (m_nativeWindow == null)
+            return;
+
+        m_nativeWindow.Title = (title);
     }
 
     public bool HitTest(int x, int y)
@@ -631,20 +638,31 @@ public class Widget : IDisposable
         }
     }
 
-    public Widget testThing;
-
     private void initializeIfTopLevel()
     {
         if (!IsTopLevel) return;
 
         Console.WriteLine($"Initialized top level widget of type: {GetType().Name}");
 
-        m_nativeWindow = new(this, m_height, m_height, GetType().Name, GetType() == typeof(ToolTip), testThing?.m_nativeWindow);
+        m_nativeWindow = new(this, GetType().Name);
         WindowRegistry.Register(m_nativeWindow);
 
-        m_nativeWindow.OnWindowResize += onNativeWindowResizeEvent;
-        m_nativeWindow.OnMouseEvent += onNativeWindowMouseEvent;
-        // m_nativeWindow.OnMouseMoved += dispatchMouseMove;
+        m_nativeWindow.Resized += delegate ()
+        {
+            onNativeWindowResizeEvent(m_nativeWindow.Size.Width, m_nativeWindow.Size.Height);
+        };
+        m_nativeWindow.MouseMove += delegate (System.Numerics.Vector2 pos)
+        {
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Move);
+        };
+        m_nativeWindow.MouseDown += delegate(System.Numerics.Vector2 pos, MouseButton button)
+        {
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Down);
+        };
+        m_nativeWindow.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
+        {
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Up);
+        };
     }
 
     private void invalidate()
@@ -819,7 +837,10 @@ public class Widget : IDisposable
         Resize(w, h);
         m_nativeWindow!.CreateFrameBuffer(w, h);
 
-        Invalidate();
+        // Invalidate();
+
+        Application.LayoutQueue.Flush();
+        RenderTopLevel();
     }
 
     #endregion

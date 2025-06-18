@@ -10,11 +10,11 @@ namespace Pellychan.GUI;
 
 internal static class WindowRegistry
 {
-    private static readonly Dictionary<SDL.SDL_WindowID, SkiaWindow> Windows = [];
+    internal static readonly Dictionary<SDL.SDL_WindowID, SkiaWindow> Windows = [];
 
     public static void Register(SkiaWindow window)
     {
-        Windows[window.WindowID] = window;
+        Windows[window.SDLWindowID] = window;
     }
 
     public static SkiaWindow? Get(SDL.SDL_WindowID id) =>
@@ -27,8 +27,6 @@ public class Application : IDisposable
     
     internal readonly List<Widget> TopLevelWidgets = [];
 
-    internal ToolTip ToolTip;
-    
     private readonly SKFont m_defaultFont;
     private readonly Style m_defaultStyle;
     private ColorPalette m_palette;
@@ -56,7 +54,7 @@ public class Application : IDisposable
             if (widget.Layout == null)
                 return;
 
-            Console.WriteLine($"Enqued: {widget.GetType().Name}");
+            // Console.WriteLine($"Enqued: {widget.GetType().Name}");
 
             s_dirtyWidgets.Add(widget);
         }
@@ -66,7 +64,7 @@ public class Application : IDisposable
             IsFlusing = true;
             while (s_dirtyWidgets.Count > 0)
             {
-                Console.WriteLine("==================Layout Flush Start==================");
+                // Console.WriteLine("==================Layout Flush Start==================");
 
                 foreach (var widget in s_dirtyWidgets.ToList())
                 {
@@ -74,7 +72,7 @@ public class Application : IDisposable
                     s_dirtyWidgets.Remove(widget);
                 }
 
-                Console.WriteLine("===================Layout Flush End===================");
+                // Console.WriteLine("===================Layout Flush End===================");
             }
             s_dirtyWidgets.Clear();
             IsFlusing = false;
@@ -90,6 +88,12 @@ public class Application : IDisposable
         Instance = this;
 
         SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO);
+
+        int version = SDL3.SDL_GetVersion();
+        Console.WriteLine($@"SDL3 Initialized
+                          SDL3 Version: {SDL3.SDL_VERSIONNUM_MAJOR(version)}.{SDL3.SDL_VERSIONNUM_MINOR(version)}.{SDL3.SDL_VERSIONNUM_MICRO(version)}
+                          SDL3 Revision: {SDL3.SDL_GetRevision()}
+                          SDL3 Video driver: {SDL3.SDL_GetCurrentVideoDriver()}");
 
         using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
         // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
@@ -117,7 +121,11 @@ public class Application : IDisposable
     {
         while (TopLevelWidgets.Count > 0)
         {
-            pumpEvents();
+            // pumpEvents();
+            foreach (var window in WindowRegistry.Windows)
+            {
+                window.Value.pollSDLEvents();
+            }
 
             // Flush any pending layout requests
             LayoutQueue.Flush();
@@ -138,8 +146,6 @@ public class Application : IDisposable
             // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
             // SDL3.SDL_Delay(16); // ~60fps
         }
-        
-        // ToolTip.Show();
     }
 
     public void Dispose()
@@ -153,43 +159,5 @@ public class Application : IDisposable
 
         SDL3.SDL_Quit();
         GC.SuppressFinalize(this);
-    }
-
-    private static void pumpEvents()
-    {
-        unsafe
-        {
-            SDL_Event e;
-            while (SDL3.SDL_PollEvent(&e) != false)
-            {
-                /*
-
-                */
-
-                if (e.Type == SDL.SDL_EventType.SDL_EVENT_KEY_DOWN)
-                {
-                    if (e.key.scancode == SDL.SDL_Scancode.SDL_SCANCODE_F2)
-                    {
-                        Application.DebugDrawing = !Application.DebugDrawing;
-                    }
-                }
-
-                SDL_WindowID id = e.Type switch
-                {
-                    SDL_EventType.SDL_EVENT_MOUSE_MOTION => e.motion.windowID,
-                    SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN or SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP => e.button.windowID,
-
-
-                    SDL_EventType.SDL_EVENT_WINDOW_RESIZED => e.window.windowID,
-                    SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED => e.window.windowID,
-                    _ => 0
-                };
-
-                if (WindowRegistry.Get(id) is { } win)
-                {
-                    win.HandleEvent(e);
-                }
-            }
-        }
     }
 }
