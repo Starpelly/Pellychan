@@ -272,7 +272,7 @@ public class Widget : IDisposable
             {
                 m_contentPositions = value;
 
-                Application.LayoutQueue.Enqueue(this, LayoutFlushType.Position);
+                LayoutQueue.Enqueue(this, LayoutFlushType.Position);
             }
         }
     }
@@ -702,7 +702,7 @@ public class Widget : IDisposable
             if (Layout.PerformingPasses)
                 return;
 
-            Application.LayoutQueue.Enqueue(this, LayoutFlushType.All);
+            LayoutQueue.Enqueue(this, LayoutFlushType.All);
             shouldInvalidateChildren = true;
         }
 
@@ -762,7 +762,7 @@ public class Widget : IDisposable
 
     private void dispatchResize()
     {
-        var isFlusing = Application.LayoutQueue.IsFlusing;
+        var isFlusing = LayoutQueue.IsFlusing;
 
         if (Layout != null)
             isFlusing = Layout.PerformingPasses;
@@ -1005,7 +1005,7 @@ public class Widget : IDisposable
 
         // Invalidate();
 
-        Application.LayoutQueue.Flush();
+        LayoutQueue.Flush();
         RenderTopLevel(Application.DebugDrawing);
     }
 
