@@ -62,19 +62,26 @@ public class Application : IDisposable
         public static void Flush()
         {
             IsFlusing = true;
-            while (s_dirtyWidgets.Count > 0)
-            {
-                // Console.WriteLine("==================Layout Flush Start==================");
 
-                foreach (var widget in s_dirtyWidgets.ToList())
+            while (true)
+            {
+                Widget[] toWork;
+                lock (s_dirtyWidgets)
                 {
-                    widget.PerformLayoutUpdate();
-                    s_dirtyWidgets.Remove(widget);
+                    if (s_dirtyWidgets.Count == 0)
+                        break;
+
+                    toWork = s_dirtyWidgets.ToArray();
+                    s_dirtyWidgets.Clear();
                 }
 
-                // Console.WriteLine("===================Layout Flush End===================");
+                foreach (var widget in toWork)
+                {
+                    // Sometimes this can be null? I don't know how or why
+                    // but I guess we'll handle it in that case???
+                    widget?.PerformLayoutUpdate();
+                }
             }
-            s_dirtyWidgets.Clear();
             IsFlusing = false;
         }
     }

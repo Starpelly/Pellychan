@@ -645,26 +645,29 @@ public class Widget : IDisposable
     {
         if (!Visible)
             return;
+
+        bool shouldInvalidateChildren = doChildrenAnyway;
+
         if (Layout == null)
         {
-            if (doChildrenAnyway)
-            {
-                goto Children;
-            }
-            return;
+            if (!doChildrenAnyway)
+                return;
         }
         else
         {
             if (Layout.PerformingPasses)
                 return;
+
+            Application.LayoutQueue.Enqueue(this);
+            shouldInvalidateChildren = true;
         }
 
-        Application.LayoutQueue.Enqueue(this);
-
-    Children:
-        foreach (var child in m_children)
+        if (shouldInvalidateChildren)
         {
-            child.InvalidateLayout(doChildrenAnyway);
+            foreach (var child in m_children)
+            {
+                child.InvalidateLayout(doChildrenAnyway);
+            }
         }
     }
 
