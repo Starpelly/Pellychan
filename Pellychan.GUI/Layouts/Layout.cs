@@ -20,6 +20,11 @@ public abstract class Layout
         PerformingPasses = false;
     }
 
+    internal Padding GetFinalPadding(Widget parent)
+    {
+        return new Padding(Padding.Left + parent.ContentsMargins.Left, Padding.Top + parent.ContentsMargins.Top, Padding.Right + parent.ContentsMargins.Right, Padding.Bottom + parent.ContentsMargins.Bottom);
+    }
+
     public abstract SKSizeI SizeHint(Widget parent);
 
     public abstract void FitSizingPass(Widget parent);

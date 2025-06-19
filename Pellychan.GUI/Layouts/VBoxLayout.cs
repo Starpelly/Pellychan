@@ -20,8 +20,10 @@ public class VBoxLayout : Layout
     {
         var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
 
+        var finalPadding = GetFinalPadding(parent);
+
         int width = 0;
-        int height = Padding.Top + Padding.Bottom + Spacing * (visibleChildren.Count - 1);
+        int height = finalPadding.Top + finalPadding.Bottom + Spacing * (visibleChildren.Count - 1);
 
         foreach (var child in visibleChildren)
         {
@@ -30,7 +32,7 @@ public class VBoxLayout : Layout
             height += hint.Height;
         }
 
-        width += Padding.Left + Padding.Right;
+        width += finalPadding.Left + finalPadding.Right;
 
         return new(width, height);
     }
@@ -46,6 +48,8 @@ public class VBoxLayout : Layout
         var visibleChildren = widget.Children.Where(c => c.Visible).Reverse().ToList();
         if (visibleChildren.Count == 0)
             return;
+
+        var finalPadding = GetFinalPadding(widget);
 
         var lastParentSize = new SKSizeI(widget.Width, widget.Height);
 
@@ -71,12 +75,12 @@ public class VBoxLayout : Layout
 
         if (fitHorizontal)
         {
-            widget.Width += Padding.Left + Padding.Right;
+            widget.Width += finalPadding.Left + finalPadding.Right;
         }
         if (fitVertical)
         {
             widget.Height += childGap;
-            widget.Height += Padding.Top + Padding.Bottom;
+            widget.Height += finalPadding.Top + finalPadding.Bottom;
         }
 
         if (lastParentSize != new SKSizeI(widget.Width, widget.Height))
@@ -89,14 +93,16 @@ public class VBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
+        var finalPadding = GetFinalPadding(parent);
+
         // Collect sizes for actually sending resize events
         var lastChildrenSizes = visibleChildren.Select(c => new SKSizeI(c.Width, c.Height)).ToList();
 
         float remainingWidth = parent.Width;
         float remainingHeight = parent.Height;
 
-        remainingWidth -= Padding.Left + Padding.Right;
-        remainingHeight -= Padding.Top + Padding.Bottom;
+        remainingWidth -= finalPadding.Left + finalPadding.Right;
+        remainingHeight -= finalPadding.Top + finalPadding.Bottom;
 
         foreach (var child in visibleChildren)
         {
@@ -236,7 +242,8 @@ public class VBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
-        var y = Padding.Top;
+        var finalPadding = GetFinalPadding(parent);
+        var y = finalPadding.Top;
 
         foreach (var child in visibleChildren)
         {
@@ -250,13 +257,13 @@ public class VBoxLayout : Layout
                 hPolicy == FitPolicy.Policy.MinimumExpanding ||
                 hPolicy == FitPolicy.Policy.Ignored)
             {
-                finalWidth = parent.Width - Padding.Horizontal;
+                finalWidth = parent.Width - finalPadding.Horizontal;
             }
 
-            var x = Padding.Left + (Align switch
+            var x = finalPadding.Left + (Align switch
             {
-                HorizontalAlignment.Center => (parent.Width - Padding.Horizontal - finalWidth) / 2,
-                HorizontalAlignment.Right => (parent.Width - Padding.Right - finalWidth),
+                HorizontalAlignment.Center => (parent.Width - finalPadding.Horizontal - finalWidth) / 2,
+                HorizontalAlignment.Right => (parent.Width - finalPadding.Right - finalWidth),
                 _ => 0
             });
 

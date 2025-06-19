@@ -1,6 +1,5 @@
 ﻿using Pellychan.GUI.Styles;
 using SkiaSharp;
-using static Pellychan.GUI.Widgets.ScrollBar;
 
 namespace Pellychan.GUI.Widgets;
 
@@ -22,6 +21,7 @@ public class ShapedFrame : Widget, IPaintHandler
 
     public ShapedFrame(Widget? parent = null) : base(parent)
     {
+        ContentsMargins = new(1);
     }
 
     public void OnPaint(SKCanvas canvas)

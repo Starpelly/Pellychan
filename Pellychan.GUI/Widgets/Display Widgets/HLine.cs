@@ -8,5 +8,6 @@ public class HLine : ShapedFrame
     public HLine(Widget? parent = null) : base(parent)
     {
         FrameShape = Shape.HLine;
+        Height = 1;
     }
 }

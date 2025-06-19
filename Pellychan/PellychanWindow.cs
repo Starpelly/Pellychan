@@ -73,11 +73,20 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     {
         Layout = new HBoxLayout
         {
+            Padding = new(32)
+        };
+
+        var mainHolder = new ShapedFrame(this)
+        {
+            Fitting = FitPolicy.ExpandingPolicy,
+            Layout = new HBoxLayout
+            {
+            }
         };
 
         // Boards
         {
-            var boardsContainer = new Widget(this)
+            var boardsContainer = new Widget(mainHolder)
             {
                 Layout = new HBoxLayout
                 {
@@ -153,10 +162,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         // Separator
         {
-            new VLine(this)
+            new VLine(mainHolder)
             {
                 Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-                Width = 1
             };
         }
 
@@ -164,7 +172,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         
         // Main content
         {
-            m_mainContentWidget = new ScrollArea(this)
+            m_mainContentWidget = new ScrollArea(mainHolder)
             {
                 Fitting = FitPolicy.ExpandingPolicy,
             };

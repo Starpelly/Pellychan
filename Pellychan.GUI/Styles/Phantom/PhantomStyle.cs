@@ -541,15 +541,23 @@ public class PhantomStyle : Style
     public override void DrawShapedFrame(SKCanvas canvas, ShapedFrame frame, StyleOptionShapedFrame option)
     {
         using var paint = new SKPaint();
+        paint.IsStroke = true;
+        paint.StrokeWidth = 1;
         paint.Color = m_swatch.GetColor(SwatchColor.Window_Outline);
+
+        var r = new SKRectI(0, 0, frame.Width, frame.Height);
         switch (frame.FrameShape)
         {
+            case ShapedFrame.Shape.Box:
+                canvas.DrawRect(new(0, 0, frame.Width - 1, frame.Height - 1), paint);
+                break;
             case ShapedFrame.Shape.HLine:
-
+                r = r.SetY(r.GetY() + r.Height / 2);
+                r = r.SetHeight(1);
+                canvas.DrawRect(r, paint);
                 break;
             case ShapedFrame.Shape.VLine:
-                var r = new SKRectI(0, 0, frame.Width, frame.Height);
-                r = r.SetX(r.Left + r.Width / 2);
+                r = r.SetX(r.GetX() + r.Width / 2);
                 r = r.SetWidth(1);
                 canvas.DrawRect(r, paint);
                 break;

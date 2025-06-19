@@ -1,6 +1,5 @@
 ﻿using Pellychan.GUI.Widgets;
 using SkiaSharp;
-using System.Drawing;
 
 namespace Pellychan.GUI.Layouts;
 
@@ -19,10 +18,13 @@ public class HBoxLayout : Layout
     {
         var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
 
-        if (visibleChildren.Count == 0)
-            return new(Padding.Left + Padding.Right, Padding.Top + Padding.Bottom);
+        var finalPadding = GetFinalPadding(parent);
 
-        int totalWidth = Padding.Left + Padding.Right + Spacing * (visibleChildren.Count - 1);
+        if (visibleChildren.Count == 0)
+            return new(finalPadding.Left + finalPadding.Right,
+                finalPadding.Top + finalPadding.Bottom);
+
+        int totalWidth = finalPadding.Left + finalPadding.Right + Spacing * (visibleChildren.Count - 1);
         int maxHeight = 0;
 
         foreach (var child in visibleChildren)
@@ -32,7 +34,7 @@ public class HBoxLayout : Layout
             maxHeight = Math.Max(maxHeight, hint.Height);
         }
 
-        int totalHeight = Padding.Top + Padding.Bottom + maxHeight;
+        int totalHeight = finalPadding.Top + finalPadding.Bottom + maxHeight;
 
         return new(totalWidth, totalHeight);
     }
@@ -48,6 +50,8 @@ public class HBoxLayout : Layout
 
         if (!fitHorizontal && !fitVertical)
             return;
+
+        var finalPadding = GetFinalPadding(widget);
 
         if (fitHorizontal)
         {
@@ -72,11 +76,11 @@ public class HBoxLayout : Layout
         if (fitHorizontal)
         {
             widget.Width += childGap;
-            widget.Width += Padding.Left + Padding.Right;
+            widget.Width += finalPadding.Left + finalPadding.Right;
         }
         if (fitVertical)
         {
-            widget.Height += Padding.Top + Padding.Bottom;
+            widget.Height += finalPadding.Top + finalPadding.Bottom;
         }
     }
 
@@ -86,11 +90,13 @@ public class HBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
+        var finalPadding = GetFinalPadding(parent);
+
         float remainingWidth = parent.Width;
         float remainingHeight = parent.Height;
 
-        remainingWidth -= Padding.Left + Padding.Right;
-        remainingHeight -= Padding.Top + Padding.Bottom;
+        remainingWidth -= finalPadding.Left + finalPadding.Right;
+        remainingHeight -= finalPadding.Top + finalPadding.Bottom;
 
         foreach (var child in visibleChildren)
         {
@@ -221,7 +227,8 @@ public class HBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
-        var x = Padding.Left;
+        var finalPadding = GetFinalPadding(parent);
+        var x = finalPadding.Left;
 
         foreach (var child in visibleChildren)
         {
@@ -235,13 +242,13 @@ public class HBoxLayout : Layout
                 vPolicy == FitPolicy.Policy.MinimumExpanding ||
                 vPolicy == FitPolicy.Policy.Ignored)
             {
-                finalHeight = parent.Height - Padding.Vertical;
+                finalHeight = parent.Height - finalPadding.Vertical;
             }
 
-            var y = Padding.Top + (Align switch
+            var y = finalPadding.Top + (Align switch
             {
-                VerticalAlignment.Center => (parent.Height - Padding.Vertical - finalHeight) / 2,
-                VerticalAlignment.Bottom => (parent.Height - Padding.Bottom - finalHeight),
+                VerticalAlignment.Center => (parent.Height - finalPadding.Vertical - finalHeight) / 2,
+                VerticalAlignment.Bottom => (parent.Height - finalPadding.Bottom - finalHeight),
                 _ => 0
             });
 

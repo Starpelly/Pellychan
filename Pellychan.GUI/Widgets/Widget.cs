@@ -188,17 +188,12 @@ public class Widget : IDisposable
         }
     }
 
-    protected virtual bool ShouldCache => false;
-
     private bool IsHovered { get; set; } = false;
     private Widget? m_lastHovered = null;
 
     private static Widget? s_mouseGrabber = null;
 
-    private bool m_isDirty = false;
-    private bool m_hasDirtyDescendants = false;
-
-    // Layout
+    #region Layout
     public Layout? Layout { get; set; }
 
     private FitPolicy m_fitPolicy = FitPolicy.FixedPolicy;
@@ -243,17 +238,29 @@ public class Widget : IDisposable
     public Action? OnPostLayoutUpdate;
     public Action? OnResized;
 
-    // Palette
+    /// <summary>
+    /// Gets and sets the margins around the content of the widget.
+    /// The margins are used by the layout system, and may be used by subclasses to specify the area to draw in (e.g. excluding the frame).
+    /// </summary>
+    public Margins ContentsMargins { get; set; } = new(0);
+
+    #endregion
+
+    #region Palette
+
     public ColorPalette Palette => Application.Palette;
 
     public ColorPalette EffectivePalette => Palette ?? Parent?.EffectivePalette ?? Application.Palette;
 
     public ColorGroup ColorGroup => Enabled ? ColorGroup.Active : ColorGroup.Disabled;
 
+    #endregion
+
     // Cursor
     public MouseCursor.CursorType? CursorShape = null;
-    
-    // Cache
+
+    #region Cache
+
     private SKSurface? m_cachedSurface;
     private SKImage? m_cachedImage;
     private int m_cachedWidth;
@@ -262,6 +269,13 @@ public class Widget : IDisposable
     // If top-level, owns a native window
     public bool IsTopLevel => Parent == null;
     internal SkiaWindow? m_nativeWindow;
+
+    private bool m_isDirty = false;
+    private bool m_hasDirtyDescendants = false;
+
+    protected virtual bool ShouldCache => false;
+
+    #endregion
 
     public Widget(Widget? parent = null)
     {

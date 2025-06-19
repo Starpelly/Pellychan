@@ -8,5 +8,6 @@ public class VLine : ShapedFrame
     public VLine(Widget? parent = null) : base(parent)
     {
         FrameShape = Shape.VLine;
+        Width = 1;
     }
 }

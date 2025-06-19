@@ -1,4 +1,5 @@
 ﻿using SkiaSharp;
+using System.Runtime.CompilerServices;
 
 namespace Pellychan.GUI;
 
@@ -82,6 +83,18 @@ public static class SKRectExtensions
     {
         var height = rect.Height;
         return new(rect.Left, y, rect.Right, y + height);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetX(this SKRectI rect)
+    {
+        return rect.Left;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetY(this SKRectI rect)
+    {
+        return rect.Top;
     }
 
     public static SKRectI SetWidth(this SKRectI rect, int width)
