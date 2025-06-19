@@ -58,4 +58,8 @@ public abstract class Style
     public abstract void DrawPushButton(SKCanvas canvas, PushButton button, StyleOptionButton option);
     public abstract void DrawScrollBar(SKCanvas canvas, ScrollBar scrollBar, StyleOptionScrollBar option);
     public abstract void DrawShapedFrame(SKCanvas canvas, ShapedFrame frame, StyleOptionShapedFrame option);
+
+    // Idk how I feel about this...
+    // I'm feeling like this should just be part of the palette?
+    public abstract SKColor GetFrameColor();
 }

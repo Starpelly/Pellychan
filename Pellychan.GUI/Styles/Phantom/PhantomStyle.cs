@@ -565,4 +565,9 @@ public class PhantomStyle : Style
                 throw new Exception("I'm lazy!");
         }
     }
+
+    public override SKColor GetFrameColor()
+    {
+        return m_swatch.GetColor(SwatchColor.Window_Outline);
+    }
 }

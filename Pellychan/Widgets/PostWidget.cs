@@ -64,20 +64,21 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
     {
         canvas.Save();
 
+        /*
         using var path = new SKPath();
-        path.AddRoundRect(new SKRect(0, 0, Width, Height), 2, 2);
+        path.AddRoundRect(new SKRect(0, 0, Width, Height), 6, 6);
         canvas.ClipPath(path, SKClipOperation.Intersect, true);
+        */
 
         base.OnPaint(canvas);
 
         canvas.Restore();
-
-        return;
+        
         using var paint = new SKPaint();
-        paint.Color = Palette.Get(ColorRole.Base);
+        paint.Color = Application.DefaultStyle.GetFrameColor();
         paint.IsStroke = true;
         paint.StrokeWidth = 1;
-        canvas.DrawRect(new SKRect(0, 0, Width - 1, Height - 1), paint);
+        canvas.DrawRoundRect(new SKRect(0, 0, Width - 1, Height - 1), 0, 0, paint);
     }
 
     public void OnMouseEnter()
