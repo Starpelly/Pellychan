@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pellychan.Resources", "Pell
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LayoutTesting", "LayoutTesting\LayoutTesting.csproj", "{741806A4-746A-43CD-90D6-43A0FAB87690}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pellychan.GUI.Tests", "Pellychan.GUI.Tests\Pellychan.GUI.Tests.csproj", "{A21C269F-B88E-4989-8AE8-C45399514555}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{741806A4-746A-43CD-90D6-43A0FAB87690}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{741806A4-746A-43CD-90D6-43A0FAB87690}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{741806A4-746A-43CD-90D6-43A0FAB87690}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A21C269F-B88E-4989-8AE8-C45399514555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A21C269F-B88E-4989-8AE8-C45399514555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A21C269F-B88E-4989-8AE8-C45399514555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A21C269F-B88E-4989-8AE8-C45399514555}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

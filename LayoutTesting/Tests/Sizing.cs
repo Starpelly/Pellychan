@@ -13,10 +13,20 @@ namespace LayoutTesting.Tests
         {
             Layout = new VBoxLayout
             {
-                Padding = new(32)
+                Padding = new(32),
             };
 
-            new Rect(SKColors.Red, this)
+            var frame = new ShapedFrame(this)
+            {
+                Fitting = FitPolicy.ExpandingPolicy,
+                Layout = new VBoxLayout
+                {
+                    // Padding = new(32),
+                },
+                ContentsMargins = new(16, 16, 1, 1)
+            };
+
+            new Rect(SKColors.Red, frame)
             {
                 Fitting = FitPolicy.ExpandingPolicy
             };

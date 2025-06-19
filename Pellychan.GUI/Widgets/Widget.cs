@@ -317,7 +317,7 @@ public class Widget : IDisposable
         if (parent != null)
             SetParent(parent);
 
-        if (IsTopLevel)
+        if (IsTopLevel && !Application.HeadlessMode)
         {
             Visible = false;
             initializeIfTopLevel();
@@ -651,7 +651,7 @@ public class Widget : IDisposable
         return IsTopLevel && m_nativeWindow!.ShouldClose;
     }
 
-    internal void PerformLayoutUpdate(LayoutFlushType type)
+    public void PerformLayoutUpdate(LayoutFlushType type)
     {
         if (Layout != null)
         {

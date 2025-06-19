@@ -74,19 +74,17 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     {
         Layout = new HBoxLayout
         {
-            // Padding = new(32)
+            Padding = new(32)
         };
 
-        /*
-        var mainHolder = new ShapedFrame(this)
+        Widget mainHolder;
+        mainHolder = new ShapedFrame(this)
         {
             Fitting = FitPolicy.ExpandingPolicy,
             Layout = new HBoxLayout
             {
             }
         };
-        */
-        var mainHolder = this;
 
         // Boards
         {

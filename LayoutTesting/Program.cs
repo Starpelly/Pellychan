@@ -9,7 +9,7 @@ namespace LayoutTesting
         {
             using var app = new Application();
 
-            var mainWindow = new Testy();
+            var mainWindow = new Sizing();
             mainWindow.SetWindowTitle("Layout Testing");
             mainWindow.Resize(1280, 720);
             mainWindow.Show();

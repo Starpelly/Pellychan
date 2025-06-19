@@ -37,6 +37,8 @@ public class Application : IDisposable
 
     internal static bool DebugDrawing = false;
 
+    public static bool HeadlessMode { get; set; } = false;
+
     /// <summary>
     /// 
     /// </summary>
