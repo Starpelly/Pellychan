@@ -244,6 +244,26 @@ public class Widget : IDisposable
     /// </summary>
     public Margins ContentsMargins { get; set; } = new(0);
 
+    private SKPointI m_contentPositions = new(0, 0);
+
+    /// <summary>
+    /// Gets and sets the position of the content relative to the widget.
+    /// Used for positioning stuff that is affected by the layout system (e.g. a <see cref="ScrollArea"/> panning the content.
+    /// </summary>
+    public SKPointI ContentsPositions
+    {
+        get => m_contentPositions;
+        set
+        {
+            if (m_contentPositions != value)
+            {
+                m_contentPositions = value;
+
+                Application.LayoutQueue.Enqueue(this);
+            }
+        }
+    }
+
     #endregion
 
     #region Palette

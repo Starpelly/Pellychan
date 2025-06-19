@@ -243,7 +243,7 @@ public class VBoxLayout : Layout
             return;
 
         var finalPadding = GetFinalPadding(parent);
-        var y = finalPadding.Top;
+        var y = finalPadding.Top - parent.ContentsPositions.Y;
 
         foreach (var child in visibleChildren)
         {
@@ -265,7 +265,7 @@ public class VBoxLayout : Layout
                 HorizontalAlignment.Center => (parent.Width - finalPadding.Horizontal - finalWidth) / 2,
                 HorizontalAlignment.Right => (parent.Width - finalPadding.Right - finalWidth),
                 _ => 0
-            });
+            }) + parent.ContentsPositions.X;
 
             child.SetPosition(x, y);
 

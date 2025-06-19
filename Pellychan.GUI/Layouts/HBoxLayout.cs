@@ -228,7 +228,7 @@ public class HBoxLayout : Layout
             return;
 
         var finalPadding = GetFinalPadding(parent);
-        var x = finalPadding.Left;
+        var x = finalPadding.Left - parent.ContentsPositions.X;
 
         foreach (var child in visibleChildren)
         {
@@ -250,7 +250,7 @@ public class HBoxLayout : Layout
                 VerticalAlignment.Center => (parent.Height - finalPadding.Vertical - finalHeight) / 2,
                 VerticalAlignment.Bottom => (parent.Height - finalPadding.Bottom - finalHeight),
                 _ => 0
-            });
+            }) + parent.ContentsPositions.Y;
 
             child.SetPosition(x, y);
 

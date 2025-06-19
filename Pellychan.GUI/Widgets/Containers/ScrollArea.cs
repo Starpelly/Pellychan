@@ -50,7 +50,7 @@ public class ScrollArea : Widget, IMouseWheelHandler
                     value += minY;
                 }
 
-                m_childWidget.Y = -value;
+                ContentFrame.ContentsPositions = new(ContentFrame.ContentsPositions.X, -value);
             }
         };
 

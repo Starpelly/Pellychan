@@ -48,11 +48,11 @@ namespace Pellychan.GUI.Widgets
             var active = m_open || m_hovering;
 
             var bgColor = active
-                ? EffectivePalette.Get(ColorGroup.Active, ColorRole.Highlight)
-                : EffectivePalette.Get(ColorGroup.Active, ColorRole.Window);
+                ? EffectivePalette.Get(ColorRole.Highlight)
+                : EffectivePalette.Get(ColorRole.Window);
             var textColor = active
-                ? EffectivePalette.Get(ColorGroup.Active, ColorRole.HighlightedText)
-                : EffectivePalette.Get(ColorGroup.Active, ColorRole.Text);
+                ? EffectivePalette.Get(ColorRole.HighlightedText)
+                : EffectivePalette.Get(ColorRole.Text);
 
             using var paint = new SKPaint();
             paint.Color = bgColor;

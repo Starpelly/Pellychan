@@ -8,7 +8,7 @@ public abstract class Layout
     public Padding Padding { get; set; } = new(0);
     public int Spacing { get; set; } = 0;
 
-    public bool PerformingPasses { get; private set; } = false;
+    internal bool PerformingPasses { get; private set; } = false;
 
     public void Start()
     {
