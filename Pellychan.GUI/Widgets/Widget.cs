@@ -53,6 +53,13 @@ public interface IResizeHandler
 
 public class Widget : IDisposable
 {
+    private string m_name = string.Empty;
+    public string Name
+    {
+        get => m_name;
+        set => m_name = value;
+    }
+
     private Widget? m_parent;
     public Widget? Parent
     {
@@ -89,8 +96,11 @@ public class Widget : IDisposable
         get => m_width;
         set
         {
-            m_width = value;
-            dispatchResize();
+            if (m_width != value)
+            {
+                m_width = value;
+                dispatchResize();
+            }
         }
     }
     public int Height
@@ -98,8 +108,11 @@ public class Widget : IDisposable
         get => m_height;
         set
         {
-            m_height = value;
-            dispatchResize();
+            if (m_height != value)
+            {
+                m_height = value;
+                dispatchResize();
+            }
         }
     }
 
@@ -259,7 +272,7 @@ public class Widget : IDisposable
             {
                 m_contentPositions = value;
 
-                Application.LayoutQueue.Enqueue(this);
+                Application.LayoutQueue.Enqueue(this, LayoutFlushType.Position);
             }
         }
     }
@@ -299,6 +312,8 @@ public class Widget : IDisposable
 
     public Widget(Widget? parent = null)
     {
+        m_name = GetType().Name;
+
         if (parent != null)
             SetParent(parent);
 
@@ -563,28 +578,40 @@ public class Widget : IDisposable
             }
         }
 
-        // Debug shit
-        if (Application.DebugDrawing)
-        {
-            canvas.Save();
-            canvas.ResetMatrix();
-
-            // Skia unfortunately doesn't have an API for clearing the clip rect. SO if you have a monitor bigger than this, God help you.
-            canvas.ClipRect(new SKRect(0, 0, 40000, 40000));
-
-            using var debugPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Red };
-            canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), debugPaint);
-
-            canvas.Restore();
-        }
-
         // clipStack.Pop();
         canvas.Restore();
 
         m_hasDirtyDescendants = false;
     }
 
-    internal void RenderTopLevel()
+    internal void DrawDebug(SKCanvas canvas)
+    {
+        if (m_height <= 0 || m_height <= 0 || !m_visible)
+            return;
+
+        var globalPos = getGlobalPosition();
+
+        canvas.Save();
+        canvas.ResetMatrix();
+
+        using var debugPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Red };
+        canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), debugPaint);
+
+        canvas.Restore();
+
+        if (m_children.Count > 0)
+        {
+            foreach (var child in m_children)
+            {
+                if (!child.m_visible)
+                    continue;
+
+                child.DrawDebug(canvas);
+            }
+        }
+    }
+
+    internal void RenderTopLevel(bool debug)
     {
         if (!IsTopLevel) return;
         if (m_height == 0 || m_height == 0) return;
@@ -605,6 +632,11 @@ public class Widget : IDisposable
 
         Paint(canvas, rootClip);
 
+        if (debug)
+        {
+            DrawDebug(canvas);
+        }
+
         canvas.Flush();
 
         // canvas.Flush();
@@ -619,7 +651,7 @@ public class Widget : IDisposable
         return IsTopLevel && m_nativeWindow!.ShouldClose;
     }
 
-    internal void PerformLayoutUpdate()
+    internal void PerformLayoutUpdate(LayoutFlushType type)
     {
         if (Layout != null)
         {
@@ -628,9 +660,21 @@ public class Widget : IDisposable
             OnPreLayout();
 
             Layout.Start();
-            Layout.FitSizingPass(this);
-            Layout.GrowSizingPass(this);
-            Layout.PositionsPass(this);
+            switch (type)
+            {
+                case LayoutFlushType.All:
+                    Layout.FitSizingPass(this);
+                    Layout.GrowSizingPass(this);
+                    Layout.PositionsPass(this);
+                    break;
+                case LayoutFlushType.Position:
+                    Layout.PositionsPass(this);
+                    break;
+                case LayoutFlushType.Size:
+                    Layout.FitSizingPass(this);
+                    Layout.GrowSizingPass(this);
+                    break;
+            }
             Layout.End();
 
             OnPostLayout();
@@ -658,7 +702,7 @@ public class Widget : IDisposable
             if (Layout.PerformingPasses)
                 return;
 
-            Application.LayoutQueue.Enqueue(this);
+            Application.LayoutQueue.Enqueue(this, LayoutFlushType.All);
             shouldInvalidateChildren = true;
         }
 
@@ -962,7 +1006,7 @@ public class Widget : IDisposable
         // Invalidate();
 
         Application.LayoutQueue.Flush();
-        RenderTopLevel();
+        RenderTopLevel(Application.DebugDrawing);
     }
 
     #endregion

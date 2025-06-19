@@ -21,12 +21,13 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     private readonly List<Label> m_labels = [];
     private readonly List<PostWidget> m_postWidgets = [];
+    public List<PostWidget> Tester => m_postWidgets;
 
     private ScrollArea m_mainContentWidget;
 
     private int m_clickCount = 0;
 
-    private int test_count = 8;
+    private int test_count = 1;
 
     public PellychanWindow() : base()
     {
@@ -35,9 +36,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         // createMenubar();
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-        m_chanClient.CurrentBoard = "v";
+        m_chanClient.CurrentBoard = "g";
 
-        m_thread = m_chanClient.GetThreadAsync("712960801").GetAwaiter().GetResult();
+        m_thread = m_chanClient.GetThreadAsync("105628073").GetAwaiter().GetResult();
 
         m_labelPaint.Color = SKColors.White;
 
@@ -73,9 +74,10 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     {
         Layout = new HBoxLayout
         {
-            Padding = new(32)
+            // Padding = new(32)
         };
 
+        /*
         var mainHolder = new ShapedFrame(this)
         {
             Fitting = FitPolicy.ExpandingPolicy,
@@ -83,6 +85,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             {
             }
         };
+        */
+        var mainHolder = this;
 
         // Boards
         {
@@ -93,7 +97,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     Spacing = 0,
                 },
                 Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-                Width = 200
+                Width = 200,
+                Name = "Boards container"
             };
 
             var boardsListContainer = new Rect(Application.Palette.Get(ColorRole.Base), boardsContainer)
@@ -175,6 +180,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             m_mainContentWidget = new ScrollArea(mainHolder)
             {
                 Fitting = FitPolicy.ExpandingPolicy,
+                Name = "Main Content Holder"
             };
             m_mainContentWidget.ContentFrame.Layout = new HBoxLayout
             {
@@ -186,7 +192,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 Layout = new VBoxLayout
                 {
                     Spacing = 1,
-                }
+                },
+                Name = "Posts Lists Holder"
             };
 
             for (var i = 0; i < test_count; i++)

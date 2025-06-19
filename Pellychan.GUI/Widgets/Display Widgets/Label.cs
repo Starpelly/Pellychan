@@ -54,13 +54,16 @@ public class Label : Widget, IPaintHandler
     public void OnPaint(SKCanvas canvas)
     {
         float x = 0, y = m_font.Size;
-        
+
         // canvas.DrawText(Text, new SKPoint(0, m_font.Size), m_font, m_paint);
         // return;
 
         foreach (var frag in m_textFragments)
         {
             var words = frag.Text.Split(' ');
+
+            m_font.Embolden = frag.IsBold;
+            m_paint.Color = frag.TextColor;
 
             foreach (var word in words)
             {
@@ -71,19 +74,89 @@ public class Label : Widget, IPaintHandler
                     continue;
                 }
 
-                var width = m_font.MeasureText(word + " ");
-                if (WordWrap && x + width > Width)
+                var textWidth = m_font.MeasureText(word + " ");
+                if (WordWrap && x + textWidth > Width)
                 {
                     x = 0;
                     y += m_font.Size + LineSpacing;
                 }
 
-                m_font.Embolden = frag.IsBold;
-                m_paint.Color = frag.TextColor;
                 canvas.DrawText(word + " ", x, y, m_font, m_paint);
-                x += width;
+                x += textWidth;
             }
         }
+    }
+
+    public int MeasureHeightFromWidth(int width)
+    {
+        float x = 0;
+        float retHeight = m_font.Size + LineSpacing;
+        foreach (var frag in m_textFragments)
+        {
+            var words = frag.Text.Split(' ');
+
+            foreach (var word in words)
+            {
+                if (word == "\n")
+                {
+                    x = 0;
+                    retHeight += m_font.Size + LineSpacing;
+                    continue;
+                }
+
+                var textWidth = m_font.MeasureText(word + " ");
+                if (WordWrap && x + textWidth > width)
+                {
+                    x = 0;
+                    retHeight += m_font.Size + LineSpacing;
+                }
+
+                x += textWidth;
+            }
+        }
+        return (int)retHeight;
+    }
+
+    public (int, int) MeasureSizeFromText()
+    {
+        float maxLineWidth = 0;
+        float currentLineWidth = 0;
+        float totalHeight = m_font.Size + LineSpacing;
+
+        void onNewLine()
+        {
+            maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
+            totalHeight += m_font.Size + LineSpacing;
+            currentLineWidth = 0;
+        }
+
+        foreach (var frag in m_textFragments)
+        {
+            var words = frag.Text.Split(' ');
+
+            foreach (var word in words)
+            {
+                if (word == "\n")
+                {
+                    onNewLine();
+                    continue;
+                }
+
+                var textWidth = m_font.MeasureText(word + " ");
+                if (WordWrap && currentLineWidth + textWidth > m_maxWidth)
+                {
+                    onNewLine();
+                }
+
+                currentLineWidth += textWidth;
+            }
+        }
+
+        maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
+
+        int width = WordWrap ? Math.Min((int)maxLineWidth, m_maxWidth) : (int)maxLineWidth;
+        int height = (int)totalHeight;
+        return (width, height);
     }
 
     #region Private methods
@@ -143,12 +216,16 @@ public class Label : Widget, IPaintHandler
 
     private void updateSize()
     {
-        if (string.IsNullOrEmpty(Text))
+        if (string.IsNullOrEmpty(m_text))
         {
             Resize(0, 0);
             return;
         }
 
+        var res = MeasureSizeFromText();
+        Resize(res.Item1, res.Item2);
+
+        /*
         float maxLineWidth = 0;
         float currentLineWidth = 0;
         float totalHeight = m_font.Size;
@@ -190,6 +267,7 @@ public class Label : Widget, IPaintHandler
         int height = (int)totalHeight + 4;
 
         Resize(width, height);
+        */
     }
 
     // Truncate text to fit with "..." at the end

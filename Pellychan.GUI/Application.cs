@@ -1,4 +1,5 @@
-﻿using Pellychan.GUI.Platform.Skia;
+﻿using Pellychan.GUI.Layouts;
+using Pellychan.GUI.Platform.Skia;
 using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
@@ -43,10 +44,18 @@ public class Application : IDisposable
 
     internal static class LayoutQueue
     {
-        private static readonly HashSet<Widget> s_dirtyWidgets = [];
+        private static readonly HashSet<DirtyWidget> s_dirtyWidgets = [];
         public static bool IsFlusing { get; private set; } = false;
 
-        public static void Enqueue(Widget widget)
+        private const bool LogChanges = false;
+
+        private struct DirtyWidget
+        {
+            public LayoutFlushType FlushType;
+            public Widget Widget;
+        }
+
+        public static void Enqueue(Widget widget, LayoutFlushType flushType)
         {
             // Why would this be the case? Idk...
             if (widget == null)
@@ -54,35 +63,64 @@ public class Application : IDisposable
             if (widget.Layout == null)
                 return;
 
-            // Console.WriteLine($"Enqued: {widget.GetType().Name}");
+            var oldCount = s_dirtyWidgets.Count;
 
-            s_dirtyWidgets.Add(widget);
+            s_dirtyWidgets.Add(new()
+            {
+                Widget = widget,
+                FlushType = flushType
+            });
+
+            if (s_dirtyWidgets.Count > oldCount && LogChanges)
+                Console.WriteLine($"Enqued: {widget.Name}");
         }
 
         public static void Flush()
         {
             IsFlusing = true;
 
+            bool hadWorkAll = s_dirtyWidgets.Count > 0;
+            if (hadWorkAll && LogChanges)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("========================Started flush!========================");
+                Console.ResetColor();
+            }
+
             while (true)
             {
-                Widget[] toWork;
+                bool hadWork = s_dirtyWidgets.Count > 0;
+                if (hadWork && LogChanges)
+                    Console.WriteLine("------------------Layout Flush Start------------------");
+
+                var toWork = new DirtyWidget[s_dirtyWidgets.Count];
                 lock (s_dirtyWidgets)
                 {
                     if (s_dirtyWidgets.Count == 0)
                         break;
 
-                    toWork = s_dirtyWidgets.ToArray();
+                    s_dirtyWidgets.CopyTo(toWork);
                     s_dirtyWidgets.Clear();
                 }
 
-                foreach (var widget in toWork)
+                foreach (var dirty in toWork)
                 {
                     // Sometimes this can be null? I don't know how or why
                     // but I guess we'll handle it in that case???
-                    widget?.PerformLayoutUpdate();
+                    dirty.Widget?.PerformLayoutUpdate(dirty.FlushType);
                 }
+
+                if (hadWork && LogChanges)
+                    Console.WriteLine("------------------Layout Flush End------------------");
             }
             IsFlusing = false;
+
+            if (hadWorkAll && LogChanges)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("=========================Ended flush!=========================");
+                Console.ResetColor();
+            }
         }
     }
 
@@ -146,7 +184,7 @@ public class Application : IDisposable
                 }
                 else
                 {
-                    w.RenderTopLevel();
+                    w.RenderTopLevel(Application.DebugDrawing);
                 }
             }
 
@@ -221,8 +259,8 @@ public class Application : IDisposable
     private ColorPalette getDefaultColorPalette()
     {
         ThemeColors c = new();
-        // setCarbon(ref c);
-        setPolar(ref c);
+        setCarbon(ref c);
+        // setPolar(ref c);
         // setStealth(ref c);
         // setSakura(ref c);
 

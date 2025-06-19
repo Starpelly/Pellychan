@@ -103,7 +103,7 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
 
         Resize(Image!.Width, Image.Height);
 
-        (Parent as PostWidget)?.SetTempShit(true);
+        (Parent as PostWidget)?.SetHeight();
     }
 
     private void loadFull()
@@ -159,11 +159,12 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
     private readonly Thumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
     private readonly Label m_dateLabel;
-    private readonly NullWidget m_commentHolder;
     private readonly Label m_commentLabel;
 
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
     {
+        Name = "A Post widget!!!";
+
         m_apiPost = post;
 
         // UI Layout
@@ -187,40 +188,31 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
 
-        m_commentHolder = new(this)
-        {
-            Y = m_nameLabel.Y + m_nameLabel.Height + 4,
-
-            Layout = new VBoxLayout
-            {
-            },
-
-            CatchCursorEvents = false,
-        };
+        var commentY = m_nameLabel.Y + m_nameLabel.Height + 4;
 
         m_previewBitmap = new(m_apiPost, this)
         {
             X = Padding.Left,
-            Y = m_commentHolder.Y,
+            Y = commentY,
         };
 
-        m_commentLabel = new Label(Application.DefaultFont, m_commentHolder)
+        m_commentLabel = new Label(Application.DefaultFont, this)
         {
+            Y = commentY,
+
             Text = decoded,
             WordWrap = true,
 
-            Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed),
+            Fitting = new(GUI.Layouts.FitPolicy.Policy.Fixed, GUI.Layouts.FitPolicy.Policy.Fixed),
             CatchCursorEvents = false,
         };
-
-        SetTempShit(true);
     }
 
     public void SetBitmapPreview(SKBitmap thumbnail)
     {
         m_previewBitmap.SetThumbnail(thumbnail);
 
-        SetTempShit(true);
+        SetHeight();
     }
 
     public void OnPaint(SKCanvas canvas)
@@ -231,26 +223,41 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
         canvas.DrawRect(new(0, 0, Width, Height), paint);
     }
 
-    public void SetTempShit(bool setHeight)
+    public void OnResize(int width, int height)
     {
-        if (setHeight)
+        SetHeight();
+    }
+
+    #region Private methods
+
+    internal void SetHeight()
+    {
+        SetPositions();
+
+        m_commentLabel.Width = Width - m_commentLabel.X - Padding.Right;
+        m_commentLabel.Height = m_commentLabel.MeasureHeightFromWidth(m_commentLabel.Width);
+
+        int newHeight = 0;
+        if (m_commentLabel.Height > m_previewBitmap.Height)
         {
-            int newHeight;
-            newHeight = m_previewBitmap.Height + (m_previewBitmap.Y) + Padding.Bottom;
-            newHeight = Math.Max(100, newHeight);
-            Height = newHeight;
+            newHeight += m_commentLabel.Height + 4;
+        }
+        else
+        {
+            newHeight = m_previewBitmap.Height + 4;
         }
 
-        m_commentHolder.X = Padding.Left + (m_previewBitmap.Image != null ? (m_previewBitmap.Width + 8) : 0);
-        m_commentHolder.Width = Width - m_commentHolder.X - Padding.Right;
-        m_commentHolder.Height = Height - m_commentHolder.Y - Padding.Bottom;
+        // newHeight = Math.Max(100, newHeight);
+        Height = newHeight + Padding.Top + m_nameLabel.Height + Padding.Bottom;
+    }
+
+    internal void SetPositions()
+    {
+        m_commentLabel.X = Padding.Left + (m_previewBitmap.Image != null ? (m_previewBitmap.Width + 8) : 0);
 
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
     }
 
-    public void OnResize(int width, int height)
-    {
-        SetTempShit(false);
-    }
+    #endregion
 }

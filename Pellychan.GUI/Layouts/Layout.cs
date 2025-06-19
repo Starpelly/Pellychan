@@ -3,6 +3,13 @@ using SkiaSharp;
 
 namespace Pellychan.GUI.Layouts;
 
+public enum LayoutFlushType
+{
+    All = 0,
+    Position,
+    Size
+}
+
 public abstract class Layout
 {
     public Padding Padding { get; set; } = new(0);
