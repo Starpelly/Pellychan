@@ -6,7 +6,7 @@ namespace Pellychan.GUI.Styles.Phantom;
 
 public class PhantomStyle : Style
 {
-    private PHSwatch m_swatch = new();
+    private readonly PHSwatch m_swatch = new();
 
     #region Adjustments
 
@@ -535,6 +535,26 @@ public class PhantomStyle : Style
             }
             int adj = Math.Min(bgRect.Width, bgRect.Height) / 4;
             DrawArrow(canvas, bgRect.Adjusted(adj, adj, -adj, -adj), arrowType, m_swatch.GetColor(hasRange ? SwatchColor.Indicator_Current : SwatchColor.Indicator_Disabled));
+        }
+    }
+
+    public override void DrawShapedFrame(SKCanvas canvas, ShapedFrame frame, StyleOptionShapedFrame option)
+    {
+        using var paint = new SKPaint();
+        paint.Color = m_swatch.GetColor(SwatchColor.Window_Outline);
+        switch (frame.FrameShape)
+        {
+            case ShapedFrame.Shape.HLine:
+
+                break;
+            case ShapedFrame.Shape.VLine:
+                var r = new SKRectI(0, 0, frame.Width, frame.Height);
+                r = r.SetX(r.Left + r.Width / 2);
+                r = r.SetWidth(1);
+                canvas.DrawRect(r, paint);
+                break;
+            default:
+                throw new Exception("I'm lazy!");
         }
     }
 }

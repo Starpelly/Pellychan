@@ -34,11 +34,11 @@ public struct PHSwatch
 
     public void LoadFromPalette(ColorPalette palette)
     {
-        const bool isEnabled = true;
+        bool isEnabled = palette.CurrentColorGroup != ColorGroup.Disabled;
 
         var colors = new SwatchColorMap();
 
-        SKColor getPal(ColorRole role) => palette.Get(ColorGroup.Active, role);
+        SKColor getPal(ColorRole role) => palette.Get(role);
 
         colors[SwatchColor.None] = SKColors.Transparent;
 

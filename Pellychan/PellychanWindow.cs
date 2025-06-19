@@ -151,9 +151,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             };
         }
 
-        // Separator (temp?)
+        // Separator
         {
-            new Rect(new SKColor(42, 42, 45), this)
+            new VLine(this)
             {
                 Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
                 Width = 1

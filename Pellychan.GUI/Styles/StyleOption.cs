@@ -43,3 +43,7 @@ public class StyleOptionScrollBar : StyleOptionComplex
 
     public Dictionary<ScrollBar.SubControl, SKRectI> SubControlRects { get; } = [];
 }
+
+public class StyleOptionShapedFrame : StyleOption
+{
+}

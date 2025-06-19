@@ -246,7 +246,7 @@ public class Widget : IDisposable
     // Palette
     public ColorPalette Palette => Application.Palette;
 
-    public ColorPalette EffectivePalette => Palette ?? Parent?.EffectivePalette ?? ColorPalette.Default;
+    public ColorPalette EffectivePalette => Palette ?? Parent?.EffectivePalette ?? Application.Palette;
 
     public ColorGroup ColorGroup => Enabled ? ColorGroup.Active : ColorGroup.Disabled;
 

@@ -96,8 +96,8 @@ public class Application : IDisposable
                           SDL3 Video driver: {SDL3.SDL_GetCurrentVideoDriver()}");
 
         using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-        using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        // using var typeface = SKTypeface.FromStream(fontStream);
+        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        using var typeface = SKTypeface.FromStream(fontStream);
 
         const int dpi = 96;
         const float pixelsPerPoint = dpi / 72.0f;
@@ -111,7 +111,7 @@ public class Application : IDisposable
             Typeface = typeface,
             Size = skiaFontSize
         };
-        m_palette = ColorPalette.Default;
+        m_palette = getDefaultColorPalette();
 
         // Load default style last
         m_defaultStyle = new PhantomStyle();
@@ -160,4 +160,172 @@ public class Application : IDisposable
         SDL3.SDL_Quit();
         GC.SuppressFinalize(this);
     }
+
+    #region Private methods
+
+    private struct ThemeColors
+    {
+        public SKColor window;
+        public SKColor text;
+        public SKColor disabledText;
+        public SKColor brightText;
+        public SKColor highlight;
+        public SKColor highlightedText;
+        public SKColor @base;
+        public SKColor alternateBase;
+        public SKColor shadow;
+        public SKColor button;
+        public SKColor disabledButton;
+        public SKColor unreadBadge;
+        public SKColor unreadBadgeText;
+        public SKColor icon;
+        public SKColor disabledIcon;
+        public SKColor chatTimestampText;
+
+        public readonly ColorPalette ToPalette()
+        {
+            var pal = new ColorPalette();
+
+            pal.Set(ColorRole.Window, this.window);
+            pal.Set(ColorRole.WindowText, this.text);
+            pal.Set(ColorRole.Text, this.text);
+            pal.Set(ColorRole.ButtonText, this.text);
+            // if (this.brightText.isValid())
+            pal.Set(ColorRole.BrightText, this.brightText);
+            pal.Set(ColorGroup.Disabled, ColorRole.WindowText, this.disabledText);
+            pal.Set(ColorGroup.Disabled, ColorRole.Text, this.disabledText);
+            pal.Set(ColorGroup.Disabled, ColorRole.ButtonText, this.disabledText);
+            pal.Set(ColorRole.Base, this.@base);
+            pal.Set(ColorRole.AlternateBase, this.alternateBase);
+            // if (this.shadow.isValid())
+            pal.Set(ColorRole.Shadow, this.shadow);
+            pal.Set(ColorRole.Button, this.button);
+            pal.Set(ColorRole.Highlight, this.highlight);
+            pal.Set(ColorRole.HighlightedText, this.highlightedText);
+            // if (this.disabledButton.isValid())
+            pal.Set(ColorGroup.Disabled, ColorRole.Button, this.disabledButton);
+            // Used as the shadow text color on disabled menu items
+            pal.Set(ColorGroup.Disabled, ColorRole.Light, SKColors.Transparent);
+
+            return pal;
+        }
+    };
+
+    private ColorPalette getDefaultColorPalette()
+    {
+        ThemeColors c = new();
+        // setCarbon(ref c);
+        setPolar(ref c);
+        // setStealth(ref c);
+        // setSakura(ref c);
+
+        return c.ToPalette();
+    }
+
+    private void setCarbon(ref ThemeColors c)
+    {
+        var window = new SKColor(60, 61, 64);
+        var button = new SKColor(74, 75, 80);
+        var @base = new SKColor(46, 47, 49);
+        var alternateBase = new SKColor(41, 41, 43);
+        var text = new SKColor(208, 209, 212);
+        var highlight = new SKColor(0xbfc7d5);
+        var highlightedText = new SKColor(0x2d2c27);
+        var disabledText = new SKColor(0x60a4a6a8);
+
+        disabledText = disabledText.Darker(120); // old
+        c.window = window;
+        c.text = text;
+        c.disabledText = disabledText;
+        c.@base = @base;
+        c.alternateBase = alternateBase;
+        c.shadow = @base;
+        c.button = button;
+        c.disabledButton = button.Darker(107);
+        c.brightText = SKColors.White;
+        c.highlight = highlight;
+        c.highlightedText = highlightedText;
+        c.icon = text;
+        c.disabledIcon = c.disabledText;
+        c.unreadBadge = c.text;
+        c.unreadBadgeText = c.highlightedText;
+        c.chatTimestampText = c.@base.Lighter(160);
+    }
+
+    private void setPolar(ref ThemeColors c)
+    {
+        var snow = new SKColor(251, 252, 254);
+        var callout = new SKColor(90, 97, 111);
+        var bright = new SKColor(237, 236, 241);
+        var lessBright = new SKColor(234, 234, 238);
+        var dimmer = new SKColor(221, 221, 226);
+        var text = new SKColor(18, 18, 24);
+        var disabledText = new SKColor(140, 140, 145);
+        c.window = bright;
+        c.highlight = callout;
+        c.highlightedText = new SKColor(255, 255, 255);
+        c.@base = snow;
+        c.alternateBase = lessBright;
+        c.button = bright;
+        c.text = text;
+        c.disabledText = disabledText;
+        c.icon = new SKColor(105, 107, 113);
+        c.disabledIcon = c.disabledText.Lighter(125);
+        c.unreadBadge = c.highlight;
+        c.unreadBadgeText = c.highlightedText;
+        c.chatTimestampText = c.@base.Darker(130);
+    }
+
+    private void setStealth(ref ThemeColors c)
+    {
+        var window = new SKColor(30, 31, 32);
+        var button = new SKColor(41, 42, 44);
+        var @base = new SKColor(23, 24, 25);
+        var alternateBase = new SKColor(19, 19, 22);
+        var text = new SKColor(212, 209, 208);
+        var highlight = new SKColor(211, 210, 208);
+        var highlightedText = new SKColor(0x2d2c27);
+        var disabledText = new SKColor(0x60a4a6a8);
+        c.window = window;
+        c.text = text;
+        c.disabledText = disabledText.Darker(150);
+        c.@base = @base;
+        c.alternateBase = alternateBase;
+        c.shadow = @base;
+        c.button = button;
+        c.disabledButton = button.Darker(107);
+        c.brightText = SKColors.White;
+        c.highlight = highlight;
+        c.highlightedText = highlightedText;
+        c.icon = text;
+        c.disabledIcon = c.disabledText;
+        c.unreadBadge = c.text;
+        c.unreadBadgeText = c.highlightedText;
+        c.chatTimestampText = c.@base.Lighter(160);
+    }
+
+    private void setSakura(ref ThemeColors c)
+    {
+        var callout = new SKColor(156, 112, 160);
+        var bright = new SKColor(252, 234, 243);
+        var lessBright = new SKColor(242, 234, 237);
+        var dimmer = new SKColor(255, 219, 250);
+        var text = new SKColor(24, 18, 18);
+        var disabledText = new SKColor(145, 140, 140);
+        c.window = bright;
+        c.highlight = callout;
+        c.highlightedText = new SKColor(255, 255, 255);
+        c.@base = new SKColor(255, 247, 252);
+        c.alternateBase = lessBright;
+        c.button = dimmer;
+        c.text = text;
+        c.disabledText = disabledText;
+        c.icon = new SKColor(120, 100, 112);
+        c.disabledIcon = c.disabledText.Lighter(125);
+        c.unreadBadge = c.highlight;
+        c.unreadBadgeText = c.highlightedText;
+        c.chatTimestampText = c.@base.Darker(130);
+    }
+
+    #endregion
 }

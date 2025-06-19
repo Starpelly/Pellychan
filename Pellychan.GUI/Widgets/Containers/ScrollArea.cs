@@ -76,7 +76,7 @@ public class ScrollArea : Widget, IMouseWheelHandler
 
     public void OnMouseScroll(int x, int y, int deltaX, int deltaY)
     {
-        VerticalScrollbar.Value -= deltaY * VerticalScrollbar.PageStep / 2;
+        VerticalScrollbar.Value -= deltaY * VerticalScrollbar.PageStep / 4;
         VerticalScrollbar.Value = Math.Clamp(VerticalScrollbar.Value, VerticalScrollbar.Minimum, VerticalScrollbar.Maximum);
     }
 

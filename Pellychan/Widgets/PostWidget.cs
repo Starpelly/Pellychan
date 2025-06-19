@@ -65,7 +65,7 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
         canvas.Save();
 
         using var path = new SKPath();
-        path.AddRoundRect(new SKRect(0, 0, Width, Height), 6, 6);
+        path.AddRoundRect(new SKRect(0, 0, Width, Height), 2, 2);
         canvas.ClipPath(path, SKClipOperation.Intersect, true);
 
         base.OnPaint(canvas);
