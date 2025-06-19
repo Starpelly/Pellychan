@@ -1,15 +1,18 @@
 ﻿using Pellychan.GUI.Widgets;
 using SkiaSharp;
+using System.Reflection;
 
 namespace Pellychan.GUI.Styles.Phantom;
 
 public class PhantomStyle : Style
 {
     private PHSwatch m_swatch = new();
-    
+
     #region Adjustments
 
-    private const float PushButton_Rounding = 2.0f;
+    internal const float PushButton_Rounding = 2.0f;
+    internal const bool Scrollbar_Shadows = true;
+    internal const int Num_ShadowSteps = 3;
 
     #endregion
 
@@ -284,7 +287,21 @@ public class PhantomStyle : Style
             // Top or left dark edge
             FillRectEdges(canvas, scrollBarGroove, edges, new(1), m_swatch.GetColor(SwatchColor.Window_Outline));
 
+            // Ring shadow
+            paint.IsStroke = true;
+            paint.StrokeWidth = 1;
+            if (Scrollbar_Shadows && isEnabled)
+            {
+                for (int i = 0; i < Num_ShadowSteps; ++i)
+                {
+                    paint.Color = m_swatch.ScrollbarShadowColors[i];
+                    canvas.DrawRect(new SKRectI(r.Left, r.Top, r.Right - 1, r.Bottom - 1), paint);
+                    r = r.Adjusted(1, 1, -1, -1);
+                }
+            }
+
             // General BG fill
+            paint.IsStroke = false;
             paint.Color = m_swatch.GetColor(grooveColor);
             canvas.DrawRect(r, paint);
         }

@@ -7,7 +7,8 @@ using Dc = DeriveColors;
 
 public struct PHSwatch
 {
-    public SKPaint[] Paints = new SKPaint[(int)SwatchColor.Num];
+    public readonly SKPaint[] Paints = new SKPaint[(int)SwatchColor.Num];
+    public readonly SKColor[] ScrollbarShadowColors = new SKColor[PhantomStyle.Num_ShadowSteps];
 
     private class SwatchColorMap
     {
@@ -91,6 +92,14 @@ public struct PHSwatch
             {
                 Color = colors[i]
             };
+        }
+
+        var gutterGrad = new Grad(Dc.SliderGutterShadowOf(colors[SwatchColor.ScrollbarGutter]),
+                colors[SwatchColor.ScrollbarGutter]);
+        for (int i = 0; i < PhantomStyle.Num_ShadowSteps; ++i)
+        {
+            ScrollbarShadowColors[i] =
+                gutterGrad.Sample((double)i / (double)PhantomStyle.Num_ShadowSteps);
         }
     }
 }

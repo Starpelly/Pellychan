@@ -83,4 +83,56 @@ public static class SKRectExtensions
         var height = rect.Height;
         return new(rect.Left, y, rect.Right, y + height);
     }
+
+    public static SKRectI SetWidth(this SKRectI rect, int width)
+    {
+        return new SKRectI(rect.Left, rect.Top, rect.Left + width, rect.Bottom);
+    }
+
+    public static SKRectI SetHeight(this SKRectI rect, int height)
+    {
+        return new SKRectI(rect.Left, rect.Top, rect.Right, rect.Top + height);
+    }
+
+    public static SKRectI SetSize(this SKRectI rect, int width, int height)
+    {
+        return new SKRectI(rect.Left, rect.Top, rect.Left + width, rect.Top + height);
+    }
+
+    public static SKRectI Translate(this SKRectI rect, int dx, int dy)
+    {
+        return new SKRectI(rect.Left + dx, rect.Top + dy, rect.Right + dx, rect.Bottom + dy);
+    }
+
+    public static SKRectI MoveTo(this SKRectI rect, int x, int y)
+    {
+        int width = rect.Width;
+        int height = rect.Height;
+        return new SKRectI(x, y, x + width, y + height);
+    }
+
+    public static SKRectI MoveCenter(this SKRectI rect, SKPointI center)
+    {
+        int width = rect.Width;
+        int height = rect.Height;
+        int left = center.X - width / 2;
+        int top = center.Y - height / 2;
+        return new SKRectI(left, top, left + width, top + height);
+    }
+
+    public static SKPointI Center(this SKRectI rect)
+    {
+        return new SKPointI((rect.Left + rect.Right) / 2, (rect.Top + rect.Bottom) / 2);
+    }
+
+    public static SKSizeI Size(this SKRectI rect)
+    {
+        return new SKSizeI(rect.Width, rect.Height);
+    }
+
+    public static bool Contains(this SKRectI rect, SKPointI point)
+    {
+        return point.X >= rect.Left && point.X < rect.Right &&
+               point.Y >= rect.Top && point.Y < rect.Bottom;
+    }
 }
