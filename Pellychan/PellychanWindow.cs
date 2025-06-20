@@ -32,7 +32,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         Instance = this;
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-        m_chanClient.CurrentBoard = "vg";
+        m_chanClient.CurrentBoard = "g";
 
         // m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 

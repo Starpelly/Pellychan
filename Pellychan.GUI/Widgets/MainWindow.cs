@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using Pellychan.GUI.Platform.Skia;
+using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
 
@@ -18,5 +19,10 @@ public class MainWindow : Widget, IPaintHandler, IResizeHandler
     public void OnResize(int width, int height)
     {
         Menubar?.Resize(width, Menubar.Height);
+    }
+
+    public void SetIconFromStream(Stream imageStream)
+    {
+        m_nativeWindow?.Window.SetIconFromStream(imageStream);
     }
 }

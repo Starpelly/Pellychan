@@ -1,6 +1,8 @@
-﻿using Pellychan.GUI.Utils;
-using Pellychan.Resources;
+﻿using Pellychan.GUI.Extensions.ImageExtensions;
+using Pellychan.GUI.Utils;
 using SDL;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SDL.SDL3;
@@ -17,6 +19,11 @@ namespace Pellychan.GUI.Platform.SDL3
         /// Returns false if the window has not yet been created, or has been closed.
         /// </summary>
         public bool Exists { get; private set; }
+
+        private const int default_width = 1366;
+        private const int default_height = 768;
+
+        private const int default_icon_size = 256;
 
         private string m_title = string.Empty;
 
@@ -115,6 +122,8 @@ namespace Pellychan.GUI.Platform.SDL3
         {
             SDL_ShowWindow(SDLWindowHandle);
         }
+
+        #region SDL Event Handling
 
         private const int events_per_peep = 64;
         private readonly SDL_Event[] events = new SDL_Event[events_per_peep];
@@ -239,6 +248,57 @@ namespace Pellychan.GUI.Platform.SDL3
                 window.HandleEventFromWatch(*eventPtr);
 
             return true;
+        }
+
+        #endregion
+        public void SetIconFromStream(Stream imageStream)
+        {
+            using (var ms = new MemoryStream())
+            {
+                imageStream.CopyTo(ms);
+                ms.Position = 0;
+
+                try
+                {
+                    SetIconFromImage(Image.Load<Rgba32>(ms.GetBuffer()));
+                }
+                catch
+                {
+                    if (IconGroup.TryParse(ms.GetBuffer(), out var iconGroup))
+                        SetIconFromGroup(iconGroup);
+                }
+            }
+        }
+
+        internal virtual void SetIconFromGroup(IconGroup iconGroup)
+        {
+            // LoadRawIcon returns raw PNG data if available, which avoids any Windows-specific pinvokes
+            byte[]? bytes = iconGroup.LoadRawIcon(default_icon_size, default_icon_size);
+            if (bytes == null)
+                return;
+
+            SetIconFromImage(Image.Load<Rgba32>(bytes));
+        }
+
+        internal virtual void SetIconFromImage(Image<Rgba32> iconImage) => setSDLIcon(iconImage);
+
+        private void setSDLIcon(Image<Rgba32> image)
+        {
+            var pixelMemory = image.CreateReadOnlyPixelMemory();
+            var imageSize = image.Size;
+
+            var pixelSpan = pixelMemory.Span;
+
+            SDL_Surface* surface;
+
+            fixed (Rgba32* ptr = pixelSpan)
+            {
+                var pixelFormat = SDL_GetPixelFormatForMasks(32, 0xff, 0xff00, 0xff0000, 0xff000000);
+                surface = SDL_CreateSurfaceFrom(imageSize.Width, imageSize.Height, pixelFormat, new IntPtr(ptr), imageSize.Width * 4);
+            }
+
+            SDL_SetWindowIcon(SDLWindowHandle, surface);
+            SDL_DestroySurface(surface);
         }
 
         #region Events

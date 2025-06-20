@@ -1,15 +1,23 @@
 ﻿using Pellychan.GUI.Platform.SDL3;
+using Pellychan.GUI.Platform.Windows;
+using Pellychan.GUI.Utils;
 using Pellychan.GUI.Widgets;
 using SDL;
 using SkiaSharp;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using static SDL.SDL3;
 
 namespace Pellychan.GUI.Platform.Skia;
 
-internal unsafe class SkiaWindow : SDL3Window
+internal unsafe class SkiaWindow
 {
     public Widget ParentWidget { get; private set; } 
+
+    public IWindow Window { get; private set; }
+
+    internal SDL_Window* SDLWindowHandle => ((SDL3Window)Window).SDLWindowHandle;
+    internal SDL_WindowID SDLWindowID => ((SDL3Window)Window).SDLWindowID;
 
     public SDL_Renderer* SDLRenderer;
     public SDL_Texture* SDLTexture;
@@ -55,17 +63,27 @@ internal unsafe class SkiaWindow : SDL3Window
 
     public SkiaWindow(Widget parent, string title) : base()
     {
-        Create();
+        switch (RuntimeInfo.OS)
+        {
+            case RuntimeInfo.Platform.Windows:
+                Debug.Assert(OperatingSystem.IsWindows());
+                Window = new SDL3WindowsWindow();
+                break;
+            default:
+                throw new InvalidOperationException($"Could not find a suitable window for the selected operating system ({RuntimeInfo.OS})");
+        }
+
+        Window.Create();
         Center();
 
-        this.ExitRequested += delegate ()
+        Window.ExitRequested += delegate ()
         {
             ShouldClose = true;
         };
 
         ParentWidget = parent;
 
-        Title = title;
+        Window.Title = title;
 
         SDLRenderer = SDL_CreateRenderer(SDLWindowHandle, (byte*)null);
     }
@@ -86,14 +104,14 @@ internal unsafe class SkiaWindow : SDL3Window
             w, h);
     }
 
-    public new void Dispose()
+    public void Dispose()
     {
         // SkiaSurface?.Dispose();
 
         SDL_DestroyTexture(SDLTexture);
         SDL_DestroyRenderer(SDLRenderer);
-        
-        base.Dispose();
+
+        Window.Dispose();
     }
 
     public void Lock()
@@ -119,6 +137,11 @@ internal unsafe class SkiaWindow : SDL3Window
 
         SDL_SetRenderDrawColor(popupRenderer, 255, 0, 0, 255);
         SDL_RenderPresent(popupRenderer);
+    }
+
+    internal void PollEvents()
+    {
+        ((SDL3Window)Window).pollSDLEvents();
     }
 
     SDL_Renderer* popupRenderer;

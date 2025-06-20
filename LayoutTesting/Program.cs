@@ -12,6 +12,7 @@ namespace LayoutTesting
             var mainWindow = new Sizing();
             mainWindow.SetWindowTitle("Layout Testing");
             mainWindow.Resize(1280, 720);
+
             mainWindow.Show();
 
             app.Run();

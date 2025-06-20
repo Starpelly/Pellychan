@@ -1,9 +1,7 @@
-﻿using Pellychan.GUI.Layouts;
-using Pellychan.GUI.Platform.Skia;
+﻿using Pellychan.GUI.Platform.Skia;
 using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
-using Pellychan.Resources;
 using SDL;
 using SkiaSharp;
 
@@ -60,9 +58,9 @@ public class Application : IDisposable
                           SDL3 Revision: {SDL3.SDL_GetRevision()}
                           SDL3 Video driver: {SDL3.SDL_GetCurrentVideoDriver()}");
 
-        using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-        // using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        using var typeface = SKTypeface.FromStream(fontStream);
+        // using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
+        using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+        // using var typeface = SKTypeface.FromStream(fontStream);
 
         const int dpi = 96;
         const float pixelsPerPoint = dpi / 72.0f;
@@ -89,7 +87,7 @@ public class Application : IDisposable
             // pumpEvents();
             foreach (var window in WindowRegistry.Windows)
             {
-                window.Value.pollSDLEvents();
+                window.Value.PollEvents();
             }
 
             // Flush any pending layout requests

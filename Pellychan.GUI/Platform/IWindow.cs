@@ -22,6 +22,11 @@ namespace Pellychan.GUI.Platform
         void Show();
 
         /// <summary>
+        /// Sets the window icon to the provided <paramref name="imageStream"/>.
+        /// </summary>
+        void SetIconFromStream(Stream imageStream);
+
+        /// <summary>
         /// Invoked when the window close (X) button or another platform-native exit action has been pressed.
         /// </summary>
         event Action? ExitRequested;
@@ -82,12 +87,12 @@ namespace Pellychan.GUI.Platform
         /// <summary>
         /// The position of the window.
         /// </summary>
-        Point Position { get; }
+        Point Position { get; set; }
 
         /// <summary>
         /// The size of the window in scaled pixels (excluding any window decoration/border).
         /// </summary>
-        Size Size { get; }
+        Size Size { get; set; }
 
         /// <summary>
         /// The ratio of <see cref="ClientSize"/> and <see cref="Size"/>.

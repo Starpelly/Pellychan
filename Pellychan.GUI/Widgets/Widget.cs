@@ -339,10 +339,10 @@ public class Widget : IDisposable
         {
             Application.Instance!.TopLevelWidgets.Add(this);
 
-            m_nativeWindow.Size = new System.Drawing.Size(m_width, m_height);
+            m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
             m_nativeWindow.CreateFrameBuffer(m_width, m_height);
             m_nativeWindow.Center();
-            m_nativeWindow.Show();
+            m_nativeWindow.Window.Show();
         }
 
         InvalidateLayout(true);
@@ -426,7 +426,7 @@ public class Widget : IDisposable
         // can't be in a layout!
         if (m_nativeWindow != null)
         {
-            m_nativeWindow.Size = new System.Drawing.Size(m_width, m_height);
+            m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
         }
 
         dispatchResize();
@@ -446,7 +446,7 @@ public class Widget : IDisposable
         if (m_nativeWindow == null)
             return;
 
-        m_nativeWindow.Title = (title);
+        m_nativeWindow.Window.Title = (title);
     }
 
     public bool HitTest(int x, int y)
@@ -804,23 +804,23 @@ public class Widget : IDisposable
         m_nativeWindow = new(this, GetType().Name);
         WindowRegistry.Register(m_nativeWindow);
 
-        m_nativeWindow.Resized += delegate ()
+        m_nativeWindow.Window.Resized += delegate ()
         {
-            onNativeWindowResizeEvent(m_nativeWindow.Size.Width, m_nativeWindow.Size.Height);
+            onNativeWindowResizeEvent(m_nativeWindow.Window.Size.Width, m_nativeWindow.Window.Size.Height);
         };
-        m_nativeWindow.MouseMove += delegate (System.Numerics.Vector2 pos)
+        m_nativeWindow.Window.MouseMove += delegate (System.Numerics.Vector2 pos)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Move);
         };
-        m_nativeWindow.MouseDown += delegate(System.Numerics.Vector2 pos, MouseButton button)
+        m_nativeWindow.Window.MouseDown += delegate(System.Numerics.Vector2 pos, MouseButton button)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Down);
         };
-        m_nativeWindow.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
+        m_nativeWindow.Window.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Up);
         };
-        m_nativeWindow.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
+        m_nativeWindow.Window.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Wheel, (int)delta.X, (int)delta.Y);
         };
