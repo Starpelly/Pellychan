@@ -1,9 +1,12 @@
-﻿using ImageMagick;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.API.Responses;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
 using Thread = Pellychan.API.Models.Thread;
 
 namespace Pellychan;
@@ -62,7 +65,7 @@ public class ChanClient
         try
         {
             byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
-            using MemoryStream ms = new MemoryStream(imageBytes);
+            using var ms = new MemoryStream(imageBytes);
             return SKImage.FromEncodedData(ms); // Decode into SKBitmap
         }
         catch
@@ -78,7 +81,7 @@ public class ChanClient
         try
         {
             byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
-            using MemoryStream ms = new MemoryStream(imageBytes);
+            using var ms = new MemoryStream(imageBytes);
             return SKImage.FromEncodedData(ms); // Decode into SKBitmap
         }
         catch
@@ -116,29 +119,35 @@ public class ChanClient
 
     public class GifFrame
     {
-        public SKImage Image;
+        public required SKImage Image;
         public int Delay; // in milliseconds
     }
 
     public async Task<List<GifFrame>> LoadGifFromUrlAsync(string url)
     {
         byte[] data = await m_httpClient.GetByteArrayAsync(url);
+        using var stream = new MemoryStream(data);
 
         var frames = new List<GifFrame>();
-        using var collection = new MagickImageCollection(data);
-        collection.Coalesce();
 
-        foreach (var frame in collection)
+        using var image = Image.Load<Rgba32>(stream);
+
+        foreach (var frame in image.Frames)
         {
-            using var ms = new MemoryStream();
-            frame.Format = MagickFormat.Png; // Convert each frame to PNG for Skia
-            frame.Write(ms);
-            ms.Position = 0;
+            // Delay (10ms units)
+            int delay = 100;
+            if (frame.Metadata.TryGetGifMetadata(out var gifMeta))
+            {
+                delay = gifMeta.FrameDelay * 10; // 1 unit = 10 ms
+            }
+
+            using var skBitmap = new SKBitmap(frame.Width, frame.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+            frame.CopyPixelDataTo(MemoryMarshal.Cast<byte, Rgba32>(skBitmap.GetPixelSpan()));
 
             frames.Add(new GifFrame
             {
-                Image = SKImage.FromEncodedData(ms),
-                Delay = (int)(frame.AnimationDelay * 10) // ms
+                Image = SKImage.FromBitmap(skBitmap),
+                Delay = delay
             });
         }
 
