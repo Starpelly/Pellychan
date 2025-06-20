@@ -570,4 +570,9 @@ public class PhantomStyle : Style
     {
         return m_swatch.GetColor(SwatchColor.Window_Outline);
     }
+
+    public override SKColor GetButtonHoverColor()
+    {
+        return m_swatch.GetColor(SwatchColor.Button_Pressed);
+    }
 }

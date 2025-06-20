@@ -15,6 +15,7 @@ public class ChanClient
     public string CurrentBoard { get; set; }
 
     public BoardsResponse Boards;
+    public CatalogResponse Catalog;
 
     public ChanClient()
     {
@@ -33,16 +34,28 @@ public class ChanClient
         return result;
     }
 
-    public async Task<Thread> GetThreadAsync(string post)
+    public async Task<CatalogResponse> GetCatalogAsync()
     {
-        var url = $"https://{Domains.API}/{CurrentBoard}/thread/{post}.json";
+        var url = $"https://{Domains.API}/{CurrentBoard}/catalog.json";
+        var json = await m_httpClient.GetStringAsync(url);
+
+        var result = JsonConvert.DeserializeObject<List<CatalogPage>>(json);
+        return new()
+        {
+            Pages = result!
+        };
+    }
+
+    public async Task<Thread> GetThreadPostsAsync(string threadID)
+    {
+        var url = $"https://{Domains.API}/{CurrentBoard}/thread/{threadID}.json";
         var json = await m_httpClient.GetStringAsync(url);
 
         var result = JsonConvert.DeserializeObject<Thread>(json);
         return result;
     }
 
-    public async Task<SKBitmap?> DownloadThumbnailAsync(long tim)
+    public async Task<SKImage?> DownloadThumbnailAsync(long tim)
     {
         string url = $"https://{Domains.UserContent}/{CurrentBoard}/{tim}s.jpg";
 
@@ -50,7 +63,7 @@ public class ChanClient
         {
             byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
             using MemoryStream ms = new MemoryStream(imageBytes);
-            return SKBitmap.Decode(ms); // Decode into SKBitmap
+            return SKImage.FromEncodedData(ms); // Decode into SKBitmap
         }
         catch
         {
@@ -58,7 +71,7 @@ public class ChanClient
         }
     }
 
-    public async Task<SKBitmap?> DownloadAttachmentAsync(Post post)
+    public async Task<SKImage?> DownloadAttachmentAsync(Post post)
     {
         string url = $"https://{Domains.UserContent}/{CurrentBoard}/{post.Tim}{post.Ext}";
 
@@ -66,7 +79,7 @@ public class ChanClient
         {
             byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
             using MemoryStream ms = new MemoryStream(imageBytes);
-            return SKBitmap.Decode(ms); // Decode into SKBitmap
+            return SKImage.FromEncodedData(ms); // Decode into SKBitmap
         }
         catch
         {
@@ -74,16 +87,25 @@ public class ChanClient
         }
     }
 
-    public void LoadThumbnail(Post post, int storeIndex, Action<SKBitmap?, int> onComplete)
+    public void LoadThumbnail(Post post, Action<SKImage?> onComplete)
     {
         Task.Run(async () =>
         {
             var thumb = await DownloadThumbnailAsync((long)post.Tim!);
-            onComplete?.Invoke(thumb, storeIndex);
+            onComplete?.Invoke(thumb);
         });
     }
 
-    public void LoadAttachment(Post post, Action<SKBitmap?> onComplete)
+    public void LoadThumbnail(CatalogThread post, Action<SKImage?> onComplete)
+    {
+        Task.Run(async () =>
+        {
+            var thumb = await DownloadThumbnailAsync((long)post.Tim!);
+            onComplete?.Invoke(thumb);
+        });
+    }
+
+    public void LoadAttachment(Post post, Action<SKImage?> onComplete)
     {
         Task.Run(async () =>
         {
@@ -94,7 +116,7 @@ public class ChanClient
 
     public class GifFrame
     {
-        public SKBitmap Bitmap;
+        public SKImage Image;
         public int Delay; // in milliseconds
     }
 
@@ -113,12 +135,9 @@ public class ChanClient
             frame.Write(ms);
             ms.Position = 0;
 
-            // using var skStream = new SKManagedStream(ms);
-            var bitmap = SKBitmap.Decode(ms);
-
             frames.Add(new GifFrame
             {
-                Bitmap = bitmap,
+                Image = SKImage.FromEncodedData(ms),
                 Delay = (int)(frame.AnimationDelay * 10) // ms
             });
         }

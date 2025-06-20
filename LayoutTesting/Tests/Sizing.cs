@@ -11,10 +11,20 @@ namespace LayoutTesting.Tests
 
         public Sizing()
         {
+            /*
             Layout = new VBoxLayout
             {
-                Padding = new(32),
+                // Padding = new(32),
             };
+            */
+            Menubar = new(this)
+            {
+
+            };
+            Menubar.AddMenu("View");
+            Menubar.AddMenu("Accounts");
+            Menubar.AddMenu("Tools");
+            Menubar.AddMenu("Help");
 
             var frame = new ShapedFrame(this)
             {

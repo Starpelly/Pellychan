@@ -62,4 +62,5 @@ public abstract class Style
     // Idk how I feel about this...
     // I'm feeling like this should just be part of the palette?
     public abstract SKColor GetFrameColor();
+    public abstract SKColor GetButtonHoverColor();
 }

@@ -9,7 +9,7 @@ public class GifPlayer : IDisposable
     private int m_currentFrame = 0;
     private Timer? m_timer; // DISGUSTING, WE SHOULD USE A STOPWATCH INSTEAD!!!
 
-    public SKBitmap? CurrentBitmap => m_frames.Count > 0 ? m_frames[m_currentFrame].Bitmap : null;
+    public SKImage? CurrentImage => m_frames.Count > 0 ? m_frames[m_currentFrame].Image : null;
 
     public async Task LoadAsync(string url)
     {
@@ -51,7 +51,7 @@ public class GifPlayer : IDisposable
 
         m_timer?.Dispose();
         foreach (var frame in m_frames)
-            frame.Bitmap.Dispose();
+            frame.Image.Dispose();
         m_frames.Clear();
     }
 }

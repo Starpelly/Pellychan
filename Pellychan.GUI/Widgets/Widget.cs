@@ -464,12 +464,22 @@ public class Widget : IDisposable
         NotifyLayoutChange();
     }
 
+    /// <summary>
+    /// Deletes the widget from the hierarchy and disposes anything it may have allocated.
+    /// </summary>
+    public void Delete()
+    {
+        Dispose();
+    }
+
     public virtual void Dispose()
     {
+        m_parent?.m_children.Remove(this);
+
         m_nativeWindow?.Dispose();
         m_cachedSurface?.Dispose();
 
-        foreach (var child in m_children)
+        foreach (var child in m_children.ToList())
             child.Dispose();
 
         GC.SuppressFinalize(this);
@@ -710,6 +720,8 @@ public class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
+                if (child == null)
+                    continue;
                 child.InvalidateLayout(doChildrenAnyway);
             }
         }

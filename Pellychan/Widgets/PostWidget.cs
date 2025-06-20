@@ -8,12 +8,12 @@ using System.Net;
 
 namespace Pellychan.Widgets;
 
-public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHandler, IMouseLeaveHandler
+public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHandler, IMouseLeaveHandler
 {
     private readonly Post m_ApiPost;
 
-    private SKBitmap? m_thumbnailBitmap;
-    private SKBitmap? m_fullBitmap;
+    private SKImage? m_thumbnailBitmap;
+    private SKImage? m_fullBitmap;
 
     private bool m_usingThumbnail = true;
     private bool m_loadedFull = false;
@@ -28,7 +28,7 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
         updateImage(null);
     }
 
-    public void SetThumbnail(SKBitmap? thumbnail)
+    public void SetThumbnail(SKImage? thumbnail)
     {
         m_thumbnailBitmap = thumbnail;
 
@@ -91,17 +91,26 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
         MouseCursor.Set(MouseCursor.CursorType.Arrow);
     }
 
-    private void updateImage(SKBitmap? bitmap)
+    private void updateImage(SKImage? bitmap)
     {
-        Image = bitmap;
+        Bitmap = bitmap;
 
-        if (Image == null)
+        if (Bitmap == null)
         {
             Resize(0, 0);
             return;
         }
 
-        Resize(Image!.Width, Image.Height);
+        var newWidth = Bitmap.Width;
+        var newHeight = Bitmap.Height;
+
+        if (newWidth > 1280)
+        {
+            newWidth = 1280;
+            newHeight = (int)(((float)newWidth / Bitmap.Width) * Bitmap.Height);
+        }
+
+        Resize(newWidth, newHeight);
 
         (Parent as PostWidget)?.SetHeight();
     }
@@ -129,7 +138,7 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
             m_gifPlayer.OnFrameChanged += delegate ()
             {
                 if (!m_usingThumbnail)
-                    updateImage(m_gifPlayer.CurrentBitmap);
+                    updateImage(m_gifPlayer.CurrentImage);
             };
         }
         else
@@ -147,6 +156,17 @@ public class Thumbnail : Bitmap, IPaintHandler, IMouseDownHandler, IMouseEnterHa
                 }
             });
         }
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+
+        m_thumbnailBitmap?.Dispose();
+        m_fullBitmap?.Dispose();
+        m_gifPlayer?.Dispose();
+
+        Console.WriteLine("Dispose");
     }
 }
 
@@ -208,7 +228,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
         };
     }
 
-    public void SetBitmapPreview(SKBitmap thumbnail)
+    public void SetBitmapPreview(SKImage thumbnail)
     {
         m_previewBitmap.SetThumbnail(thumbnail);
 
@@ -253,7 +273,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
 
     internal void SetPositions()
     {
-        m_commentLabel.X = Padding.Left + (m_previewBitmap.Image != null ? (m_previewBitmap.Width + 8) : 0);
+        m_commentLabel.X = Padding.Left + (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Width + 8) : 0);
 
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
