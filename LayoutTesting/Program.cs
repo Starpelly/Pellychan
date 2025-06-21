@@ -9,7 +9,7 @@ namespace LayoutTesting
         {
             using var app = new Application();
 
-            var mainWindow = new Caching();
+            var mainWindow = new ScrollViewer();
             mainWindow.SetWindowTitle("Layout Testing");
             mainWindow.Resize(1280, 720);
 

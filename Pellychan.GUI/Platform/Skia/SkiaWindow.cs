@@ -130,7 +130,6 @@ internal unsafe class SkiaWindow
         // GRContext.CreateDirect3D();
     }
 
-
     GRBackendRenderTarget createRenderTarget(int width, int height)
     {
         SDL_GetWindowSizeInPixels(SDL_GL_GetCurrentWindow(), &width, &height);

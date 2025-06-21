@@ -27,11 +27,11 @@ namespace LayoutTesting.Tests
                 Height = 300
             };
 
-            new ScrollBar(this)
+            new PushButton("Test", this)
             {
                 X = 400,
                 Y = 24,
-                Width = 13,
+                Width = 400,
                 Height = 200
             };
         }

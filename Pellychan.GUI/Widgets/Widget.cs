@@ -779,7 +779,7 @@ public class Widget : IDisposable
             SKSurface surface;
             if (Application.HardwareAccel)
             {
-                surface = SKSurface.Create(m_nativeWindow.GRContext, m_nativeWindow.RenderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
+                surface = SKSurface.Create(m_nativeWindow.GRContext, m_nativeWindow.RenderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Bgra8888, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
             }
             else
             {
