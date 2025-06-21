@@ -53,7 +53,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         m_hovering = true;
         MouseCursor.Set(MouseCursor.CursorType.Hand);
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseLeave()
@@ -61,7 +61,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         m_hovering = false;
         MouseCursor.Set(MouseCursor.CursorType.Arrow);
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseDown(int x, int y)
@@ -69,7 +69,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         m_pressed = true;
         OnPressed?.Invoke();
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseUp(int x, int y)
@@ -77,14 +77,14 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         m_pressed = false;
         OnReleased?.Invoke();
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseClick(int x, int y)
     {
         OnClicked?.Invoke();
     
-        Invalidate();
+        TriggerRepaint();
     }
 
     private void updateSize()

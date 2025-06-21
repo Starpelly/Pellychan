@@ -6,7 +6,10 @@ public class Image : Widget, IPaintHandler
 {
     public SKImage? Bitmap { get; set; }
 
-    public Image(Widget? parent = null) : base(parent) { }
+    public Image(Widget? parent = null) : base(parent)
+    {
+        ShouldCache = false;
+    }
 
     public void OnPaint(SKCanvas canvas)
     {

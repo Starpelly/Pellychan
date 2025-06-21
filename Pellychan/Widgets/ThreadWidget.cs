@@ -22,6 +22,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
     {
         Thread = thread;
         Name = "A thread widget!";
+        ShouldCache = true;
 
         m_previewImage = new Image(this)
         {
@@ -42,7 +43,8 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
 
             Text = decoded,
             WordWrap = true,
-            CatchCursorEvents = false
+            CatchCursorEvents = false,
+            ShouldCache = false
         };
 
         PellychanWindow.ChanClient.LoadThumbnail(thread, (thumbnail) =>
@@ -85,14 +87,14 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
     {
         m_hovering = true;
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseLeave()
     {
         m_hovering = false;
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseDown(int x, int y)

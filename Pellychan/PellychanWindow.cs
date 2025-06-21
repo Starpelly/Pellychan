@@ -1,13 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using Pellychan.API.Models;
-using Pellychan.GUI;
+﻿using Pellychan.API.Models;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 using Pellychan.Widgets;
 using SkiaSharp;
-using System;
-using System.Reflection;
-using System.Xml.Linq;
 
 namespace Pellychan;
 

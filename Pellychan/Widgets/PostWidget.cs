@@ -184,6 +184,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
     {
         Name = "A Post widget!!!";
+        ShouldCache = true;
 
         m_apiPost = post;
 
@@ -193,7 +194,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
             X = Padding.Left,
             Y = Padding.Top,
             Text = $"<span class=\"name\">{post.Name}</span>",
-            CatchCursorEvents = false
+            CatchCursorEvents = false,
         };
 
         m_dateLabel = new Label(Application.DefaultFont, this)
@@ -201,7 +202,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
             X = Padding.Left,
             Y = Padding.Top,
             Text = $"<span class=\"date\">{post.Now}</span>",
-            CatchCursorEvents = false
+            CatchCursorEvents = false,
         };
 
         var rawComment = post.Com == null ? string.Empty : post.Com;

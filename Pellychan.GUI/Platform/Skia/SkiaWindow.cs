@@ -128,14 +128,18 @@ internal unsafe class SkiaWindow
         SDL_UnlockTexture(SDLTexture);
     }
 
-    public void Present()
+    public void BeginPresent()
     {
+        var windowClear = Application.Palette.Get(ColorRole.Window);
+        SDL_SetRenderDrawColor(SDLRenderer, windowClear.Red, windowClear.Green, windowClear.Blue, 255);
         SDL_RenderClear(SDLRenderer);
+        
         SDL_RenderTexture(SDLRenderer, SDLTexture, null, null);
+    }
 
+    public void EndPresent()
+    {
         SDL_RenderPresent(SDLRenderer);
-
-        SDL_SetRenderDrawColor(popupRenderer, 255, 0, 0, 255);
         SDL_RenderPresent(popupRenderer);
     }
 

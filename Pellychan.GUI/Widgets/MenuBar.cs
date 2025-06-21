@@ -89,12 +89,12 @@ namespace Pellychan.GUI.Widgets
             if (itemIndex >= 0 && itemIndex < Items.Count)
             {
                 m_hoveredIndex = itemIndex;
-                Invalidate();
+                TriggerRepaint();
             }
             else if (m_hoveredIndex != -1)
             {
                 m_hoveredIndex = -1;
-                Invalidate();
+                TriggerRepaint();
             }
         }
 
@@ -103,7 +103,7 @@ namespace Pellychan.GUI.Widgets
             if (!m_open && y < Height)
             {
                 m_open = true;
-                Invalidate();
+                TriggerRepaint();
             }
             else if (m_open && y >= Height)
             {
@@ -112,13 +112,13 @@ namespace Pellychan.GUI.Widgets
                 {
                     Items[itemIndex].OnClick?.Invoke();
                     m_open = false;
-                    Invalidate();
+                    TriggerRepaint();
                 }
             }
             else
             {
                 m_open = false;
-                Invalidate();
+                TriggerRepaint();
             }
         }
 

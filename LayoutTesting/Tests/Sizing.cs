@@ -11,20 +11,15 @@ namespace LayoutTesting.Tests
 
         public Sizing()
         {
-            /*
             Layout = new VBoxLayout
             {
-                // Padding = new(32),
+                Padding = new(32),
             };
-            */
-            Menubar = new(this)
+            new Rect(SKColors.Blue, this)
             {
-
+                Fitting = FitPolicy.ExpandingPolicy
             };
-            Menubar.AddMenu("View");
-            Menubar.AddMenu("Accounts");
-            Menubar.AddMenu("Tools");
-            Menubar.AddMenu("Help");
+            return;
 
             var frame = new ShapedFrame(this)
             {
@@ -33,7 +28,6 @@ namespace LayoutTesting.Tests
                 {
                     // Padding = new(32),
                 },
-                ContentsMargins = new(16, 16, 1, 1)
             };
 
             new Rect(SKColors.Red, frame)

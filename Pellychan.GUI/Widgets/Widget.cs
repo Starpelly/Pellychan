@@ -2,6 +2,7 @@
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Platform.Input;
 using Pellychan.GUI.Platform.Skia;
+using SDL;
 using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
@@ -195,7 +196,7 @@ public class Widget : IDisposable
             if (m_enabled != value)
             {
                 m_enabled = value;
-                // Invalidate();
+                TriggerRepaint();
                 // NotifyLayoutChange();
             }
         }
@@ -295,9 +296,11 @@ public class Widget : IDisposable
     #region Cache
 
     private SKSurface? m_cachedSurface;
-    private SKImage? m_cachedImage;
+    private SKBitmap? m_cachedBitmap;
+    private SKPicture? m_cachedPicture;
     private int m_cachedWidth;
     private int m_cachedHeight;
+    private unsafe SDL_Texture* m_cachedRenderTexture;
 
     // If top-level, owns a native window
     public bool IsTopLevel => Parent == null;
@@ -306,7 +309,21 @@ public class Widget : IDisposable
     private bool m_isDirty = false;
     private bool m_hasDirtyDescendants = false;
 
-    protected virtual bool ShouldCache => false;
+    private uint m_lastPaintFrame = 0;
+
+    private bool m_shouldCache = false;
+    public bool ShouldCache
+    {
+        get
+        {
+            return m_shouldCache && SupportCache;
+        }
+        set
+        {
+            m_shouldCache = value;
+        }
+    }
+    internal const bool SupportCache = true;
 
     #endregion
 
@@ -323,7 +340,7 @@ public class Widget : IDisposable
             initializeIfTopLevel();
         }
 
-        Invalidate();
+        TriggerRepaint();
     }
 
     /// <summary>
@@ -345,6 +362,7 @@ public class Widget : IDisposable
             m_nativeWindow.Window.Show();
         }
 
+        TriggerRepaint();
         InvalidateLayout(true);
         NotifyLayoutChange();
 
@@ -379,6 +397,7 @@ public class Widget : IDisposable
             m_parent.Children.Remove(this);
             if (m_parent.Layout != null)
                 m_parent.InvalidateLayout();
+            m_parent.TriggerRepaint();
         }
 
         m_parent = parent;
@@ -392,8 +411,11 @@ public class Widget : IDisposable
 
             if (Layout != null)
                 InvalidateLayout();
+
+            m_parent.TriggerRepaint();
         }
 
+        TriggerRepaint();
         NotifyLayoutChange(); // In case grandparent needs to update layout too
     }
 
@@ -433,9 +455,9 @@ public class Widget : IDisposable
         CallResizeEvents();
     }
 
-    public void Invalidate()
+    public void TriggerRepaint()
     {
-        invalidate();
+        triggerRepaint();
     }
 
     /// <summary>
@@ -505,13 +527,30 @@ public class Widget : IDisposable
 
     #region Internal methods
 
-    internal void Paint(SKCanvas canvas, SKRect clipRect)
+    internal void Paint(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
+    {
+        if (ShouldCache)
+        {
+            paintCache(canvas, clipRect, window);
+        }
+        else
+        {
+            paintNoCache(canvas, clipRect, window);
+        }
+        m_hasDirtyDescendants = false;
+    }
+
+
+    /// <summary>
+    /// Paints to the cache canvas, then paints the cache to the canvas.
+    /// </summary>
+    private void paintCache(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
     {
         if (m_height <= 0 || m_height <= 0 || !m_visible)
             return;
 
         var globalPos = getGlobalPosition();
-        
+
         var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
         var currentClip = SKRect.Intersect(clipRect, thisRect);
 
@@ -533,49 +572,125 @@ public class Widget : IDisposable
         canvas.Translate(m_x, m_y);
         canvas.ClipRect(new(0, 0, m_width, m_height));
 
-        if (ShouldCache)
+        if (m_isDirty || m_hasDirtyDescendants)
         {
-            SKSurface? GetPaintSurface() => (IsTopLevel) ? canvas.Surface : m_cachedSurface!;
+            m_lastPaintFrame = Application.CurrentFrame;
+            m_isDirty = false;
 
-            if (m_isDirty)
+            bool recreateTexture = false;
+
+            if (!IsTopLevel)
             {
-                m_isDirty = false;
-
-                if (!IsTopLevel)
+                /*
+                if (m_cachedBitmap != null || m_width != m_cachedWidth || m_height != m_cachedHeight)
                 {
-                    if (m_cachedSurface == null || m_height != m_cachedWidth || m_height != m_cachedHeight)
+                    m_cachedBitmap?.Dispose();
+                    m_cachedBitmap = new SKBitmap(m_width, m_height);
+                    m_cachedWidth = m_width;
+                    m_cachedHeight = m_height;
+                }
+                */
+
+                if (m_width != m_cachedWidth || m_height != m_cachedHeight)
+                {
+                    recreateTexture = true;
+                    m_cachedBitmap?.Dispose();
+                    m_cachedBitmap = new SKBitmap(m_width, m_height);
+
+                    m_cachedWidth = m_width;
+                    m_cachedHeight = m_height;
+                }
+            }
+
+            // using var recorder = new SKPictureRecorder();
+            // var paintCanvas = recorder.BeginRecording(new SKRect(0, 0, m_width, m_height));
+
+            using (var paintCanvas = new SKCanvas(m_cachedBitmap))
+            {
+                Console.WriteLine("OnPaint");
+                paintCanvas.Clear(SKColors.Transparent);
+                (this as IPaintHandler)?.OnPaint(paintCanvas);
+
+                if (m_children.Count > 0)
+                {
+                    foreach (var child in m_children)
                     {
-                        m_cachedSurface?.Dispose();
-                        m_cachedSurface = SKSurface.Create(new SKImageInfo(m_height, m_height), new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-                        m_cachedWidth = m_height;
-                        m_cachedHeight = m_height;
+                        if (!child.m_visible)
+                            continue;
+
+                        child.Paint(paintCanvas, clipRect, window);
                     }
                 }
-
-                var paintSurface = GetPaintSurface()!;
-                var sc = paintSurface.Canvas;
-
-                sc.Save();
-                sc.Clear(SKColors.Transparent);
-
-                var paintHandler = this as IPaintHandler;
-                paintHandler?.OnPaint(sc);
-
-                sc.Restore();
-
-                m_cachedImage?.Dispose();
-                m_cachedImage = paintSurface.Snapshot();
             }
 
-            if (m_cachedImage != null)
+            // m_cachedPicture = recorder.EndRecording();
+
+            unsafe
             {
-                canvas.DrawImage(m_cachedImage, m_x, m_y);
+                if (recreateTexture)
+                {
+                    var surface = SDL3.SDL_CreateSurfaceFrom(m_width, m_height, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888, m_cachedBitmap!.GetPixels(), m_cachedBitmap.RowBytes);
+
+                    if (m_cachedRenderTexture != null)
+                    {
+                        SDL3.SDL_DestroyTexture(m_cachedRenderTexture);
+                    }
+                    m_cachedRenderTexture = SDL3.SDL_CreateTextureFromSurface(window.SDLRenderer, surface);
+
+                    SDL3.SDL_DestroySurface(surface);
+                }
+                else
+                {
+                    SDL3.SDL_UpdateTexture(m_cachedRenderTexture, null, m_cachedBitmap!.GetPixels(), m_cachedBitmap.RowBytes);
+                }
             }
         }
-        else
+
+        if (m_cachedBitmap != null)
         {
-            (this as IPaintHandler)?.OnPaint(canvas);
+            // canvas.DrawBitmap(m_cachedBitmap, m_x, m_y);
         }
+        if (m_cachedPicture != null)
+        {
+            // m_cachedPicture.Playback(canvas);
+            // canvas.DrawPicture(m_cachedPicture, 0, 0);
+        }
+
+        canvas.Restore();
+    }
+
+    /// <summary>
+    /// Paints to the canvas directly.
+    /// </summary>
+    private void paintNoCache(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
+    {
+        if (m_height <= 0 || m_height <= 0 || !m_visible)
+            return;
+
+        var globalPos = getGlobalPosition();
+
+        var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
+        var currentClip = SKRect.Intersect(clipRect, thisRect);
+
+        if (currentClip.IsEmpty)
+            return;
+
+        /*
+        foreach (var clip in clipStack)
+        {
+            var a = this;
+            if (!clip.IntersectsWith(thisRect))
+                return;
+        }
+        
+        clipStack.Push(thisRect);
+        */
+
+        canvas.Save();
+        canvas.Translate(m_x, m_y);
+        canvas.ClipRect(new(0, 0, m_width, m_height));
+
+        (this as IPaintHandler)?.OnPaint(canvas);
 
         if (m_children.Count > 0)
         {
@@ -584,28 +699,56 @@ public class Widget : IDisposable
                 if (!child.m_visible)
                     continue;
 
-                child.Paint(canvas, clipRect);
+                child.Paint(canvas, clipRect, window);
             }
         }
 
         // clipStack.Pop();
-        canvas.Restore();
 
-        m_hasDirtyDescendants = false;
+        canvas.Restore();
     }
+
+    static SKPaint s_debugPaint = new()
+    {
+        Style = SKPaintStyle.Stroke,
+        IsAntialias = false
+    };
 
     internal void DrawDebug(SKCanvas canvas)
     {
         if (m_height <= 0 || m_height <= 0 || !m_visible)
             return;
 
+        // Cache debug mode?
+        // Multiple debug modes?
+        // Idk yet...
+        //if (!ShouldCache)
+        //    return;
+
         var globalPos = getGlobalPosition();
 
         canvas.Save();
         canvas.ResetMatrix();
 
-        using var debugPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Red };
-        canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), debugPaint);
+        SKColor Lerp(SKColor from, SKColor to, float t)
+        {
+            // Clamp t between 0 and 1
+            t = Math.Clamp(t, 0f, 1f);
+
+            byte r = (byte)(from.Red + (to.Red - from.Red) * t);
+            byte g = (byte)(from.Green + (to.Green - from.Green) * t);
+            byte b = (byte)(from.Blue + (to.Blue - from.Blue) * t);
+            byte a = (byte)(from.Alpha + (to.Alpha - from.Alpha) * t);
+
+            return new SKColor(r, g, b, a);
+        }
+
+        var framesSinceLastPaint = Application.CurrentFrame - m_lastPaintFrame;
+        var maxCounter = 60;
+
+        s_debugPaint.Color = (ShouldCache ? Lerp(SKColors.Green, SKColors.Red, (float)framesSinceLastPaint / maxCounter) : SKColors.Blue);
+
+        canvas.DrawRect(new SKRect(globalPos.X, globalPos.Y, globalPos.X + (m_width - 1), globalPos.Y + (m_height - 1)), s_debugPaint);
 
         canvas.Restore();
 
@@ -625,9 +768,11 @@ public class Widget : IDisposable
     {
         if (!IsTopLevel) return;
         if (m_height == 0 || m_height == 0) return;
+        if (m_nativeWindow == null)
+            throw new Exception("Native window isn't set!");
 
         // Lock texture to get pixel buffer
-        m_nativeWindow!.Lock();
+        m_nativeWindow.Lock();
 
         using var surface = SKSurface.Create(m_nativeWindow.ImageInfo, m_nativeWindow.Pixels, m_nativeWindow.Pitch, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
 
@@ -640,7 +785,7 @@ public class Widget : IDisposable
         // rootStack.Push(new SKRect(0, 0, m_width, m_height));
         var rootClip = new SKRect(0, 0, m_width, m_height);
 
-        Paint(canvas, rootClip);
+        Paint(canvas, rootClip, m_nativeWindow);
 
         if (debug)
         {
@@ -649,11 +794,57 @@ public class Widget : IDisposable
 
         canvas.Flush();
 
-        // canvas.Flush();
+        m_nativeWindow.Unlock();
 
-        m_nativeWindow!.Unlock();
+        m_nativeWindow.BeginPresent();
 
-        m_nativeWindow!.Present();
+        unsafe
+        {
+            renderWidget(m_nativeWindow.SDLRenderer, m_x, m_y, rootClip);
+        }
+
+        m_nativeWindow.EndPresent();
+    }
+
+    private unsafe void renderWidget(SDL_Renderer* renderer, int x, int y, SKRect clipRect)
+    {
+        var newX = m_x + x;
+        var newY = m_y + y;
+
+        var thisRect = new SKRect(newX, newY, newX + m_width, newY + m_height);
+        var currentClip = SKRect.Intersect(clipRect, thisRect);
+
+        if (currentClip.IsEmpty)
+            return;
+
+        if (m_cachedRenderTexture != null)
+        {
+            SDL.SDL3.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            var destRect = new SDL_FRect
+            {
+                x = newX,
+                y = newY,
+                w = m_width,
+                h = m_height
+            };
+            /*
+
+            SDL.SDL3.SDL_RenderRect(renderer, &test);
+            */
+
+            SDL3.SDL_RenderTexture(renderer, m_cachedRenderTexture, null, &destRect);
+        }
+
+        foreach (var child in m_children)
+        {
+            if (!child.Visible)
+                continue;
+
+            unsafe
+            {
+                child.renderWidget(renderer, newX, newY, currentClip);
+            }
+        }
     }
 
     internal bool ShouldClose()
@@ -689,6 +880,9 @@ public class Widget : IDisposable
 
             OnPostLayout();
             OnPostLayoutUpdate?.Invoke();
+
+            TriggerRepaint();
+
 
             if (Width != oldSize.Width || Height != oldSize.Height)
                 dispatchResize();
@@ -793,6 +987,8 @@ public class Widget : IDisposable
 
             OnResized?.Invoke();
         }
+
+        TriggerRepaint();
     }
 
     private void initializeIfTopLevel()
@@ -826,9 +1022,10 @@ public class Widget : IDisposable
         };
     }
 
-    private void invalidate()
+    private void triggerRepaint()
     {
         if (m_isDirty) return;
+
         m_isDirty = true;
         Parent?.markChildDirty();
     }
@@ -1015,7 +1212,7 @@ public class Widget : IDisposable
         Resize(w, h);
         m_nativeWindow!.CreateFrameBuffer(w, h);
 
-        // Invalidate();
+        TriggerRepaint();
 
         LayoutQueue.Flush();
         RenderTopLevel(Application.DebugDrawing);

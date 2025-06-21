@@ -17,7 +17,7 @@ public class Label : Widget, IPaintHandler
 
             parseHtml(value, m_font);
             updateSize();
-            Invalidate();
+            TriggerRepaint();
         }
     }
 

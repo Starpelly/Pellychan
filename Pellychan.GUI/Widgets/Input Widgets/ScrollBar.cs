@@ -52,6 +52,7 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
             if (oldValue != value)
             {
                 OnValueChanged?.Invoke(value);
+                TriggerRepaint();
             }
         }
     }
@@ -156,7 +157,7 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
         {
             Value = Math.Min(Maximum, Value + PageStep);
         }
-        Invalidate();
+        TriggerRepaint();
     }
 
     public void OnMouseMove(int x, int y)
@@ -176,7 +177,7 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
 
             float ratio = (newTop - groove.Top) / (groove.Height - sliderHeight);
             Value = Minimum + (int)(ratio * (Maximum - Minimum));
-            Invalidate();
+            TriggerRepaint();
         }
         else
         {
@@ -188,6 +189,6 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
     {
         m_pressed = SubControl.None;
         m_dragging = false;
-        Invalidate();
+        TriggerRepaint();
     }
 }

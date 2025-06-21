@@ -36,6 +36,7 @@ public class Application : IDisposable
     internal static bool DebugDrawing = false;
 
     public static bool HeadlessMode { get; set; } = false;
+    internal static uint CurrentFrame { get; private set; } = 0;
 
     /// <summary>
     /// 
@@ -105,6 +106,8 @@ public class Application : IDisposable
                     w.RenderTopLevel(Application.DebugDrawing);
                 }
             }
+
+            CurrentFrame++;
 
             // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
             // SDL3.SDL_Delay(16); // ~60fps
