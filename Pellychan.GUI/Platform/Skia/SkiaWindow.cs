@@ -12,25 +12,20 @@ namespace Pellychan.GUI.Platform.Skia;
 
 internal unsafe class SkiaWindow
 {
-    public Widget ParentWidget { get; private set; } 
+    internal Widget ParentWidget { get; private set; }
 
-    public IWindow Window { get; private set; }
+    internal IWindow Window { get; private set; }
 
     internal SDL_Window* SDLWindowHandle => ((SDL3Window)Window).SDLWindowHandle;
     internal SDL_WindowID SDLWindowID => ((SDL3Window)Window).SDLWindowID;
 
-    public SDL_Renderer* SDLRenderer;
-    public SDL_Texture* SDLTexture;
+    internal SDL_Renderer* SDLRenderer { get; private set; }
+    internal SDL_Texture* SDLTexture { get; private set; }
+    internal SDL_Surface* SDLSurface { get; private set; }
 
-    public SKImageInfo ImageInfo { get; private set; }
+    internal SKImageInfo ImageInfo { get; private set; }
 
-    public bool ShouldClose { get; private set; }
-
-    private IntPtr m_pixels;
-    private int m_pitch;
-
-    public IntPtr Pixels => m_pixels;
-    public int Pitch => m_pitch;
+    internal bool ShouldClose { get; private set; }
 
     private MouseCursor.CursorType? m_currentCursor = null;
     private MouseCursor.CursorType? m_lastCursorShape = null;
@@ -102,37 +97,30 @@ internal unsafe class SkiaWindow
             SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888,
             SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
             w, h);
+
+        if (SDLSurface != null)
+        {
+            SDL_DestroySurface(SDLSurface);
+        }
+        // SDLSurface = SDL_CreateSurface(w, h, SDL_GetPixelFormatForMasks(32, 0, 0, 0, 0));
+        SDLSurface = SDL_CreateSurface(w, h, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888);
     }
 
     public void Dispose()
     {
         // SkiaSurface?.Dispose();
 
+        SDL_DestroySurface(SDLSurface);
         SDL_DestroyTexture(SDLTexture);
         SDL_DestroyRenderer(SDLRenderer);
 
         Window.Dispose();
     }
 
-    public void Lock()
-    {
-        fixed (nint* pixelsPtr = &m_pixels)
-        fixed (int* pitchPtr = &m_pitch)
-        {
-            SDL_LockTexture(SDLTexture, null, pixelsPtr, pitchPtr);
-        }
-    }
-
-    public void Unlock()
-    {
-        SDL_UnlockTexture(SDLTexture);
-    }
-
     public void BeginPresent()
     {
-        var windowClear = Application.Palette.Get(ColorRole.Window);
-        SDL_SetRenderDrawColor(SDLRenderer, windowClear.Red, windowClear.Green, windowClear.Blue, 255);
-        SDL_RenderClear(SDLRenderer);
+        // SDL_SetRenderDrawColor(SDLRenderer, windowClear.Red, 0, 0, 255);
+        // SDL_RenderClear(SDLRenderer);
         
         SDL_RenderTexture(SDLRenderer, SDLTexture, null, null);
     }
@@ -140,7 +128,7 @@ internal unsafe class SkiaWindow
     public void EndPresent()
     {
         SDL_RenderPresent(SDLRenderer);
-        SDL_RenderPresent(popupRenderer);
+        // SDL_RenderPresent(popupRenderer);
     }
 
     internal void PollEvents()

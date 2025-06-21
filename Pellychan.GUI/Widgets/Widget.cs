@@ -323,7 +323,7 @@ public class Widget : IDisposable
             m_shouldCache = value;
         }
     }
-    internal const bool SupportCache = true;
+    internal const bool SupportCache = false;
 
     #endregion
 
@@ -771,30 +771,48 @@ public class Widget : IDisposable
         if (m_nativeWindow == null)
             throw new Exception("Native window isn't set!");
 
-        // Lock texture to get pixel buffer
-        m_nativeWindow.Lock();
-
-        using var surface = SKSurface.Create(m_nativeWindow.ImageInfo, m_nativeWindow.Pixels, m_nativeWindow.Pitch, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-
-        // var surface = m_nativeWindow!.SkiaSurface!;
-        var canvas = surface.Canvas;
-
-        canvas.Clear(SKColors.White);
-
-        //var rootStack = new Stack<SKRect>();
-        // rootStack.Push(new SKRect(0, 0, m_width, m_height));
         var rootClip = new SKRect(0, 0, m_width, m_height);
 
-        Paint(canvas, rootClip, m_nativeWindow);
+        nint pixelsPtr;
+        int pitchPtr;
 
-        if (debug)
+        unsafe
         {
-            DrawDebug(canvas);
+            pixelsPtr = m_nativeWindow.SDLSurface->pixels;
+            pitchPtr = m_nativeWindow.SDLSurface->pitch;
+
+            // SDL3.SDL_LockTexture(m_nativeWindow.SDLTexture, null, &pixelsPtr, &pitchPtr);
         }
 
-        canvas.Flush();
+        // Paint!
+        // if (false)
+        {
+            using var surface = SKSurface.Create(m_nativeWindow.ImageInfo, pixelsPtr, pitchPtr, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
+            // var surface = m_nativeWindow.SKSurface;
+            var canvas = surface.Canvas;
 
-        m_nativeWindow.Unlock();
+            canvas.Clear(SKColors.Magenta);
+
+            // var rootStack = new Stack<SKRect>();
+            // rootStack.Push(new SKRect(0, 0, m_width, m_height));
+
+            Paint(canvas, rootClip, m_nativeWindow);
+
+            if (debug)
+            {
+                DrawDebug(canvas);
+            }
+            canvas.Flush();
+        }
+
+        unsafe
+        {
+            // SDL3.SDL_UnlockTexture(m_nativeWindow.SDLTexture);
+            if (!SDL3.SDL_UpdateTexture(m_nativeWindow.SDLTexture, null, m_nativeWindow.SDLSurface->pixels, m_nativeWindow.SDLSurface->pitch))
+            {
+                Console.WriteLine(SDL3.SDL_GetError());
+            }
+        }
 
         m_nativeWindow.BeginPresent();
 
