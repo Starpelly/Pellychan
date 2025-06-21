@@ -19,6 +19,13 @@ internal unsafe class SkiaWindow
     internal SDL_Window* SDLWindowHandle => ((SDL3Window)Window).SDLWindowHandle;
     internal SDL_WindowID SDLWindowID => ((SDL3Window)Window).SDLWindowID;
 
+    // Hardware acceleration
+    internal SDL_GLContextState* SDLGLContext { get; private set; }
+    internal GRGlInterface? InterfaceGL { get; private set; }
+    internal GRContext? GRContext { get; private set; }
+    internal GRBackendRenderTarget RenderTarget { get; private set; }
+
+    // Software rendering mode
     internal SDL_Renderer* SDLRenderer { get; private set; }
     internal SDL_Texture* SDLTexture { get; private set; }
     internal SDL_Surface* SDLSurface { get; private set; }
@@ -80,7 +87,18 @@ internal unsafe class SkiaWindow
 
         Window.Title = title;
 
-        SDLRenderer = SDL_CreateRenderer(SDLWindowHandle, (byte*)null);
+        if (Application.HardwareAccel)
+        {
+            SDLGLContext = SDL_GL_CreateContext(SDLWindowHandle);
+            SDL_GL_MakeCurrent(SDLWindowHandle, SDLGLContext);
+
+            InterfaceGL = GRGlInterface.Create();
+            GRContext = GRContext.CreateGl(InterfaceGL);
+        }
+        else
+        {
+            SDLRenderer = SDL_CreateRenderer(SDLWindowHandle, (byte*)null);
+        }
     }
 
     public void CreateFrameBuffer(int w, int h)
@@ -104,6 +122,24 @@ internal unsafe class SkiaWindow
         }
         // SDLSurface = SDL_CreateSurface(w, h, SDL_GetPixelFormatForMasks(32, 0, 0, 0, 0));
         SDLSurface = SDL_CreateSurface(w, h, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888);
+
+        RenderTarget?.Dispose();
+        RenderTarget = createRenderTarget(w, h);
+
+        // var grInterface = GRGlInterface.Create
+        // GRContext.CreateDirect3D();
+    }
+
+
+    GRBackendRenderTarget createRenderTarget(int width, int height)
+    {
+        SDL_GetWindowSizeInPixels(SDL_GL_GetCurrentWindow(), &width, &height);
+        // SDL_GL_GetIntegerv(SDL.SDL.GLAttribute.FramebufferBinding, out int framebuffer);
+
+        var glInfo = new GRGlFramebufferInfo((uint)0, SKColorType.Rgba8888.ToGlSizedFormat());
+        var renderTarget = new GRBackendRenderTarget(width, height, 0, 0, glInfo);
+
+        return renderTarget;
     }
 
     public void Dispose()
@@ -112,23 +148,48 @@ internal unsafe class SkiaWindow
 
         SDL_DestroySurface(SDLSurface);
         SDL_DestroyTexture(SDLTexture);
-        SDL_DestroyRenderer(SDLRenderer);
+
+        GRContext?.Dispose();
+        InterfaceGL?.Dispose();
+
+        if (SDLGLContext != null)
+        {
+            SDL_GL_DestroyContext(SDLGLContext);
+        }
+        if (SDLRenderer != null)
+        {
+            SDL_DestroyRenderer(SDLRenderer);
+        }
 
         Window.Dispose();
     }
 
     public void BeginPresent()
     {
-        // SDL_SetRenderDrawColor(SDLRenderer, windowClear.Red, 0, 0, 255);
-        // SDL_RenderClear(SDLRenderer);
-        
-        SDL_RenderTexture(SDLRenderer, SDLTexture, null, null);
+        if (Application.HardwareAccel)
+        {
+
+        }
+        else
+        {
+            // SDL_SetRenderDrawColor(SDLRenderer, windowClear.Red, 0, 0, 255);
+            // SDL_RenderClear(SDLRenderer);
+
+            SDL_RenderTexture(SDLRenderer, SDLTexture, null, null);
+        }
     }
 
     public void EndPresent()
     {
-        SDL_RenderPresent(SDLRenderer);
-        // SDL_RenderPresent(popupRenderer);
+        if (Application.HardwareAccel)
+        {
+            SDL_GL_SwapWindow(SDLWindowHandle);
+        }
+        else
+        {
+            SDL_RenderPresent(SDLRenderer);
+            // SDL_RenderPresent(popupRenderer);
+        }
     }
 
     internal void PollEvents()

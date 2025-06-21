@@ -316,14 +316,13 @@ public class Widget : IDisposable
     {
         get
         {
-            return m_shouldCache && SupportCache;
+            return m_shouldCache && Application.SupportPaintCaching && !Application.HardwareAccel;
         }
         set
         {
             m_shouldCache = value;
         }
     }
-    internal const bool SupportCache = false;
 
     #endregion
 
@@ -773,22 +772,19 @@ public class Widget : IDisposable
 
         var rootClip = new SKRect(0, 0, m_width, m_height);
 
-        nint pixelsPtr;
-        int pitchPtr;
-
-        unsafe
-        {
-            pixelsPtr = m_nativeWindow.SDLSurface->pixels;
-            pitchPtr = m_nativeWindow.SDLSurface->pitch;
-
-            // SDL3.SDL_LockTexture(m_nativeWindow.SDLTexture, null, &pixelsPtr, &pitchPtr);
-        }
-
         // Paint!
         // if (false)
+        unsafe
         {
-            using var surface = SKSurface.Create(m_nativeWindow.ImageInfo, pixelsPtr, pitchPtr, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
-            // var surface = m_nativeWindow.SKSurface;
+            SKSurface surface;
+            if (Application.HardwareAccel)
+            {
+                surface = SKSurface.Create(m_nativeWindow.GRContext, m_nativeWindow.RenderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
+            }
+            else
+            {
+                surface = SKSurface.Create(m_nativeWindow.ImageInfo, m_nativeWindow.SDLSurface->pixels, m_nativeWindow.SDLSurface->pitch, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
+            }
             var canvas = surface.Canvas;
 
             canvas.Clear(SKColors.Magenta);
@@ -803,14 +799,24 @@ public class Widget : IDisposable
                 DrawDebug(canvas);
             }
             canvas.Flush();
+
+            m_nativeWindow.GRContext?.Flush();
+            surface.Dispose();
         }
 
-        unsafe
+        if (Application.HardwareAccel)
         {
-            // SDL3.SDL_UnlockTexture(m_nativeWindow.SDLTexture);
-            if (!SDL3.SDL_UpdateTexture(m_nativeWindow.SDLTexture, null, m_nativeWindow.SDLSurface->pixels, m_nativeWindow.SDLSurface->pitch))
+
+        }
+        else
+        {
+            unsafe
             {
-                Console.WriteLine(SDL3.SDL_GetError());
+                // SDL3.SDL_UnlockTexture(m_nativeWindow.SDLTexture);
+                if (!SDL3.SDL_UpdateTexture(m_nativeWindow.SDLTexture, null, m_nativeWindow.SDLSurface->pixels, m_nativeWindow.SDLSurface->pitch))
+                {
+                    Console.WriteLine(SDL3.SDL_GetError());
+                }
             }
         }
 
@@ -837,20 +843,27 @@ public class Widget : IDisposable
 
         if (m_cachedRenderTexture != null)
         {
-            SDL.SDL3.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            var destRect = new SDL_FRect
+            if (Application.HardwareAccel)
             {
-                x = newX,
-                y = newY,
-                w = m_width,
-                h = m_height
-            };
-            /*
 
-            SDL.SDL3.SDL_RenderRect(renderer, &test);
-            */
+            }
+            else
+            {
+                SDL.SDL3.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                var destRect = new SDL_FRect
+                {
+                    x = newX,
+                    y = newY,
+                    w = m_width,
+                    h = m_height
+                };
+                /*
 
-            SDL3.SDL_RenderTexture(renderer, m_cachedRenderTexture, null, &destRect);
+                SDL.SDL3.SDL_RenderRect(renderer, &test);
+                */
+
+                SDL3.SDL_RenderTexture(renderer, m_cachedRenderTexture, null, &destRect);
+            }
         }
 
         foreach (var child in m_children)

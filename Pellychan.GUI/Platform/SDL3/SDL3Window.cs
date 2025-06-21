@@ -105,6 +105,15 @@ namespace Pellychan.GUI.Platform.SDL3
                                     SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
                                     SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
+            if (Application.HardwareAccel)
+            {
+                flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
+
+                SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+                SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+                SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLProfile.SDL_GL_CONTEXT_PROFILE_CORE);
+            }
+
             SDLWindowHandle = SDL_CreateWindow(m_title, Size.Width, Size.Height, flags);
             SDLWindowID = SDL_GetWindowID(SDLWindowHandle);
 

@@ -289,7 +289,13 @@ public class PhantomStyle : Style
 
             // Ring shadow
             paint.IsStroke = true;
-            paint.StrokeWidth = 1;
+
+            // I don't know why, but if rendered using the GPU,
+            // setting this to '1' fucks up rendering strokes...?
+            // Is this a bug with SkiaSharp? Idk, I should probably report.
+            // For right now, just don't do this...!
+            // paint.StrokeWidth = 1;
+            
             if (Scrollbar_Shadows && isEnabled)
             {
                 for (int i = 0; i < Num_ShadowSteps; ++i)

@@ -77,7 +77,6 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         using var paint = new SKPaint();
         paint.Color = Application.DefaultStyle.GetFrameColor();
         paint.IsStroke = true;
-        paint.StrokeWidth = 1;
         canvas.DrawRoundRect(new SKRect(0, 0, Width - 1, Height - 1), 0, 0, paint);
     }
 

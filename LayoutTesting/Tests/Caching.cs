@@ -22,9 +22,17 @@ namespace LayoutTesting.Tests
             new Rect(SKColors.AliceBlue, this)
             {
                 X = 16,
-                Y = 500,
+                Y = 400,
                 Width = 300,
                 Height = 300
+            };
+
+            new ScrollBar(this)
+            {
+                X = 400,
+                Y = 24,
+                Width = 13,
+                Height = 200
             };
         }
 

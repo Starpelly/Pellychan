@@ -74,7 +74,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
     {
         using var paint = new SKPaint();
 
-        paint.Color = m_hovering ? Application.DefaultStyle.GetButtonHoverColor().Darker(1.5f) : Palette.Get(ColorRole.Button);
+        paint.Color = m_hovering ? Application.DefaultStyle.GetButtonHoverColor().Darker(1.1f) : Palette.Get(ColorRole.Button);
         canvas.DrawRect(new(0, 0, Width, Height), paint);
     }
 

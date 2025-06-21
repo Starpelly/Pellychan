@@ -36,6 +36,16 @@ public class Application : IDisposable
     internal static bool DebugDrawing = false;
 
     public static bool HeadlessMode { get; set; } = false;
+
+    public static bool HardwareAccel { get; private set; } = true;
+    public const bool SupportPaintCaching = false;
+
+    public enum RendererType
+    {
+        SDL,
+        OpenGL
+    }
+
     internal static uint CurrentFrame { get; private set; } = 0;
 
     /// <summary>
