@@ -13,6 +13,11 @@ public interface IPaintHandler
     public void OnPaint(SKCanvas canvas);
 }
 
+public interface IPostPaintHandler
+{
+    public void OnPostPaint(SKCanvas canvas);
+}
+
 public interface IMouseEnterHandler
 {
     public void OnMouseEnter();
@@ -386,6 +391,7 @@ public class Widget : IDisposable
         }
         else
         {
+            // All top level widgets are windows
             if (winType == WindowType.Widget)
             {
                 m_windowType |= WindowType.Window;
@@ -394,7 +400,10 @@ public class Widget : IDisposable
 
         if (IsTopLevel)
         {
-            Application.Instance!.TopLevelWidgets.Add(this);
+            if (!Application.HeadlessMode)
+            {
+                Application.Instance!.TopLevelWidgets.Add(this);
+            }
             Visible = false;
         }
 
@@ -515,7 +524,7 @@ public class Widget : IDisposable
 
         // This is fine because a native window can only exist on top level widgets and thus,
         // can't be in a layout!
-        if (m_nativeWindow != null && m_windowType == WindowType.Window)
+        if (m_nativeWindow != null)
         {
             m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
         }
@@ -805,6 +814,8 @@ public class Widget : IDisposable
             }
         }
 
+        (this as IPostPaintHandler)?.OnPostPaint(canvas);
+
         // clipStack.Pop();
 
         canvas.Restore();
@@ -868,7 +879,8 @@ public class Widget : IDisposable
 
     internal void RenderTopLevel(bool debug)
     {
-        if (m_height == 0 || m_height == 0) return;
+        if (m_height == 0 || m_height == 0)
+            return;
         if (m_nativeWindow == null)
             throw new Exception("Native window isn't set!");
 
@@ -1085,12 +1097,18 @@ public class Widget : IDisposable
 
     private SKPoint getGlobalPosition()
     {
+        if (IsWindow)
+            return new(0, 0);
+
         var x = m_x;
         var y = m_y;
 
         Widget? current = m_parent;
         while (current != null)
         {
+            if (current.IsWindow)
+                break;
+
             x += current.m_x;
             y += current.m_y;
             current = current.m_parent;
@@ -1137,9 +1155,11 @@ public class Widget : IDisposable
             flags |= WindowFlags.PopupMenu;
         }
         SkiaWindow? parentWindow = null;
-        if (m_parent != null)
+        var parentWidgetCheck = m_parent;
+        while (parentWindow == null && m_parent != null)
         {
-            parentWindow = m_parent.m_nativeWindow;
+            parentWidgetCheck = parentWidgetCheck.Parent;
+            parentWindow = parentWidgetCheck.m_nativeWindow;
         }
 
         m_nativeWindow = new(this, GetType().Name, flags, parentWindow);
@@ -1164,6 +1184,16 @@ public class Widget : IDisposable
         m_nativeWindow.Window.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
         {
             onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Wheel, (int)delta.X, (int)delta.Y);
+        };
+        m_nativeWindow.Window.MouseEntered += delegate()
+        {
+            // I don't know what I'd use this for right now
+        };
+        m_nativeWindow.Window.MouseLeft += delegate ()
+        {
+            // Simulate mouse exiting
+            m_lastHovered?.handleMouseLeave();
+            m_lastHovered = null;
         };
     }
 

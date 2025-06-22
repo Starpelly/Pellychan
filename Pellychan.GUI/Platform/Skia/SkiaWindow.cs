@@ -37,32 +37,6 @@ internal unsafe class SkiaWindow
     private MouseCursor.CursorType? m_currentCursor = null;
     private MouseCursor.CursorType? m_lastCursorShape = null;
 
-    // Win32 constants
-    const int GWL_STYLE = -16;
-    const int GWL_EXSTYLE = -20;
-    const uint WS_POPUP = 0x80000000;
-    const uint WS_EX_TOOLWINDOW = 0x00000080;
-    const uint WS_EX_NOACTIVATE = 0x08000000;
-
-    // Win32 APIs
-    [DllImport("user32.dll")]
-    static extern uint GetWindowLongPtr(IntPtr hWnd, int nIndex);
-
-    [DllImport("user32.dll")]
-    static extern uint SetWindowLongPtr(IntPtr hWnd, int nIndex, uint dwNewLong);
-
-    [DllImport("dwmapi.dll")]
-    static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct MARGINS
-    {
-        public int cxLeftWidth;
-        public int cxRightWidth;
-        public int cyTopHeight;
-        public int cyBottomHeight;
-    }
-
     public SkiaWindow(Widget parent, string title, WindowFlags flags, SkiaWindow? parentWindow)
     {
         switch (RuntimeInfo.OS)
@@ -76,6 +50,12 @@ internal unsafe class SkiaWindow
         }
 
         Window.Create(parentWindow?.Window ?? null, flags);
+        
+        if (flags.HasFlag(WindowFlags.PopupMenu))
+        {
+            (Window as SDL3WindowsWindow)?.AddDropShadow();
+        }
+
         Center();
 
         Window.ExitRequested += delegate ()
@@ -223,26 +203,4 @@ internal unsafe class SkiaWindow
         // Set the window position
         SDL_SetWindowPosition(SDLWindowHandle, centeredX, centeredY);
     }
-
-    #region Private methods
-
-    private static void createWindowShadowForBorderless(SDL_Window* window)
-    {
-        // Creates a shadow frame outside for borderless windows, might be useful?
-        fixed (byte* ptr = SDL_PROP_WINDOW_WIN32_HWND_POINTER)
-        {
-            var hwnd = SDL_GetPointerProperty(SDL_GetWindowProperties(window), ptr, 0);
-
-            var shadow = new MARGINS()
-            {
-                cxLeftWidth = 1,
-                cxRightWidth = 1,
-                cyTopHeight = 1,
-                cyBottomHeight = 1
-            };
-            DwmExtendFrameIntoClientArea(hwnd, ref shadow);
-        }
-    }
-
-    #endregion
 }

@@ -256,9 +256,9 @@ public class Application : IDisposable
         var @base = new SKColor(46, 47, 49);
         var alternateBase = new SKColor(41, 41, 43);
         var text = new SKColor(208, 209, 212);
-        var highlight = new SKColor(0xbfc7d5);
-        var highlightedText = new SKColor(0x2d2c27);
-        var disabledText = new SKColor(0x60a4a6a8);
+        var highlight = new SKColor(191, 199, 213);
+        var highlightedText = new SKColor(45, 44, 39);
+        var disabledText = new SKColor(164, 166, 168);
 
         disabledText = disabledText.Darker(120); // old
         c.window = window;
@@ -311,8 +311,8 @@ public class Application : IDisposable
         var alternateBase = new SKColor(19, 19, 22);
         var text = new SKColor(212, 209, 208);
         var highlight = new SKColor(211, 210, 208);
-        var highlightedText = new SKColor(0x2d2c27);
-        var disabledText = new SKColor(0x60a4a6a8);
+        var highlightedText = new SKColor(45, 44, 39);
+        var disabledText = new SKColor(164, 166, 168);
         c.window = window;
         c.text = text;
         c.disabledText = disabledText.Darker(150);

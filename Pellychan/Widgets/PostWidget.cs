@@ -1,4 +1,5 @@
-﻿using Pellychan.API;
+﻿using HtmlAgilityPack;
+using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
@@ -180,6 +181,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
     private readonly Thumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
     private readonly Label m_dateLabel;
+    private readonly Label m_postIDLabel;
     private readonly Label m_commentLabel;
 
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
@@ -206,9 +208,43 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
             CatchCursorEvents = false,
         };
 
+        m_postIDLabel = new Label(Application.DefaultFont, this)
+        {
+            X = Padding.Left,
+            Y = Padding.Top,
+            Text = $"<span class=\"postID\">{post.No}</span>",
+            CatchCursorEvents = false,
+        };
+
         var rawComment = post.Com == null ? string.Empty : post.Com;
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
+
+        var commentInput = decoded;
+        // sanitize html
+        /*
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml($"<body>{decoded}</body>");
+
+            doc.CreateTextNode()
+
+            foreach (var node in doc.DocumentNode.SelectSingleNode("//body").ChildNodes)
+            {
+                switch (node.Name)
+                {
+                    case "a":
+                        switch (node.GetAttributeValue("class", ""))
+                        {
+                            case "quotelink":
+                                node.InnerText
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+        */
 
         var commentY = m_nameLabel.Y + m_nameLabel.Height + 4;
 
@@ -222,7 +258,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
         {
             Y = commentY,
 
-            Text = decoded,
+            Text = commentInput,
             WordWrap = true,
 
             Fitting = new(GUI.Layouts.FitPolicy.Policy.Fixed, GUI.Layouts.FitPolicy.Policy.Fixed),
@@ -279,6 +315,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
 
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
+        m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
     }
 
     #endregion

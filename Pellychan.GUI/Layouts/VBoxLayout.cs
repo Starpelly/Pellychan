@@ -51,15 +51,16 @@ public class VBoxLayout : Layout
 
         var finalPadding = GetFinalPadding(widget);
 
-        var lastParentSize = new SKSizeI(widget.Width, widget.Height);
+        var newWidth = widget.Width;
+        var newHeight = widget.Height;
 
         if (fitHorizontal)
         {
-            widget.Width = 0;
+            newWidth = 0;
         }
         if (fitVertical)
         {
-            widget.Height = 0;
+            newHeight = 0;
         }
 
         var childGap = (widget.Children.Count - 1) * Spacing;
@@ -67,24 +68,23 @@ public class VBoxLayout : Layout
         foreach (var child in visibleChildren)
         {
             if (fitVertical)
-                widget.Height += child.Height;
+                newHeight += child.Height;
 
             if (widget.Sizing.Horizontal == SizePolicy.Policy.Fit)
-                widget.Width = Math.Max(child.Width, widget.Width);
+                newWidth = Math.Max(child.Width, widget.Width);
         }
 
         if (fitHorizontal)
         {
-            widget.Width += finalPadding.Left + finalPadding.Right;
+            newWidth += finalPadding.Left + finalPadding.Right;
         }
         if (fitVertical)
         {
-            widget.Height += childGap;
-            widget.Height += finalPadding.Top + finalPadding.Bottom;
+            newHeight += childGap;
+            newHeight += finalPadding.Top + finalPadding.Bottom;
         }
 
-        if (lastParentSize != new SKSizeI(widget.Width, widget.Height))
-            widget.CallResizeEvents();
+        widget.Resize(newWidth, newHeight);
     }
 
     public override void GrowSizingPass(Widget parent)

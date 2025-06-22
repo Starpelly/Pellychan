@@ -126,6 +126,14 @@ namespace Pellychan.GUI.Platform.SDL3
                     fetchWindowSize();
                     break;
 
+                case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
+                    MouseEntered?.Invoke();
+                    break;
+
+                case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
+                    MouseLeft?.Invoke();
+                    break;
+
                 case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                     ExitRequested?.Invoke();
                     break;

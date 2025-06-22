@@ -6,7 +6,7 @@ using System.Net;
 
 namespace Pellychan.Widgets;
 
-internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
+internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
 {
     private const int MaxImageWidth = 75;
     private static readonly Padding Padding = new(8);
@@ -78,6 +78,56 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
         canvas.DrawRect(new(0, 0, Width, Height), paint);
     }
 
+    public void OnPostPaint(SKCanvas canvas)
+    {
+        Padding textPadding = new(8);
+
+        using var paint = new SKPaint();
+
+        var metaRect = new SKRectI(0, 0, 64, (int)Application.DefaultFont.Size + (textPadding.Top + textPadding.Bottom));
+        metaRect.Left = Width - metaRect.Width;
+        metaRect.Right = Width + 1;
+        metaRect = metaRect.SetY(Height - metaRect.Height);
+        // metaRect.Left = Width - metaRect.Right;
+
+        using var roundRect = new SKRoundRect(metaRect);
+        roundRect.SetRectRadii(metaRect,
+        [
+            new SKPoint(8, 4),
+            new SKPoint(),
+            new SKPoint(),
+            new SKPoint(),
+        ]);
+
+        // paint.IsAntialias = true;
+        paint.Color = Palette.Get(ColorRole.Button);
+        canvas.DrawRoundRect(roundRect, paint);
+
+        paint.IsStroke = true;
+        paint.Color = Palette.Get(ColorRole.Window);
+        canvas.DrawRoundRect(roundRect, paint);
+        paint.IsAntialias = false;
+
+        canvas.Save();
+        canvas.Translate(metaRect.Left + textPadding.Left, metaRect.Top + textPadding.Top);
+
+        paint.IsStroke = false;
+        paint.Color = Palette.Get(ColorRole.Text);
+
+        void drawIconText(string icon, string label)
+        {
+            var iconWidth = PellychanWindow.Instance.IconsFont.MeasureText(icon);
+            var labelWidth = Application.DefaultFont.MeasureText(label);
+
+            canvas.DrawText(icon, new SKPoint(0, PellychanWindow.Instance.IconsFont.Size - 2), PellychanWindow.Instance.IconsFont, paint);
+            canvas.DrawText(label, new SKPoint(iconWidth + 4, Application.DefaultFont.Size - 1), Application.DefaultFont, paint);
+        }
+
+        drawIconText(MaterialDesign.MaterialIcons.Reply, Thread.Replies.ToString());
+
+        canvas.Restore();
+    }
+
     public void OnResize(int width, int height)
     {
         updateLayout();
@@ -120,7 +170,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
         }
 
         // newHeight = Math.Max(100, newHeight);
-        Height = newHeight + Padding.Top /*+ m_nameLabel.Height*/ + Padding.Bottom;
+        Height = newHeight + Padding.Top /*+ m_nameLabel.Height*/ + Padding.Bottom + 24;
     }
 
     #endregion

@@ -1,6 +1,7 @@
 ﻿using Pellychan.API.Models;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
+using Pellychan.Resources;
 using Pellychan.Widgets;
 using SkiaSharp;
 
@@ -22,9 +23,27 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     private ScrollArea m_threadsListWidget;
     private ScrollArea m_postsListWidget;
 
+    public readonly SKFont IconsFont;
+
     public PellychanWindow() : base()
     {
         Instance = this;
+
+        using var iconsStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.MaterialIconsRound-Regular.otf");
+        using var iconsTypeface = SKTypeface.FromStream(iconsStream);
+
+        const int dpi = 96;
+        const float pixelsPerPoint = dpi / 72.0f;
+        const float skiaFontSize = 12 * pixelsPerPoint;
+
+        IconsFont = new SKFont
+        {
+            Edging = SKFontEdging.SubpixelAntialias,
+            Hinting = SKFontHinting.Slight,
+            Subpixel = true,
+            Typeface = iconsTypeface,
+            Size = skiaFontSize
+        };
 
         m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
         m_chanClient.CurrentBoard = "g";
@@ -188,9 +207,23 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             }
             MenuBar!.AddMenu(menu);
         }
-        AddMenu("View", []);
-        AddMenu("Tools", []);
-        AddMenu("Help", []);
+        AddMenu("View", [
+            new("New Tab"),
+            new("Close Tab"),
+            new("Previous Tab"),
+            new("Next Tab"),
+            new("Go Back"),
+            new("Go Forward"),
+            new("Go to..."),
+            new("Preferences"),
+        ]);
+        AddMenu("Tools", [
+            new("Thread Downloader")    
+        ]);
+        AddMenu("Help", [
+            new("Website"),
+            new("About Pellychan")
+        ]);
     }
 
     public new void OnResize(int width, int height)

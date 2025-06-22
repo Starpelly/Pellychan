@@ -3,6 +3,7 @@ using Pellychan.GUI.Platform.Windows.Native;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using static SDL.SDL3;
 
 namespace Pellychan.GUI.Platform.Windows
 {
@@ -28,6 +29,30 @@ namespace Pellychan.GUI.Platform.Windows
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
+        [StructLayout(LayoutKind.Sequential)]
+        struct MARGINS
+        {
+            public int cxLeftWidth;
+            public int cxRightWidth;
+            public int cyTopHeight;
+            public int cyBottomHeight;
+        }
+
+        [DllImport("dwmapi.dll")]
+        static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS pMarInset);
+
+        [DllImport("dwmapi.dll")]
+        static extern int DwmIsCompositionEnabled(out bool enabled);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr GetClassLongPtr(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr SetClassLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        const int GCL_STYLE = -26;
+        const int CS_DROPSHADOW = 0x00020000;
+
         /// <summary>
         /// On Windows, SDL will use the same image for both large and small icons (scaled as necessary).
         /// This can look bad if scaling down a large image, so we use the Windows API directly so as
@@ -48,6 +73,33 @@ namespace Pellychan.GUI.Platform.Windows
                 SendMessage(windowHandle, seticon_message, icon_small, m_smallIcon.Handle);
                 SendMessage(windowHandle, seticon_message, icon_big, m_largeIcon.Handle);
             }
+        }
+
+        internal void AddDropShadow()
+        {
+            TryEnableDropShadowViaClassStyle(WindowHandle);
+            // AddDropShadow(WindowHandle);
+        }
+
+        static void AddDropShadow(IntPtr hwnd)
+        {
+            if (DwmIsCompositionEnabled(out bool enabled) == 0 && enabled)
+            {
+                var margins = new MARGINS
+                {
+                    cxLeftWidth = 1,
+                    cxRightWidth = 1,
+                    cyTopHeight = 1,
+                    cyBottomHeight = 1
+                };
+                DwmExtendFrameIntoClientArea(hwnd, ref margins);
+            }
+        }
+
+        static void TryEnableDropShadowViaClassStyle(IntPtr hwnd)
+        {
+            var currentStyle = GetClassLongPtr(hwnd, GCL_STYLE);
+            SetClassLongPtr(hwnd, GCL_STYLE, (IntPtr)(currentStyle.ToInt64() | CS_DROPSHADOW));
         }
     }
 }

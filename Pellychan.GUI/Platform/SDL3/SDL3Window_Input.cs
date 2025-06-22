@@ -84,6 +84,8 @@ namespace Pellychan.GUI.Platform.SDL3
         public event Action<Vector2>? MouseMove;
         public event Action<Vector2, MouseButton>? MouseDown;
         public event Action<Vector2, MouseButton>? MouseUp;
+        public event Action? MouseEntered;
+        public event Action? MouseLeft;
         public event Action<Vector2, Vector2, bool>? MouseWheel;
 
         #endregion

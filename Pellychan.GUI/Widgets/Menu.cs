@@ -29,6 +29,8 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     private bool m_open = false;
     private bool m_hovering = false;
 
+    private MenuPopup? m_popup;
+
     public Menu(string title, Widget? parent = null) : base(parent)
     {
         Title = title;
@@ -48,8 +50,19 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     public void Popup()
     {
+        m_popup = new MenuPopup(this)
+        {
 
+        };
+        m_popup.Show();
     }
+
+    public int MeasureWidth()
+    {
+        return (int)Application.DefaultFont.MeasureText(Title) + (XPadding * 2);
+    }
+
+    #region Events
 
     public void OnPaint(SKCanvas canvas)
     {
@@ -62,31 +75,17 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
             ? EffectivePalette.Get(ColorRole.HighlightedText)
             : EffectivePalette.Get(ColorRole.Text);
 
+        int roundness = 0;
+
         using var paint = new SKPaint();
         paint.Color = bgColor;
-        canvas.DrawRect(0, 0, Width, Height, paint);
+        paint.IsAntialias = roundness > 0;
+        canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), roundness, roundness), paint);
 
         using var textPaint = new SKPaint();
         textPaint.Color = textColor;
         textPaint.IsAntialias = true;
         canvas.DrawText(Title, XPadding, 16, Application.DefaultFont, textPaint);
-
-        if (m_open)
-        {
-            int y = Height;
-            for (int i = 0; i < Items.Count; i++)
-            {
-                var item = Items[i];
-                var isHovered = i == m_hoveredIndex;
-
-                var itemBg = isHovered ? SKColors.LightBlue : SKColors.White;
-                paint.Color = itemBg;
-                canvas.DrawRect(0, y, Width, 24, paint);
-
-                canvas.DrawText(item.Text, 5, y + 16, Application.DefaultFont, textPaint);
-                y += 24;
-            }
-        }
     }
 
     public bool OnMouseMove(int x, int y)
@@ -113,6 +112,9 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         if (!m_open && y < Height)
         {
             m_open = true;
+
+            Popup();
+
             TriggerRepaint();
         }
         else if (m_open && y >= Height)
@@ -127,6 +129,8 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         }
         else
         {
+            m_popup?.Delete();
+
             m_open = false;
             TriggerRepaint();
         }
@@ -143,4 +147,6 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     {
         m_hovering = false;
     }
+
+    #endregion
 }

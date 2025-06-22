@@ -53,13 +53,16 @@ public class HBoxLayout : Layout
 
         var finalPadding = GetFinalPadding(widget);
 
+        var newWidth = widget.Width;
+        var newHeight = widget.Height;
+
         if (fitHorizontal)
         {
-            widget.Width = 0;
+            newWidth = 0;
         }
         if (fitVertical)
         {
-            widget.Height = 0;
+            newHeight = 0;
         }
 
         var childGap = (widget.Children.Count - 1) * Spacing;
@@ -67,21 +70,23 @@ public class HBoxLayout : Layout
         foreach (var child in visibleChildren)
         {
             if (fitHorizontal)
-                widget.Width += child.Width;
+                newWidth += child.Width;
 
             if (widget.Sizing.Vertical == SizePolicy.Policy.Fit)
-                widget.Height = Math.Max(child.Height, widget.Height);
+                newHeight = Math.Max(child.Height, widget.Height);
         }
 
         if (fitHorizontal)
         {
-            widget.Width += childGap;
-            widget.Width += finalPadding.Left + finalPadding.Right;
+            newWidth += childGap;
+            newWidth += finalPadding.Left + finalPadding.Right;
         }
         if (fitVertical)
         {
-            widget.Height += finalPadding.Top + finalPadding.Bottom;
+            newHeight += finalPadding.Top + finalPadding.Bottom;
         }
+
+        widget.Resize(newWidth, newHeight);
     }
 
     public override void GrowSizingPass(Widget parent)

@@ -101,6 +101,8 @@ namespace Pellychan.GUI.Platform.SDL3
             SDL_SetEventFilter(&eventFilter, ObjectHandle.Handle);
         }
 
+        protected SDL3Window? ParentWindow;
+
         public void Create(IWindow? parent, WindowFlags wf)
         {
             SDL3Window? parentWindow = null;
@@ -124,7 +126,7 @@ namespace Pellychan.GUI.Platform.SDL3
 
             if (wf.HasFlag(WindowFlags.PopupMenu))
             {
-                flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU;
+                flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU | SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
                 flags |= SDL_WindowFlags.SDL_WINDOW_TRANSPARENT;
             }
 
@@ -150,6 +152,8 @@ namespace Pellychan.GUI.Platform.SDL3
 
             s_openedWindows.Add(SDLWindowID, this);
             SDL_AddEventWatch(&eventWatch, ObjectHandle.Handle);
+
+            ParentWindow = parentWindow;
         }
 
         /// <summary>

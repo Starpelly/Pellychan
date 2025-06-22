@@ -206,6 +206,9 @@ public class Label : Widget, IPaintHandler
                         case "date":
                             color = color.WithAlpha(50);
                             break;
+                        case "postID":
+                            color = SKColor.Parse("#5F89AC").WithAlpha(150);
+                            break;
                     }
 
                     m_textFragments.Add(new TextFragment { Text = System.Net.WebUtility.HtmlDecode(node.InnerText), TextColor = color, IsBold = bold });

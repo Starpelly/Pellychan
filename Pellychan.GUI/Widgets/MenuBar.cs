@@ -2,7 +2,7 @@
 
 namespace Pellychan.GUI.Widgets
 {
-    public class MenuBar : Widget, IPaintHandler
+    public class MenuBar : Widget, IPaintHandler, IMouseDownHandler
     {
         public enum Orientation
         {
@@ -44,12 +44,17 @@ namespace Pellychan.GUI.Widgets
 
             if (DrawBorder)
             {
-                paint.Color = new SKColor(42, 42, 45);
+                paint.Color = Application.DefaultStyle.GetFrameColor();
                 canvas.DrawRect(0, 0, Width, Height, paint);
             }
 
-            paint.Color = EffectivePalette.Get(ColorGroup.Active, ColorRole.Window);
+            paint.Color = EffectivePalette.Get(ColorRole.Window);
             canvas.DrawRect(0, 0, Width, Height - BorderSize, paint);
+        }
+
+        public bool OnMouseDown(int x, int y)
+        {
+            return true;
         }
     }
 }
