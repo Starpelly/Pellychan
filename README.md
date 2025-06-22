@@ -3,4 +3,4 @@
 # pellychan
 A 4chan desktop app because I hate the web!
 
-![image](https://github.com/user-attachments/assets/474b110d-58bb-476b-94fc-0336b69e6f79)
+![image](https://github.com/user-attachments/assets/b46a59d0-3f9f-491d-9196-e5bd4e441f52)
