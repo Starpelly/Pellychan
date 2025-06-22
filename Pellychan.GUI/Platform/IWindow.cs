@@ -4,12 +4,18 @@ using System.Numerics;
 
 namespace Pellychan.GUI.Platform
 {
+    public enum WindowFlags
+    {
+        None = 0,
+        PopupMenu
+    }
+
     internal interface IWindow : IDisposable
     {
         /// <summary>
         /// Creates the concrete window implementation.
         /// </summary>
-        void Create();
+        void Create(IWindow? parent, WindowFlags flags);
 
         /// <summary>
         /// Forcefully closes the window.

@@ -18,7 +18,7 @@ public class VBoxLayout : Layout
 
     public override SKSizeI SizeHint(Widget parent)
     {
-        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
+        var visibleChildren = parent.Children.Where(c => c.VisibleWidget).ToList();
 
         var finalPadding = GetFinalPadding(parent);
 
@@ -45,7 +45,7 @@ public class VBoxLayout : Layout
         if (!fitHorizontal && !fitVertical)
             return;
 
-        var visibleChildren = widget.Children.Where(c => c.Visible).Reverse().ToList();
+        var visibleChildren = widget.Children.Where(c => c.VisibleWidget).Reverse().ToList();
         if (visibleChildren.Count == 0)
             return;
 
@@ -89,7 +89,7 @@ public class VBoxLayout : Layout
 
     public override void GrowSizingPass(Widget parent)
     {
-        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
+        var visibleChildren = parent.Children.Where(c => c.VisibleWidget).ToList();
         if (visibleChildren.Count == 0)
             return;
 
@@ -237,7 +237,7 @@ public class VBoxLayout : Layout
 
     public override void PositionsPass(Widget parent)
     {
-        var visibleChildren = parent.Children.Where(c => c.Visible).ToList();
+        var visibleChildren = parent.Children.Where(c => c.VisibleWidget).ToList();
 
         if (visibleChildren.Count == 0)
             return;

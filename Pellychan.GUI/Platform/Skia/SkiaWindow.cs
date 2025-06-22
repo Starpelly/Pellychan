@@ -63,7 +63,7 @@ internal unsafe class SkiaWindow
         public int cyBottomHeight;
     }
 
-    public SkiaWindow(Widget parent, string title) : base()
+    public SkiaWindow(Widget parent, string title, WindowFlags flags, SkiaWindow? parentWindow)
     {
         switch (RuntimeInfo.OS)
         {
@@ -75,7 +75,7 @@ internal unsafe class SkiaWindow
                 throw new InvalidOperationException($"Could not find a suitable window for the selected operating system ({RuntimeInfo.OS})");
         }
 
-        Window.Create();
+        Window.Create(parentWindow?.Window ?? null, flags);
         Center();
 
         Window.ExitRequested += delegate ()
@@ -105,52 +105,53 @@ internal unsafe class SkiaWindow
     {
         ImageInfo = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
-        if (SDLTexture != null)
+        if (Application.HardwareAccel)
         {
-            SDL_DestroyTexture(SDLTexture);
+            RenderTarget?.Dispose();
+
+            SDL_GetWindowSizeInPixels(SDLWindowHandle, &w, &h);
+            // SDL_GL_GetIntegerv(SDL.SDL.GLAttribute.FramebufferBinding, out int framebuffer);
+
+            var glInfo = new GRGlFramebufferInfo((uint)0, SKColorType.Rgba8888.ToGlSizedFormat());
+            RenderTarget = new GRBackendRenderTarget(w, h, 0, 0, glInfo);
         }
-
-        // Create SDL texture as the drawing target
-        SDLTexture = SDL_CreateTexture(SDLRenderer,
-            SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888,
-            SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
-            w, h);
-
-        if (SDLSurface != null)
+        else
         {
-            SDL_DestroySurface(SDLSurface);
+            if (SDLTexture != null)
+            {
+                SDL_DestroyTexture(SDLTexture);
+            }
+
+            // Create SDL texture as the drawing target
+            SDLTexture = SDL_CreateTexture(SDLRenderer,
+                SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888,
+                SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
+                w, h);
+
+            if (SDLSurface != null)
+            {
+                SDL_DestroySurface(SDLSurface);
+            }
+            // SDLSurface = SDL_CreateSurface(w, h, SDL_GetPixelFormatForMasks(32, 0, 0, 0, 0));
+            SDLSurface = SDL_CreateSurface(w, h, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888);
         }
-        // SDLSurface = SDL_CreateSurface(w, h, SDL_GetPixelFormatForMasks(32, 0, 0, 0, 0));
-        SDLSurface = SDL_CreateSurface(w, h, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888);
-
-        RenderTarget?.Dispose();
-        RenderTarget = createRenderTarget(w, h);
-
-        // var grInterface = GRGlInterface.Create
-        // GRContext.CreateDirect3D();
-    }
-
-    GRBackendRenderTarget createRenderTarget(int width, int height)
-    {
-        SDL_GetWindowSizeInPixels(SDL_GL_GetCurrentWindow(), &width, &height);
-        // SDL_GL_GetIntegerv(SDL.SDL.GLAttribute.FramebufferBinding, out int framebuffer);
-
-        var glInfo = new GRGlFramebufferInfo((uint)0, SKColorType.Rgba8888.ToGlSizedFormat());
-        var renderTarget = new GRBackendRenderTarget(width, height, 0, 0, glInfo);
-
-        return renderTarget;
     }
 
     public void Dispose()
     {
         // SkiaSurface?.Dispose();
 
-        SDL_DestroySurface(SDLSurface);
-        SDL_DestroyTexture(SDLTexture);
-
         GRContext?.Dispose();
         InterfaceGL?.Dispose();
 
+        if (SDLSurface != null)
+        {
+            SDL_DestroySurface(SDLSurface);
+        }
+        if (SDLTexture != null)
+        {
+            SDL_DestroyTexture(SDLTexture);
+        }
         if (SDLGLContext != null)
         {
             SDL_GL_DestroyContext(SDLGLContext);
@@ -167,14 +168,7 @@ internal unsafe class SkiaWindow
     {
         if (Application.HardwareAccel)
         {
-
-        }
-        else
-        {
-            // SDL_SetRenderDrawColor(SDLRenderer, windowClear.Red, 0, 0, 255);
-            // SDL_RenderClear(SDLRenderer);
-
-            SDL_RenderTexture(SDLRenderer, SDLTexture, null, null);
+            SDL_GL_MakeCurrent(SDLWindowHandle, SDLGLContext);
         }
     }
 
@@ -186,14 +180,15 @@ internal unsafe class SkiaWindow
         }
         else
         {
+            SDL_RenderTexture(SDLRenderer, SDLTexture, null, null);
             SDL_RenderPresent(SDLRenderer);
             // SDL_RenderPresent(popupRenderer);
         }
     }
 
-    internal void PollEvents()
+    internal static void PollEvents()
     {
-        ((SDL3Window)Window).pollSDLEvents();
+        SDL3Window.pollSDLEvents();
     }
 
     SDL_Renderer* popupRenderer;

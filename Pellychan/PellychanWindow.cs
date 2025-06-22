@@ -31,7 +31,17 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         // m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
 
-        // createMenubar();
+        Layout = new VBoxLayout
+        {
+        };
+
+        createMenubar();
+
+        CentralWidget = new(this)
+        {
+            Fitting = FitPolicy.ExpandingPolicy
+        };
+
         createUI();
 
         m_chanClient.Catalog = m_chanClient.GetCatalogAsync().GetAwaiter().GetResult();
@@ -93,12 +103,12 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     private void createUI()
     {
-        Layout = new HBoxLayout
+        CentralWidget.Layout = new HBoxLayout
         {
             // Padding = new(4)
         };
 
-        Widget mainHolder = this;
+        Widget mainHolder = CentralWidget;
         /*
         mainHolder = new ShapedFrame(this)
         {
@@ -164,19 +174,19 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     private void createMenubar()
     {
-        Menubar = new(this)
+        MenuBar = new(this)
         {
             Width = this.Width,
             ScreenPosition = MenuBar.Orientation.Top,
         };
         void AddMenu(string title, List<MenuItem> items)
         {
-            var menu = new Menu(title, Menubar);
+            var menu = new Menu(title, MenuBar);
             foreach (var item in items)
             {
                 menu.AddItem(item);
             }
-            Menubar!.AddMenu(menu);
+            MenuBar!.AddMenu(menu);
         }
         AddMenu("View", []);
         AddMenu("Tools", []);
@@ -190,7 +200,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         base.OnResize(width, height);
 
-        var menubarHeight = Menubar != null ? Menubar.Height : 0;
+        var menubarHeight = MenuBar != null ? MenuBar.Height : 0;
 
         /*
         m_centralWidget.Y = menubarHeight;

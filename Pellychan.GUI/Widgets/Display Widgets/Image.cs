@@ -4,6 +4,9 @@ namespace Pellychan.GUI.Widgets;
 
 public class Image : Widget, IPaintHandler
 {
+    // @NOTE
+    // There should be a flag to set if the widget owns the actual bitmap or not so it can dispose-
+    // of it properly....
     public SKImage? Bitmap { get; set; }
 
     public Image(Widget? parent = null) : base(parent)

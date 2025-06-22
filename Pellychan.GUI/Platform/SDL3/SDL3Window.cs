@@ -25,6 +25,8 @@ namespace Pellychan.GUI.Platform.SDL3
 
         private const int default_icon_size = 256;
 
+        private static readonly Dictionary<SDL_WindowID, SDL3Window> s_openedWindows = [];
+
         private string m_title = string.Empty;
 
         /// <summary>
@@ -99,8 +101,18 @@ namespace Pellychan.GUI.Platform.SDL3
             SDL_SetEventFilter(&eventFilter, ObjectHandle.Handle);
         }
 
-        public void Create()
+        public void Create(IWindow? parent, WindowFlags wf)
         {
+            SDL3Window? parentWindow = null;
+            if (parent != null)
+            {
+                if (parent is not SDL3Window)
+                {
+                    throw new Exception("Uhhhh lmao???");
+                }
+                parentWindow = parent as SDL3Window;
+            }
+
             SDL_WindowFlags flags = SDL_WindowFlags.SDL_WINDOW_RESIZABLE |
                                     SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
                                     SDL_WindowFlags.SDL_WINDOW_HIDDEN;
@@ -108,23 +120,50 @@ namespace Pellychan.GUI.Platform.SDL3
             if (Application.HardwareAccel)
             {
                 flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
-
-                SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-                SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-                SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLProfile.SDL_GL_CONTEXT_PROFILE_CORE);
             }
 
-            SDLWindowHandle = SDL_CreateWindow(m_title, Size.Width, Size.Height, flags);
+            if (wf.HasFlag(WindowFlags.PopupMenu))
+            {
+                flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU;
+                flags |= SDL_WindowFlags.SDL_WINDOW_TRANSPARENT;
+            }
+
+            if (flags.HasFlag(SDL_WindowFlags.SDL_WINDOW_POPUP_MENU) || flags.HasFlag(SDL_WindowFlags.SDL_WINDOW_TOOLTIP))
+            {
+                if (parentWindow == null)
+                    throw new Exception("Popup and tool menus NEED to have parents!");
+
+                SDLWindowHandle = SDL_CreatePopupWindow(parentWindow.SDLWindowHandle, 0, 0, Size.Width, Size.Height, flags);
+            }
+            else
+            {
+                SDLWindowHandle = SDL_CreateWindow(m_title, Size.Width, Size.Height, flags);
+            }
             SDLWindowID = SDL_GetWindowID(SDLWindowHandle);
+
+            if (parentWindow != null)
+            {
+                SDL_SetWindowParent(SDLWindowHandle, parentWindow.SDLWindowHandle);
+            }
 
             Exists = true;
 
+            s_openedWindows.Add(SDLWindowID, this);
             SDL_AddEventWatch(&eventWatch, ObjectHandle.Handle);
         }
 
+        /// <summary>
+        /// Forcibly closes the window immediately. Call order be damned.
+        /// </summary>
         public void Close()
         {
             Exists = false;
+            
+            if (SDLWindowHandle != null)
+            {
+                SDL_DestroyWindow(SDLWindowHandle);
+                SDLWindowHandle = null;
+            }
         }
 
         public void Show()
@@ -135,12 +174,12 @@ namespace Pellychan.GUI.Platform.SDL3
         #region SDL Event Handling
 
         private const int events_per_peep = 64;
-        private readonly SDL_Event[] events = new SDL_Event[events_per_peep];
+        private static readonly SDL_Event[] events = new SDL_Event[events_per_peep];
 
         /// <summary>
         /// Poll for all pending events.
         /// </summary>
-        public void pollSDLEvents()
+        public static void pollSDLEvents()
         {
             SDL_PumpEvents();
 
@@ -150,11 +189,18 @@ namespace Pellychan.GUI.Platform.SDL3
             {
                 eventsRead = SDL_PeepEvents(events, SDL_EventAction.SDL_GETEVENT, SDL_EventType.SDL_EVENT_FIRST, SDL_EventType.SDL_EVENT_LAST);
                 for (int i = 0; i < eventsRead; i++)
-                    HandleEvent(events[i]);
+                {
+                    var windowID = events[i].window.windowID;
+
+                    if (s_openedWindows.TryGetValue(windowID, out var window))
+                    {
+                        window.HandleEvent(events[i]);
+                    }
+                }
             } while (eventsRead == events_per_peep);
         }
 
-        protected void HandleEvent(SDL_Event e)
+        internal void HandleEvent(SDL_Event e)
         {
             if (e.Type >= SDL_EventType.SDL_EVENT_WINDOW_FIRST && e.Type <= SDL_EventType.SDL_EVENT_WINDOW_LAST)
             {
@@ -164,10 +210,11 @@ namespace Pellychan.GUI.Platform.SDL3
 
             switch (e.Type)
             {
+                /*
                 case SDL_EventType.SDL_EVENT_QUIT:
                     ExitRequested?.Invoke();
                     break;
-
+                */
                     // @HACK
                 case SDL_EventType.SDL_EVENT_KEY_DOWN:
                     if (e.key.key == SDL_Keycode.SDLK_F2)
@@ -188,6 +235,8 @@ namespace Pellychan.GUI.Platform.SDL3
         /// <returns>A <c>bool</c> denoting whether to keep the event. <c>false</c> will drop the event.</returns>
         protected virtual bool HandleEventFromFilter(SDL_Event e)
         {
+            SDL_WindowID windowId = e.window.windowID;
+            
             switch (e.Type)
             {
                 case SDL_EventType.SDL_EVENT_TERMINATING:
@@ -242,9 +291,20 @@ namespace Pellychan.GUI.Platform.SDL3
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
         private static SDLBool eventFilter(IntPtr userdata, SDL_Event* eventPtr)
         {
+            /*
             var handle = new ObjectHandle<SDL3Window>(userdata);
             if (handle.GetTarget(out SDL3Window window))
+            {
+                Console.WriteLine(window.SDLWindowID);
                 return window.HandleEventFromFilter(*eventPtr);
+            }
+            */
+
+            var windowID = eventPtr->window.windowID;
+            if (s_openedWindows.TryGetValue(windowID, out var window))
+            {
+                return window.HandleEventFromFilter(*eventPtr);
+            }
 
             return true;
         }
@@ -252,9 +312,17 @@ namespace Pellychan.GUI.Platform.SDL3
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
         private static SDLBool eventWatch(IntPtr userdata, SDL_Event* eventPtr)
         {
+            /*
             var handle = new ObjectHandle<SDL3Window>(userdata);
             if (handle.GetTarget(out SDL3Window window))
                 window.HandleEventFromWatch(*eventPtr);
+            */
+
+            var windowID = eventPtr->window.windowID;
+            if (s_openedWindows.TryGetValue(windowID, out var window))
+            {
+                window.HandleEventFromWatch(*eventPtr);
+            }
 
             return true;
         }
@@ -327,6 +395,7 @@ namespace Pellychan.GUI.Platform.SDL3
         public void Dispose()
         {
             Close();
+            s_openedWindows.Remove(SDLWindowID);
 
             ObjectHandle.Dispose();
         }

@@ -1,4 +1,5 @@
-﻿using Pellychan.GUI.Platform.Skia;
+﻿using Pellychan.GUI.Platform;
+using Pellychan.GUI.Platform.Skia;
 using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
@@ -9,15 +10,35 @@ namespace Pellychan.GUI;
 
 internal static class WindowRegistry
 {
-    internal static readonly Dictionary<SDL.SDL_WindowID, SkiaWindow> Windows = [];
-
-    public static void Register(SkiaWindow window)
+    internal struct WidgetWindow
     {
-        Windows[window.SDLWindowID] = window;
+        public SkiaWindow SkiaWindow;
+        public Widget Widget;
+
+        public WidgetWindow(SkiaWindow skiaWindow, Widget widget)
+        {
+            this.SkiaWindow = skiaWindow;
+            this.Widget = widget;
+        }
     }
 
-    public static SkiaWindow? Get(SDL.SDL_WindowID id) =>
-        Windows.GetValueOrDefault(id);
+    internal static readonly Dictionary<SDL.SDL_WindowID, WidgetWindow> WidgetWindows = [];
+    // internal static readonly Dictionary<SDL.SDL_WindowID, IWindow> Windows = [];
+
+    public static void Register(WidgetWindow window)
+    {
+        WidgetWindows[window.SkiaWindow.SDLWindowID] = window;
+        // Windows[window.SkiaWindow.SDLWindowID] = window.SkiaWindow.Window;
+    }
+
+    public static void Remove(WidgetWindow window)
+    {
+        WidgetWindows.Remove(window.SkiaWindow.SDLWindowID);
+        // Windows.Remove(window.SkiaWindow.SDLWindowID);
+    }
+
+    public static WidgetWindow? Get(SDL.SDL_WindowID id) =>
+        WidgetWindows.GetValueOrDefault(id);
 }
 
 public class Application : IDisposable
@@ -63,6 +84,14 @@ public class Application : IDisposable
 
         SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO);
 
+        if (HardwareAccel)
+        {
+            SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+            SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLProfile.SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
+        }
+
         int version = SDL3.SDL_GetVersion();
         Console.WriteLine($@"SDL3 Initialized
                           SDL3 Version: {SDL3.SDL_VERSIONNUM_MAJOR(version)}.{SDL3.SDL_VERSIONNUM_MINOR(version)}.{SDL3.SDL_VERSIONNUM_MICRO(version)}
@@ -95,29 +124,28 @@ public class Application : IDisposable
     {
         while (TopLevelWidgets.Count > 0)
         {
-            // pumpEvents();
-            foreach (var window in WindowRegistry.Windows)
+            /*
+            // @INVESTIGATE
+            // For now, we just copy the windows list. Maybe this isn't smart and we should
+            // dispatch it until the next frame to actually create the window?
+            foreach (var window in WindowRegistry.WidgetWindows.ToList())
             {
-                window.Value.PollEvents();
+                window.Value.SkiaWindow.PollEvents();
             }
+            */
+            SkiaWindow.PollEvents();
 
-            // Flush any pending layout requests
-            LayoutQueue.Flush();
+            RunMainLoop();
 
-            foreach (var w in TopLevelWidgets.ToArray())
+            foreach (var win in WindowRegistry.WidgetWindows.ToList())
             {
+                var w = win.Value.Widget;
                 if (w.ShouldClose())
                 {
                     w.Dispose();
                     TopLevelWidgets.Remove(w);
                 }
-                else
-                {
-                    w.RenderTopLevel(Application.DebugDrawing);
-                }
             }
-
-            CurrentFrame++;
 
             // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
             // SDL3.SDL_Delay(16); // ~60fps
@@ -136,6 +164,29 @@ public class Application : IDisposable
         SDL3.SDL_Quit();
         GC.SuppressFinalize(this);
     }
+
+    #region Internal methods
+
+    internal void RunMainLoop()
+    {
+        // Flush any pending layout requests
+        LayoutQueue.Flush();
+
+        RenderAllWindows();
+
+        CurrentFrame++;
+    }
+
+    internal void RenderAllWindows()
+    {
+        foreach (var win in WindowRegistry.WidgetWindows)
+        {
+            var w = win.Value.Widget;
+            w.RenderTopLevel(Application.DebugDrawing);
+        }
+    }
+
+    #endregion
 
     #region Private methods
 

@@ -1,5 +1,6 @@
 ﻿using Pellychan.GUI.Input;
 using Pellychan.GUI.Layouts;
+using Pellychan.GUI.Platform;
 using Pellychan.GUI.Platform.Input;
 using Pellychan.GUI.Platform.Skia;
 using SDL;
@@ -303,7 +304,6 @@ public class Widget : IDisposable
     private unsafe SDL_Texture* m_cachedRenderTexture;
 
     // If top-level, owns a native window
-    public bool IsTopLevel => Parent == null;
     internal SkiaWindow? m_nativeWindow;
 
     private bool m_isDirty = false;
@@ -326,17 +326,76 @@ public class Widget : IDisposable
 
     #endregion
 
-    public Widget(Widget? parent = null)
+    internal bool IsTopLevel => Parent == null && IsWindow;
+    internal bool IsWindow => m_windowType == WindowType.Window || m_windowType == WindowType.Popup;
+    /// <summary>
+    /// Difference between this and <see cref="Visible"/> is this also checks if this is just a normal widget.
+    /// </summary>
+    internal bool VisibleWidget => m_visible && m_windowType == WindowType.Widget;
+
+    private WindowType m_windowType = WindowType.Widget;
+    public enum WindowType
     {
+        /// <summary>
+        /// The default type for <see cref="Widgets.Widget"/>. Widgets of this type are child widgets if they have a parent,
+        /// and independent windows if they have no parent.
+        /// </summary>
+        Widget = 0,
+
+        /// <summary>
+        /// Indicates that the window is a window, usually with a window system frame and a title bar, irrespective of
+        /// whether the widget has a parent or not. Note that it's not possible to unset this flag if the widget does
+        /// not have a parent.
+        /// </summary>
+        Window,
+
+        /// <summary>
+        /// Indicates that the widget is a window that should be decorated as a dialog (i.e., typically no maximize and
+        /// minimize buttons in the title bar).
+        /// </summary>
+        Dialog,
+
+        /// <summary>
+        /// Indicates that the widget is a pop-up top-level window, i.e. that it is a modal, but has a window system frame
+        /// appropriate for pop-up menus.
+        /// </summary>
+        Popup,
+
+        /// <summary>
+        /// Indicates that the widget is a tool window.
+        /// </summary>
+        Tool,
+
+        /// <summary>
+        /// Indicates that the widget is a tooltip.
+        /// </summary>
+        ToolTip
+    }
+
+    public Widget(Widget? parent = null, WindowType winType = WindowType.Widget)
+    {
+        if (parent == this)
+            throw new Exception("Cannot parent a Widget to itself!");
+
         m_name = GetType().Name;
+        m_windowType = winType;
 
         if (parent != null)
-            SetParent(parent);
-
-        if (IsTopLevel && !Application.HeadlessMode)
         {
+            SetParent(parent);
+        }
+        else
+        {
+            if (winType == WindowType.Widget)
+            {
+                m_windowType |= WindowType.Window;
+            }
+        }
+
+        if (IsTopLevel)
+        {
+            Application.Instance!.TopLevelWidgets.Add(this);
             Visible = false;
-            initializeIfTopLevel();
         }
 
         TriggerRepaint();
@@ -351,19 +410,30 @@ public class Widget : IDisposable
     {
         m_visible = true;
 
-        if (IsTopLevel && m_nativeWindow != null)
+        if (IsWindow)
         {
-            Application.Instance!.TopLevelWidgets.Add(this);
+            CreateWinID();
+        }
 
+        if (m_nativeWindow != null)
+        {
             m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
             m_nativeWindow.CreateFrameBuffer(m_width, m_height);
-            m_nativeWindow.Center();
+
+            m_nativeWindow.Window.Position = new System.Drawing.Point(X, Y);
+            if (m_windowType == WindowType.Window)
+            {
+                // @HACK
+                m_nativeWindow.Center();
+            }
             m_nativeWindow.Window.Show();
         }
 
         TriggerRepaint();
         InvalidateLayout(true);
         NotifyLayoutChange();
+
+        OnShown();
 
         /*
         void invalidateChildren(Widget parent)
@@ -445,7 +515,7 @@ public class Widget : IDisposable
 
         // This is fine because a native window can only exist on top level widgets and thus,
         // can't be in a layout!
-        if (m_nativeWindow != null)
+        if (m_nativeWindow != null && m_windowType == WindowType.Window)
         {
             m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
         }
@@ -467,12 +537,27 @@ public class Widget : IDisposable
         if (m_nativeWindow == null)
             return;
 
-        m_nativeWindow.Window.Title = (title);
+        m_nativeWindow!.Window.Title = (title);
+    }
+
+    /// <summary>
+    /// Forces the window to be created.
+    /// Usually, this is deferred until Show() if the widget is top level.
+    /// 
+    /// ONLY call this method if the widget is a window type!
+    /// </summary>
+    public void CreateWinID()
+    {
+        if (!IsWindow)
+            throw new Exception("Widget is not of a window type.");
+
+        if (m_nativeWindow == null)
+            initializeWindow();
     }
 
     public bool HitTest(int x, int y)
     {
-        return Visible && (x >= 0 && y >= 0 && x < m_width && y < m_height);
+        return (Visible) && (x >= 0 && y >= 0 && x < m_width && y < m_height);
     }
 
     /// <summary>
@@ -495,7 +580,14 @@ public class Widget : IDisposable
 
     public virtual void Dispose()
     {
+        Application.Instance!.TopLevelWidgets.Remove(this);
+        if (m_nativeWindow != null)
+        {
+            WindowRegistry.Remove(new(m_nativeWindow, this));
+        }
+
         m_parent?.m_children.Remove(this);
+        m_parent = null;
 
         m_nativeWindow?.Dispose();
         m_cachedSurface?.Dispose();
@@ -504,6 +596,7 @@ public class Widget : IDisposable
             child.Dispose();
 
         GC.SuppressFinalize(this);
+
     }
 
     #region Virtual methods
@@ -519,6 +612,10 @@ public class Widget : IDisposable
     /// Called immediately after being updated by the layout engine.
     /// </summary>
     public virtual void OnPostLayout()
+    {
+    }
+
+    public virtual void OnShown()
     {
     }
 
@@ -614,7 +711,7 @@ public class Widget : IDisposable
                 {
                     foreach (var child in m_children)
                     {
-                        if (!child.m_visible)
+                        if (!child.VisibleWidget)
                             continue;
 
                         child.Paint(paintCanvas, clipRect, window);
@@ -686,7 +783,12 @@ public class Widget : IDisposable
         */
 
         canvas.Save();
-        canvas.Translate(m_x, m_y);
+        if (!IsWindow)
+        {
+            // @INVESTIGATE
+            // This should be acknolwedged at least, the position probably shouldn't change if the widget is a window?
+            canvas.Translate(m_x, m_y);
+        }
         canvas.ClipRect(new(0, 0, m_width, m_height));
 
         (this as IPaintHandler)?.OnPaint(canvas);
@@ -695,8 +797,9 @@ public class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
-                if (!child.m_visible)
+                if (!child.VisibleWidget)
                     continue;
+
 
                 child.Paint(canvas, clipRect, window);
             }
@@ -755,7 +858,7 @@ public class Widget : IDisposable
         {
             foreach (var child in m_children)
             {
-                if (!child.m_visible)
+                if (!child.VisibleWidget)
                     continue;
 
                 child.DrawDebug(canvas);
@@ -765,15 +868,15 @@ public class Widget : IDisposable
 
     internal void RenderTopLevel(bool debug)
     {
-        if (!IsTopLevel) return;
         if (m_height == 0 || m_height == 0) return;
         if (m_nativeWindow == null)
             throw new Exception("Native window isn't set!");
 
+        m_nativeWindow.BeginPresent();
+
         var rootClip = new SKRect(0, 0, m_width, m_height);
 
         // Paint!
-        // if (false)
         unsafe
         {
             SKSurface surface;
@@ -787,7 +890,8 @@ public class Widget : IDisposable
             }
             var canvas = surface.Canvas;
 
-            canvas.Clear(SKColors.Magenta);
+            // canvas.Clear(SKColors.Magenta);
+            canvas.Clear(SKColors.Transparent);
 
             // var rootStack = new Stack<SKRect>();
             // rootStack.Push(new SKRect(0, 0, m_width, m_height));
@@ -804,12 +908,7 @@ public class Widget : IDisposable
             surface.Dispose();
         }
 
-
-        if (Application.HardwareAccel)
-        {
-
-        }
-        else
+        if (!Application.HardwareAccel)
         {
             unsafe
             {
@@ -821,7 +920,6 @@ public class Widget : IDisposable
             }
         }
 
-        m_nativeWindow.BeginPresent();
 
         if (!Application.HardwareAccel)
         {
@@ -884,7 +982,7 @@ public class Widget : IDisposable
 
     internal bool ShouldClose()
     {
-        return IsTopLevel && m_nativeWindow!.ShouldClose;
+        return m_nativeWindow?.ShouldClose ?? false;
     }
 
     public void PerformLayoutUpdate(LayoutFlushType type)
@@ -1026,14 +1124,26 @@ public class Widget : IDisposable
         TriggerRepaint();
     }
 
-    private void initializeIfTopLevel()
+    private void initializeWindow()
     {
-        if (!IsTopLevel) return;
+        if (m_nativeWindow != null)
+            return;
 
         Console.WriteLine($"Initialized top level widget of type: {GetType().Name}");
 
-        m_nativeWindow = new(this, GetType().Name);
-        WindowRegistry.Register(m_nativeWindow);
+        WindowFlags flags = WindowFlags.None;
+        if (m_windowType == WindowType.Popup)
+        {
+            flags |= WindowFlags.PopupMenu;
+        }
+        SkiaWindow? parentWindow = null;
+        if (m_parent != null)
+        {
+            parentWindow = m_parent.m_nativeWindow;
+        }
+
+        m_nativeWindow = new(this, GetType().Name, flags, parentWindow);
+        WindowRegistry.Register(new(m_nativeWindow, this));
 
         m_nativeWindow.Window.Resized += delegate ()
         {
@@ -1090,8 +1200,8 @@ public class Widget : IDisposable
 
     private Widget? findHoveredWidget(int x, int y, bool checkRaycast)
     {
-        var thisX = (IsTopLevel) ? 0 : this.m_x;
-        var thisY = (IsTopLevel) ? 0 : this.m_y;
+        var thisX = (IsWindow) ? 0 : this.m_x;
+        var thisY = (IsWindow) ? 0 : this.m_y;
 
         int localX = x - thisX;
         int localY = y - thisY;
@@ -1112,6 +1222,9 @@ public class Widget : IDisposable
         // If we can't catch any events, skip the hit test and skip immediately to the children
         foreach (var child in m_children.AsReadOnly().Reverse()) // top-most first
         {
+            if (!child.VisibleWidget)
+                continue;
+
             var result = child.findHoveredWidget(localX, localY, checkRaycast);
             if (result != null)
                 return result;
@@ -1128,7 +1241,7 @@ public class Widget : IDisposable
         // Reverse order so topmost drawn widget checked first
         foreach (var child in m_children.AsEnumerable().Reverse())
         {
-            if (!child.Visible)
+            if (!child.VisibleWidget)
                 continue;
 
             if (child.HitTest(x - child.m_x, y - child.m_y))
@@ -1169,6 +1282,8 @@ public class Widget : IDisposable
             hovered?.handleMouseEnter();
             m_lastHovered = hovered;
         }
+
+        // Console.WriteLine($"{this.Name}, {hovered?.Name}, ({mouseX}, {mouseY})");
 
         // If there's a mouse grabber, it always receives input!
         if (s_mouseGrabber != null && s_mouseGrabber.Enabled)
@@ -1257,6 +1372,7 @@ public class Widget : IDisposable
             };
 
             if (handled) return true;
+            if (widget.IsWindow) return false;
 
             widget = widget.Parent!;
         }
