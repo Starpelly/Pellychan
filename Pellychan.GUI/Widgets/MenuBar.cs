@@ -81,9 +81,9 @@ namespace Pellychan.GUI.Widgets
             }
         }
 
-        public void OnMouseMove(int x, int y)
+        public bool OnMouseMove(int x, int y)
         {
-            if (!m_open) return;
+            if (!m_open) return false;
 
             int itemIndex = (y - Height) / 24;
             if (itemIndex >= 0 && itemIndex < Items.Count)
@@ -96,9 +96,11 @@ namespace Pellychan.GUI.Widgets
                 m_hoveredIndex = -1;
                 TriggerRepaint();
             }
+
+            return true;
         }
 
-        public void OnMouseDown(int x, int y)
+        public bool OnMouseDown(int x, int y)
         {
             if (!m_open && y < Height)
             {
@@ -120,6 +122,8 @@ namespace Pellychan.GUI.Widgets
                 m_open = false;
                 TriggerRepaint();
             }
+
+            return true;
         }
 
         public void OnMouseEnter()

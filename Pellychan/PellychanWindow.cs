@@ -199,8 +199,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         */
     }
 
-    public void OnMouseDown(int x, int y)
+    public bool OnMouseDown(int x, int y)
     {
-
+        return true;
     }
 }

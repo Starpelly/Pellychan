@@ -35,7 +35,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         updateImage(m_thumbnailBitmap);
     }
 
-    public void OnMouseDown(int x, int y)
+    public bool OnMouseDown(int x, int y)
     {
         if (m_usingThumbnail)
         {
@@ -45,7 +45,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             }
         }
 
-        if (!m_loadedFull) return;
+        if (!m_loadedFull) return false;
 
         m_usingThumbnail = !m_usingThumbnail;
 
@@ -58,6 +58,8 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             m_gifPlayer?.Start();
         }
         updateImage((m_usingThumbnail) ? m_thumbnailBitmap : m_fullBitmap);
+
+        return true;
     }
 
     public new void OnPaint(SKCanvas canvas)

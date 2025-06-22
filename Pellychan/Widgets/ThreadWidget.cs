@@ -97,9 +97,11 @@ internal class ThreadWidget : Widget, IPaintHandler, IResizeHandler, IMouseEnter
         TriggerRepaint();
     }
 
-    public void OnMouseDown(int x, int y)
+    public bool OnMouseDown(int x, int y)
     {
         PellychanWindow.Instance.LoadThread(Thread.No.ToString());
+
+        return true;
     }
 
     #region Private methods

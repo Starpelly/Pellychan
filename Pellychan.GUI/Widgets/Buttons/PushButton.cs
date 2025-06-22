@@ -64,27 +64,33 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         TriggerRepaint();
     }
 
-    public void OnMouseDown(int x, int y)
+    public bool OnMouseDown(int x, int y)
     {
         m_pressed = true;
         OnPressed?.Invoke();
 
         TriggerRepaint();
+
+        return true;
     }
 
-    public void OnMouseUp(int x, int y)
+    public bool OnMouseUp(int x, int y)
     {
         m_pressed = false;
         OnReleased?.Invoke();
 
         TriggerRepaint();
+
+        return true;
     }
 
-    public void OnMouseClick(int x, int y)
+    public bool OnMouseClick(int x, int y)
     {
         OnClicked?.Invoke();
     
         TriggerRepaint();
+
+        return true;
     }
 
     private void updateSize()
