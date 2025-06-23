@@ -28,6 +28,12 @@ namespace Pellychan.GUI.Platform
         void Show();
 
         /// <summary>
+        /// Sets the window icon by copying it from another window.
+        /// </summary>
+        /// <param name="window"></param>
+        void CopyIconFromWindow(IWindow window);
+
+        /// <summary>
         /// Sets the window icon to the provided <paramref name="imageStream"/>.
         /// </summary>
         void SetIconFromStream(Stream imageStream);

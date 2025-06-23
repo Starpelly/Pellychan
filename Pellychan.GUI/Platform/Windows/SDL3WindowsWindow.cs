@@ -70,9 +70,30 @@ namespace Pellychan.GUI.Platform.Windows
                 base.SetIconFromGroup(iconGroup);
             else
             {
-                SendMessage(windowHandle, seticon_message, icon_small, m_smallIcon.Handle);
-                SendMessage(windowHandle, seticon_message, icon_big, m_largeIcon.Handle);
+                SetIconNative(m_smallIcon, m_largeIcon);
             }
+        }
+
+        internal void SetIconNative(Icon smallIcon, Icon bigIcon)
+        {
+            SendMessage(WindowHandle, seticon_message, icon_small, smallIcon.Handle);
+            SendMessage(WindowHandle, seticon_message, icon_big, bigIcon.Handle);
+        }
+
+        internal override void CopyIconFromOther(SDL3Window other)
+        {
+            if (other is not SDL3WindowsWindow window)
+                throw new Exception("How did you do this?");
+
+            if (window.m_smallIcon == null || window.m_largeIcon == null)
+                return;
+
+            SetIconNative(window.m_smallIcon, window.m_largeIcon);
+        }
+
+        internal void ResetDropShadow()
+        {
+            DisableDropShadowViaClassStyle(WindowHandle);
         }
 
         internal void AddDropShadow()
@@ -96,10 +117,22 @@ namespace Pellychan.GUI.Platform.Windows
             }
         }
 
+        static nint OriginalWindowStylePTR;
+
         static void TryEnableDropShadowViaClassStyle(IntPtr hwnd)
         {
-            var currentStyle = GetClassLongPtr(hwnd, GCL_STYLE);
-            SetClassLongPtr(hwnd, GCL_STYLE, (IntPtr)(currentStyle.ToInt64() | CS_DROPSHADOW));
+            if (OriginalWindowStylePTR == 0)
+                OriginalWindowStylePTR = GetClassLongPtr(hwnd, GCL_STYLE);
+
+            SetClassLongPtr(hwnd, GCL_STYLE, (IntPtr)(OriginalWindowStylePTR.ToInt64() | CS_DROPSHADOW));
+        }
+
+        static void DisableDropShadowViaClassStyle(IntPtr hwnd)
+        {
+            if (OriginalWindowStylePTR == 0)
+                return;
+
+            SetClassLongPtr(hwnd, GCL_STYLE, OriginalWindowStylePTR);
         }
     }
 }

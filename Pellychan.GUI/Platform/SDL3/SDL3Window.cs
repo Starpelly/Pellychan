@@ -332,6 +332,22 @@ namespace Pellychan.GUI.Platform.SDL3
         }
 
         #endregion
+
+        private IconGroup? m_iconGroup;
+
+        public void CopyIconFromWindow(IWindow window)
+        {
+            if (window is not SDL3Window sdlwindow)
+                throw new Exception("Window is not of type SDL3! Realistically, you should never be switching these to begin with...?");
+
+            CopyIconFromOther(sdlwindow);
+        }
+
+        internal virtual void CopyIconFromOther(SDL3Window window)
+        {
+            // Idk yet lol
+        }
+
         public void SetIconFromStream(Stream imageStream)
         {
             using (var ms = new MemoryStream())
@@ -346,7 +362,10 @@ namespace Pellychan.GUI.Platform.SDL3
                 catch
                 {
                     if (IconGroup.TryParse(ms.GetBuffer(), out var iconGroup))
+                    {
+                        m_iconGroup = iconGroup;
                         SetIconFromGroup(iconGroup);
+                    }
                 }
             }
         }

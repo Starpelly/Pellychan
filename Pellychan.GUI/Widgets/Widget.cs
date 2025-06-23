@@ -435,6 +435,11 @@ public class Widget : IDisposable
                 // @HACK
                 m_nativeWindow.Center();
             }
+            if (m_nativeWindow.ParentWindow != null)
+            {
+                // Inherit the parent window's icon by default
+                m_nativeWindow.Window.CopyIconFromWindow(m_nativeWindow.ParentWindow.Window);
+            }
             m_nativeWindow.Window.Show();
         }
 
@@ -1184,10 +1189,10 @@ public class Widget : IDisposable
         }
         SkiaWindow? parentWindow = null;
         var parentWidgetCheck = m_parent;
-        while (parentWindow == null && m_parent != null)
+        while (parentWindow == null && parentWidgetCheck != null)
         {
-            parentWidgetCheck = parentWidgetCheck.Parent;
             parentWindow = parentWidgetCheck.m_nativeWindow;
+            parentWidgetCheck = parentWidgetCheck.Parent;
         }
 
         m_nativeWindow = new(this, GetType().Name, flags, parentWindow);

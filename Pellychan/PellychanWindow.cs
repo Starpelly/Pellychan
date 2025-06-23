@@ -51,7 +51,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 new(MaterialIcons.DoorFront, "Exit"),
             ]);
             AddMenu("View", [
-                new(MaterialIcons.Settings, "Preferences"),
+                new(MaterialIcons.Settings, "Preferences", () => {
+                    new PreferencesWindow(this).Show();
+                }),
             ]);
             AddMenu("Actions", [
                 new(MaterialIcons.Refresh, "Refresh All"),

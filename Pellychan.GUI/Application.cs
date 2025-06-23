@@ -61,11 +61,10 @@ public class Application : IDisposable
     public static SKFont FontIcon => Instance!.m_fontIcon;
 
     internal static bool DebugDrawing = false;
+    internal const bool SupportPaintCaching = false;
 
     public static bool HeadlessMode { get; set; } = false;
-
     public static bool HardwareAccel { get; private set; } = true;
-    public const bool SupportPaintCaching = false;
 
     public enum RendererType
     {

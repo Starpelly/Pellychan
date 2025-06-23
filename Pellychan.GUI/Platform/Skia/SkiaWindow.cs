@@ -13,6 +13,7 @@ namespace Pellychan.GUI.Platform.Skia;
 internal unsafe class SkiaWindow
 {
     internal Widget ParentWidget { get; private set; }
+    internal readonly SkiaWindow? ParentWindow;
 
     internal IWindow Window { get; private set; }
 
@@ -23,7 +24,7 @@ internal unsafe class SkiaWindow
     internal SDL_GLContextState* SDLGLContext { get; private set; }
     internal GRGlInterface? InterfaceGL { get; private set; }
     internal GRContext? GRContext { get; private set; }
-    internal GRBackendRenderTarget RenderTarget { get; private set; }
+    internal GRBackendRenderTarget? RenderTarget { get; private set; }
 
     // Software rendering mode
     internal SDL_Renderer* SDLRenderer { get; private set; }
@@ -49,11 +50,19 @@ internal unsafe class SkiaWindow
                 throw new InvalidOperationException($"Could not find a suitable window for the selected operating system ({RuntimeInfo.OS})");
         }
 
+        ParentWindow = parentWindow;
+
         Window.Create(parentWindow?.Window ?? null, flags);
-        
-        if (flags.HasFlag(WindowFlags.PopupMenu))
+
+        if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
         {
-            (Window as SDL3WindowsWindow)?.AddDropShadow();
+            // Because of window styling, we need to reset this every time we create a window,
+            // or else "Pop menu" drop shadow will be applied to every window created. And that's no good!
+            (Window as SDL3WindowsWindow)?.ResetDropShadow();
+            if (flags.HasFlag(WindowFlags.PopupMenu))
+            {
+                (Window as SDL3WindowsWindow)?.AddDropShadow();
+            }
         }
 
         Center();
