@@ -13,7 +13,7 @@ public class GifPlayer : IDisposable
 
     public async Task LoadAsync(string url)
     {
-        m_frames = await PellychanWindow.ChanClient.LoadGifFromUrlAsync(url);
+        m_frames = await Pellychan.ChanClient.LoadGifFromUrlAsync(url);
 
         if (m_frames.Count > 0)
         {

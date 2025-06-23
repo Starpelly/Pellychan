@@ -127,7 +127,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             m_gifPlayer = new();
 
             var post = m_ApiPost;
-            string url = $"https://{Domains.UserContent}/{PellychanWindow.ChanClient.CurrentBoard}/{post.Tim}{post.Ext}";
+            string url = $"https://{Domains.UserContent}/{Pellychan.ChanClient.CurrentBoard}/{post.Tim}{post.Ext}";
 
             Console.WriteLine(url);
             Task.Run(async () =>
@@ -145,7 +145,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         }
         else
         {
-            PellychanWindow.ChanClient.LoadAttachment(m_ApiPost, (thumbnail) =>
+            Pellychan.ChanClient.LoadAttachment(m_ApiPost, (thumbnail) =>
             {
                 if (thumbnail != null)
                 {

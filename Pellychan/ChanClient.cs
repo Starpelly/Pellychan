@@ -5,7 +5,6 @@ using Pellychan.API.Responses;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
-using System.IO.Compression;
 using System.Runtime.InteropServices;
 using Thread = Pellychan.API.Models.Thread;
 
@@ -16,6 +15,7 @@ public class ChanClient
     private readonly HttpClient m_httpClient = new();
 
     public string CurrentBoard { get; set; }
+    public Thread CurrentThread { get; set; }
 
     public BoardsResponse Boards;
     public CatalogResponse Catalog;

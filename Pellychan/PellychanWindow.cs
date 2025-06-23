@@ -1,4 +1,6 @@
-﻿using Pellychan.API.Models;
+﻿using ExCSS;
+using Pellychan.API.Models;
+using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 using Pellychan.Resources;
@@ -9,14 +11,6 @@ namespace Pellychan;
 
 public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 {
-    public static PellychanWindow Instance { get; private set; }
-    public static ChanClient ChanClient => Instance.m_chanClient;
-
-    private readonly ChanClient m_chanClient = new();
-    private API.Models.Thread m_thread;
-
-    private readonly SKPicture m_flag;
-
     private readonly List<PostWidget> m_postWidgets = [];
     public List<PostWidget> Tester => m_postWidgets;
 
@@ -25,50 +19,195 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     public readonly SKFont IconsFont;
 
+    private readonly Label m_boardTitleLabel;
+    private readonly Label m_threadTitleLabel;
+
     public PellychanWindow() : base()
     {
-        Instance = this;
-
-        using var iconsStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.MaterialIconsRound-Regular.otf");
-        using var iconsTypeface = SKTypeface.FromStream(iconsStream);
-
-        const int dpi = 96;
-        const float pixelsPerPoint = dpi / 72.0f;
-        const float skiaFontSize = 12 * pixelsPerPoint;
-
-        IconsFont = new SKFont
-        {
-            Edging = SKFontEdging.SubpixelAntialias,
-            Hinting = SKFontHinting.Slight,
-            Subpixel = true,
-            Typeface = iconsTypeface,
-            Size = skiaFontSize
-        };
-
-        m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-        m_chanClient.CurrentBoard = "g";
-
-        // m_flag = Helpers.LoadSvgPicture($"Pellychan.Resources.Images.Flags.{Helpers.FlagURL("US")}")!;
-
         Layout = new VBoxLayout
         {
         };
 
-        createMenubar();
+        // Setup MenuBar
+        {
+            MenuBar = new(this)
+            {
+                Width = this.Width,
+                ScreenPosition = MenuBar.Orientation.Top,
+            };
+            void AddMenu(string title, List<MenuItem> items)
+            {
+                var menu = new Menu(title, MenuBar);
+                foreach (var item in items)
+                {
+                    menu.AddItem(item);
+                }
+                MenuBar!.AddMenu(menu);
+            }
+            AddMenu("View", [
+                new("New Tab"),
+                new("Close Tab"),
+                new("Previous Tab"),
+                new("Next Tab"),
+                new("Go Back"),
+                new("Go Forward"),
+                new("Go to..."),
+                new("Preferences"),
+            ]);
+            AddMenu("Tools", [
+                new("Thread Downloader")
+            ]);
+            AddMenu("Help", [
+                new("Website"),
+            new("About Pellychan")
+            ]);
+        }
 
         CentralWidget = new(this)
         {
             Fitting = FitPolicy.ExpandingPolicy
         };
 
-        createUI();
+        // Setup UI
+        {
+            CentralWidget!.Layout = new HBoxLayout
+            {
+                // Padding = new(4)
+            };
 
-        m_chanClient.Catalog = m_chanClient.GetCatalogAsync().GetAwaiter().GetResult();
-        LoadBoardThreads();
+            Widget mainHolder = CentralWidget;
+            /*
+            mainHolder = new ShapedFrame(this)
+            {
+                Fitting = FitPolicy.ExpandingPolicy,
+                Layout = new HBoxLayout
+                {
+                }
+            };
+            */
+
+            // Boards list
+            {
+                new NullWidget(mainHolder)
+                {
+                    Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
+                    Width = 64
+                };
+            }
+
+            CreateSeparator();
+
+            // Threads list
+            {
+                var threadsListHolder = new NullWidget(mainHolder)
+                {
+                    Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
+                    Width = 400,
+
+                    Layout = new VBoxLayout
+                    {
+                    }
+                };
+
+                TabInfoWidgetThing(out m_boardTitleLabel, threadsListHolder);
+
+                m_threadsListWidget = new ScrollArea(threadsListHolder)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Expanding),
+                };
+                m_threadsListWidget.ContentFrame.Layout = new HBoxLayout
+                {
+                };
+                m_threadsListWidget.ChildWidget = new NullWidget(m_threadsListWidget.ContentFrame)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+                    Layout = new VBoxLayout
+                    {
+                        Spacing = 1,
+                    },
+                    Name = "Threads Lists Holder"
+                };
+            }
+
+            CreateSeparator();
+
+            // Main content
+            {
+                var postsListHolder = new NullWidget(mainHolder)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy,
+
+                    Layout = new VBoxLayout
+                    {
+                    }
+                };
+
+                TabInfoWidgetThing(out m_threadTitleLabel, postsListHolder);
+
+                m_postsListWidget = new ScrollArea(postsListHolder)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy,
+                    Name = "Main Content Holder"
+                };
+                m_postsListWidget.ContentFrame.Layout = new HBoxLayout
+                {
+                };
+                m_postsListWidget.ChildWidget = new NullWidget(m_postsListWidget.ContentFrame)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+                    Layout = new VBoxLayout
+                    {
+                        Spacing = 1,
+                    },
+                    Name = "Posts Lists Holder"
+                };
+            }
+
+            void TabInfoWidgetThing(out Label w, Widget parent)
+            {
+                // @TODO
+                // Add anchor points
+                var bg = new Rect(Palette.Get(ColorRole.Base), parent)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Height = 20,
+
+                    Layout = new HBoxLayout
+                    { }
+                };
+                w = new Label(Application.DefaultFont, bg)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy,
+                    Anchor = Label.TextAnchor.CenterCenter,
+                };
+
+                // Separator
+                new HLine(parent)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    Height = 1
+                };
+            }
+
+            void CreateSeparator()
+            {
+                new VLine(mainHolder)
+                {
+                    Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
+                };
+            }
+        }
     }
 
-    public void LoadBoardThreads()
+    public void LoadBoardCatalog(string board)
     {
+        Pellychan.ChanClient.CurrentBoard = board;
+        Pellychan.ChanClient.Catalog = Pellychan.ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
+
+        m_boardTitleLabel.Text = $"/{board}/";
+
         void loadPage(CatalogPage page)
         {
             foreach (var thread in page.Threads)
@@ -81,15 +220,15 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             }
         }
 
-        loadPage(m_chanClient.Catalog.Pages[0]);
-        return;
-        foreach (var page in m_chanClient.Catalog.Pages)
+        // loadPage(m_chanClient.Catalog.Pages[0]);
+        // return;
+        foreach (var page in Pellychan.ChanClient.Catalog.Pages)
         {
             loadPage(page);
         }
     }
 
-    public void LoadThread(string threadID)
+    public void LoadThreadPosts(string threadID)
     {
         foreach (var widget in m_postWidgets)
         {
@@ -98,132 +237,27 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         m_postWidgets.Clear();
         m_postsListWidget.VerticalScrollbar.Value = 0;
 
-        m_thread = m_chanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
+        Pellychan.ChanClient.CurrentThread = Pellychan.ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
+        m_threadTitleLabel.Text = $"/{Pellychan.ChanClient.CurrentBoard}/{Pellychan.ChanClient.CurrentThread.Posts[0].No}/";
 
-        for (var i = 0; i < m_thread.Posts.Count; i++)
+        for (var i = 0; i < Pellychan.ChanClient.CurrentThread.Posts.Count; i++)
         {
-            var post = m_thread.Posts[i];
+            var post = Pellychan.ChanClient.CurrentThread.Posts[i];
             var widget = new PostWidget(post, m_postsListWidget.ChildWidget)
             {
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
             m_postWidgets.Add(widget);
 
-            m_chanClient.LoadThumbnail(post, (thumbnail) =>
+            Pellychan.ChanClient.LoadThumbnail(post, (thumbnail) =>
             {
                 if (thumbnail != null)
                 {
-                    Console.WriteLine($"Loaded {(long)post.Tim}.jpg");
+                    Console.WriteLine($"Loaded {(long)post.Tim!}.jpg");
                     widget.SetBitmapPreview(thumbnail);
                 }
             });
         }
-    }
-
-    private void createUI()
-    {
-        CentralWidget.Layout = new HBoxLayout
-        {
-            // Padding = new(4)
-        };
-
-        Widget mainHolder = CentralWidget;
-        /*
-        mainHolder = new ShapedFrame(this)
-        {
-            Fitting = FitPolicy.ExpandingPolicy,
-            Layout = new HBoxLayout
-            {
-            }
-        };
-        */
-
-        // Threads list
-        {
-            m_threadsListWidget = new ScrollArea(mainHolder)
-            {
-                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-                Width = 400,
-            };
-            m_threadsListWidget.ContentFrame.Layout = new HBoxLayout
-            {
-            };
-            m_threadsListWidget.ChildWidget = new NullWidget(m_threadsListWidget.ContentFrame)
-            {
-                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
-                Layout = new VBoxLayout
-                {
-                    Spacing = 1,
-                },
-                Name = "Threads Lists Holder"
-            };
-        }
-
-        // Separator
-        {
-            new VLine(mainHolder)
-            {
-                Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-            };
-        }
-
-        // Main content
-        {
-            m_postsListWidget = new ScrollArea(mainHolder)
-            {
-                Fitting = FitPolicy.ExpandingPolicy,
-                Name = "Main Content Holder"
-            };
-            m_postsListWidget.ContentFrame.Layout = new HBoxLayout
-            {
-            };
-            m_postsListWidget.ChildWidget = new NullWidget(m_postsListWidget.ContentFrame)
-            {
-                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
-                Layout = new VBoxLayout
-                {
-                    Spacing = 1,
-                },
-                Name = "Posts Lists Holder"
-            };
-        }
-    }
-
-    private void createMenubar()
-    {
-        MenuBar = new(this)
-        {
-            Width = this.Width,
-            ScreenPosition = MenuBar.Orientation.Top,
-        };
-        void AddMenu(string title, List<MenuItem> items)
-        {
-            var menu = new Menu(title, MenuBar);
-            foreach (var item in items)
-            {
-                menu.AddItem(item);
-            }
-            MenuBar!.AddMenu(menu);
-        }
-        AddMenu("View", [
-            new("New Tab"),
-            new("Close Tab"),
-            new("Previous Tab"),
-            new("Next Tab"),
-            new("Go Back"),
-            new("Go Forward"),
-            new("Go to..."),
-            new("Preferences"),
-        ]);
-        AddMenu("Tools", [
-            new("Thread Downloader")    
-        ]);
-        AddMenu("Help", [
-            new("Website"),
-            new("About Pellychan")
-        ]);
     }
 
     public new void OnResize(int width, int height)

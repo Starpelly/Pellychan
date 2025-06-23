@@ -47,7 +47,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
             ShouldCache = false
         };
 
-        PellychanWindow.ChanClient.LoadThumbnail(thread, (thumbnail) =>
+        Pellychan.ChanClient.LoadThumbnail(thread, (thumbnail) =>
         {
             if (thumbnail != null)
             {
@@ -100,11 +100,11 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         ]);
 
         // paint.IsAntialias = true;
-        paint.Color = Palette.Get(ColorRole.Button);
+        paint.Color = Palette.Get(ColorRole.Window);
         canvas.DrawRoundRect(roundRect, paint);
 
         paint.IsStroke = true;
-        paint.Color = Palette.Get(ColorRole.Window);
+        paint.Color = Application.DefaultStyle.GetFrameColor();
         canvas.DrawRoundRect(roundRect, paint);
         paint.IsAntialias = false;
 
@@ -116,10 +116,10 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
 
         void drawIconText(string icon, string label)
         {
-            var iconWidth = PellychanWindow.Instance.IconsFont.MeasureText(icon);
+            var iconWidth = Pellychan.FontIcon.MeasureText(icon);
             var labelWidth = Application.DefaultFont.MeasureText(label);
 
-            canvas.DrawText(icon, new SKPoint(0, PellychanWindow.Instance.IconsFont.Size - 2), PellychanWindow.Instance.IconsFont, paint);
+            canvas.DrawText(icon, new SKPoint(0, Pellychan.FontIcon.Size - 2), Pellychan.FontIcon, paint);
             canvas.DrawText(label, new SKPoint(iconWidth + 4, Application.DefaultFont.Size - 1), Application.DefaultFont, paint);
         }
 
@@ -149,7 +149,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
 
     public bool OnMouseDown(int x, int y)
     {
-        PellychanWindow.Instance.LoadThread(Thread.No.ToString());
+        Pellychan.LoadThread(Thread.No.ToString());
 
         return true;
     }

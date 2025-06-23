@@ -7,6 +7,19 @@ public class Label : Widget, IPaintHandler
 {
     private SKFont m_font;
 
+    public enum TextAnchor
+    {
+        TopLeft,
+        TopRight,
+        TopCenter,
+        CenterLeft,
+        CenterCenter,
+        CenterRight,
+        BottomLeft,
+        BottomCenter,
+        BottomRight,
+    }
+
     private string m_text = string.Empty;
     public string Text
     {
@@ -31,8 +44,9 @@ public class Label : Widget, IPaintHandler
 
     public bool WordWrap { get; set; } = false;
     public bool ElideRight { get; set; } = false;
-    public SKTextAlign HorizontalAlignment { get; set; } = SKTextAlign.Left;
     public SKFontMetrics FontMetrics;
+
+    public TextAnchor Anchor = TextAnchor.TopLeft;
 
     private List<TextFragment> m_textFragments = [];
 
@@ -54,6 +68,26 @@ public class Label : Widget, IPaintHandler
     public void OnPaint(SKCanvas canvas)
     {
         float x = 0, y = m_font.Size;
+
+        float yStart = 0;
+        switch (Anchor)
+        {
+            case TextAnchor.TopLeft:
+            case TextAnchor.TopCenter:
+            case TextAnchor.TopRight:
+                yStart = 0;
+                break;
+            case TextAnchor.CenterLeft:
+            case TextAnchor.CenterCenter:
+            case TextAnchor.CenterRight:
+                yStart = ((Height - m_font.Size) / 2) - 2;
+                break;
+            case TextAnchor.BottomLeft:
+            case TextAnchor.BottomCenter:
+            case TextAnchor.BottomRight:
+                yStart = Height - m_font.Size;
+                break;
+        }
 
         // canvas.DrawText(Text, new SKPoint(0, m_font.Size), m_font, m_paint);
         // return;
@@ -81,7 +115,27 @@ public class Label : Widget, IPaintHandler
                     y += m_font.Size + LineSpacing;
                 }
 
-                canvas.DrawText(word + " ", x, y, m_font, m_paint);
+                float xStart = 0;
+                switch (Anchor)
+                {
+                    case TextAnchor.TopLeft:
+                    case TextAnchor.CenterLeft:
+                    case TextAnchor.BottomLeft:
+                        xStart = 0;
+                        break;
+                    case TextAnchor.TopCenter:
+                    case TextAnchor.CenterCenter:
+                    case TextAnchor.BottomCenter:
+                        xStart = (Width - textWidth) / 2;
+                        break;
+                    case TextAnchor.TopRight:
+                    case TextAnchor.CenterRight:
+                    case TextAnchor.BottomRight:
+                        xStart = Width - textWidth;
+                        break;
+                }
+
+                canvas.DrawText(word + " ", x + xStart, y + yStart, m_font, m_paint);
                 x += textWidth;
             }
         }
