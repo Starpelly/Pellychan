@@ -153,6 +153,12 @@ namespace Pellychan.GUI.Platform.SDL3
             s_openedWindows.Add(SDLWindowID, this);
             SDL_AddEventWatch(&eventWatch, ObjectHandle.Handle);
 
+            if (Application.HardwareAccel)
+            {
+                // VSync
+                SDL_GL_SetSwapInterval(1);
+            }
+
             ParentWindow = parentWindow;
         }
 
