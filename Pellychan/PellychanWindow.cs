@@ -39,7 +39,6 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             };
             void AddMenu(string title, List<MenuAction> items)
             {
-                // var menu = new Menu(title, MenuBar);
                 var menu = MenuBar.AddMenu(title);
                 foreach (var item in items)
                 {
@@ -62,15 +61,23 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 new(MaterialIcons.Cloud, "Thread Downloader")
             ]);
             AddMenu("Help", [
-                new(MaterialIcons.Public, "Website"),
-                new(MaterialIcons.Info, "About Pellychan", () => {
+                new(MaterialIcons.Code, "Source Code", () => {
+                   var info = new ProcessStartInfo()
+                    {
+                        FileName = "https://github.com/Starpelly/pellychan",
+                        UseShellExecute = true,
+                    };
+                    System.Diagnostics.Process.Start(info);
+                }),
+                new(MaterialIcons.Public, "Website", () => {
                     var info = new ProcessStartInfo()
                     {
                         FileName = "https://boxsubmus.com",
                         UseShellExecute = true,
                     };
                     System.Diagnostics.Process.Start(info);
-                })
+                }),
+                new(MaterialIcons.Info, "About Pellychan")
             ]);
         }
 

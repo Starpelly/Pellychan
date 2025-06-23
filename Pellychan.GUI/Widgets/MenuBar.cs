@@ -47,6 +47,13 @@ namespace Pellychan.GUI.Widgets
             return t;
         }
 
+        public Menu AddMenu(string icon, string title)
+        {
+            var t = new Menu(title, icon, Menu.MenuItemType.SubMenu, null, this);
+            AddMenu(t);
+            return t;
+        }
+
         public void OnPaint(SKCanvas canvas)
         {
             using var paint = new SKPaint();
