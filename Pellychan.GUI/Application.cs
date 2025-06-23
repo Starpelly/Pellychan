@@ -67,7 +67,19 @@ public class Application : IDisposable
         OpenGL
     }
 
+    #region Timing
+
+    internal class DeltaTime
+    {
+        public UInt64 Now;
+        public UInt64 Last;
+        public double DT;
+    }
+
+    internal static readonly DeltaTime DeltaTiming = new();
     internal static uint CurrentFrame { get; private set; } = 0;
+
+    #endregion
 
     /// <summary>
     /// 
@@ -172,9 +184,18 @@ public class Application : IDisposable
         // Flush any pending layout requests
         LayoutQueue.Flush();
 
+        UpdateDeltaTime();
         RenderAllWindows();
 
         CurrentFrame++;
+    }
+
+    internal void UpdateDeltaTime()
+    {
+        DeltaTiming.Last = DeltaTiming.Now;
+        DeltaTiming.Now = SDL3.SDL_GetPerformanceCounter();
+
+        DeltaTiming.DT = (double)(DeltaTiming.Now - DeltaTiming.Last) / SDL3.SDL_GetPerformanceFrequency();
     }
 
     internal void RenderAllWindows()
@@ -182,6 +203,7 @@ public class Application : IDisposable
         foreach (var win in WindowRegistry.WidgetWindows)
         {
             var w = win.Value.Widget;
+            w.UpdateTopLevel(DeltaTiming.DT);
             w.RenderTopLevel(Application.DebugDrawing);
         }
     }

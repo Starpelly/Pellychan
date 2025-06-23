@@ -628,6 +628,10 @@ public class Widget : IDisposable
     {
     }
 
+    public virtual void OnUpdate(double dt)
+    {
+    }
+
     #endregion
 
     #region Internal methods
@@ -873,6 +877,30 @@ public class Widget : IDisposable
                     continue;
 
                 child.DrawDebug(canvas);
+            }
+        }
+    }
+
+    internal void UpdateTopLevel(double dt)
+    {
+        if (m_nativeWindow == null)
+            throw new Exception("Native window isn't set!");
+
+        Update(dt);
+    }
+
+    internal void Update(double dt)
+    {
+        OnUpdate(dt);
+
+        if (m_children.Count > 0)
+        {
+            foreach (var child in m_children)
+            {
+                if (!child.Enabled)
+                    continue;
+
+                child.Update(dt);
             }
         }
     }

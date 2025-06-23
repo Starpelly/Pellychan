@@ -53,11 +53,13 @@ public class Pellychan
     public static void LoadCatalog(string board)
     {
         MainWindow.LoadBoardCatalog(board);
+        MainWindow.SetWindowTitle($"Pellychan - /{board}/");
     }
 
     public static void LoadThread(string threadID)
     {
         MainWindow.LoadThreadPosts(threadID);
+        MainWindow.SetWindowTitle($"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/");
     }
 
     private void InitializeFonts()

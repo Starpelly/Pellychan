@@ -74,7 +74,7 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
     /// <summary>
     /// Invoked when the user drags the slider.
     /// </summary>
-    public Action? OnSliderMoved;
+    public Action<int>? OnSliderMoved;
 
     public enum ScrollOrientation
     {
@@ -110,6 +110,11 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
             option.SubControlRects[kv.Key] = kv.Value;
 
         Application.DefaultStyle.DrawScrollBar(canvas, this, option);
+    }
+
+    public void SetValueWithoutNotify(int value)
+    {
+        m_value = value;
     }
 
     private void layoutSubControls()
@@ -180,6 +185,8 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
             float ratio = (newTop - groove.Top) / (groove.Height - sliderHeight);
             Value = Minimum + (int)(ratio * (Maximum - Minimum));
             TriggerRepaint();
+
+            OnSliderMoved?.Invoke(m_value);
         }
         else
         {

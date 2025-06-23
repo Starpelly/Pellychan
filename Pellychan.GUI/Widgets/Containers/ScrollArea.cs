@@ -18,6 +18,14 @@ public class ScrollArea : Widget, IMouseWheelHandler
         }
     }
 
+    private int m_newScrollY = 0;
+    private float m_scrollPosY = 0.0f;
+
+    /// <summary>
+    /// If toggled on, the <see cref="ContentFrame"/> will be scrolled smoothly when the user "wheels" over the <see cref="ScrollArea"/>.
+    /// </summary>
+    public bool SmoothScroll { get; set; } = true;
+
     public ScrollArea(Widget? parent = null) : base(parent)
     {
         Layout = new HBoxLayout
@@ -50,7 +58,24 @@ public class ScrollArea : Widget, IMouseWheelHandler
                     value += minY;
                 }
 
+                m_newScrollY = value;
+                if (!SmoothScroll)    
+                    ContentFrame.ContentsPositions = new(ContentFrame.ContentsPositions.X, -value);
+            }
+        };
+        VerticalScrollbar.OnSliderMoved += delegate (int value)
+        {
+            // We don't need to handle all this if we're scrolling instantly.
+            if (!SmoothScroll)
+                return;
+
+            if (m_childWidget != null)
+            {
+                m_newScrollY = value;
+                m_scrollPosY = m_newScrollY;
+
                 ContentFrame.ContentsPositions = new(ContentFrame.ContentsPositions.X, -value);
+                VerticalScrollbar.SetValueWithoutNotify(value);
             }
         };
 
@@ -76,10 +101,21 @@ public class ScrollArea : Widget, IMouseWheelHandler
 
     public bool OnMouseScroll(int x, int y, int deltaX, int deltaY)
     {
-        VerticalScrollbar.Value -= deltaY * VerticalScrollbar.PageStep / 4;
-        VerticalScrollbar.Value = Math.Clamp(VerticalScrollbar.Value, VerticalScrollbar.Minimum, VerticalScrollbar.Maximum);
+        var newValue = m_newScrollY - deltaY * VerticalScrollbar.PageStep / 4;
+        newValue = Math.Clamp(newValue, VerticalScrollbar.Minimum, VerticalScrollbar.Maximum);
+        VerticalScrollbar.Value = newValue;
 
         return true;
+    }
+
+    public override void OnUpdate(double dt)
+    {
+        if (!SmoothScroll)
+            return;
+
+        m_scrollPosY = Mathf.Lerp(m_scrollPosY, m_newScrollY, (float)dt * 10);
+        ContentFrame.ContentsPositions = new(ContentFrame.ContentsPositions.X, -(int)m_scrollPosY);
+        VerticalScrollbar.SetValueWithoutNotify((int)m_scrollPosY);
     }
 
     public override void OnPostLayout()

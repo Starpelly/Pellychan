@@ -84,7 +84,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
 
         using var paint = new SKPaint();
 
-        var metaRect = new SKRectI(0, 0, 64, (int)Application.DefaultFont.Size + (textPadding.Top + textPadding.Bottom));
+        var metaRect = new SKRectI(0, 0, 200, (int)Application.DefaultFont.Size + (textPadding.Top + textPadding.Bottom));
         metaRect.Left = Width - metaRect.Width;
         metaRect.Right = Width + 1;
         metaRect = metaRect.SetY(Height - metaRect.Height);
@@ -93,7 +93,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         using var roundRect = new SKRoundRect(metaRect);
         roundRect.SetRectRadii(metaRect,
         [
-            new SKPoint(8, 4),
+            new SKPoint(0, 0),
             new SKPoint(),
             new SKPoint(),
             new SKPoint(),
@@ -114,18 +114,54 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         paint.IsStroke = false;
         paint.Color = Palette.Get(ColorRole.Text);
 
+        var iconX = 0;
         void drawIconText(string icon, string label)
         {
             var iconWidth = Pellychan.FontIcon.MeasureText(icon);
             var labelWidth = Application.DefaultFont.MeasureText(label);
+            var spacing = 4;
 
-            canvas.DrawText(icon, new SKPoint(0, Pellychan.FontIcon.Size - 2), Pellychan.FontIcon, paint);
-            canvas.DrawText(label, new SKPoint(iconWidth + 4, Application.DefaultFont.Size - 1), Application.DefaultFont, paint);
+            canvas.DrawText(icon, new SKPoint(iconX, Pellychan.FontIcon.Size - 2), Pellychan.FontIcon, paint);
+            canvas.DrawText(label, new SKPoint(iconX + iconWidth + spacing, Application.DefaultFont.Size - 1), Application.DefaultFont, paint);
+
+            iconX += (int)(iconWidth + labelWidth + spacing + 8);
         }
 
-        drawIconText(MaterialDesign.MaterialIcons.Reply, Thread.Replies.ToString());
+        drawIconText(MaterialDesign.MaterialIcons.ModeComment, Thread.Replies.ToString());
+        drawIconText(MaterialDesign.MaterialIcons.Image, Thread.Images.ToString());
+        drawIconText(MaterialDesign.MaterialIcons.AccessTime, unixToTimeAgo(Thread.Time));
 
         canvas.Restore();
+    }
+
+    private string unixToTimeAgo(long unixTime)
+    {
+        DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTime);
+        DateTime dateTime = dateTimeOffset.UtcDateTime;
+
+        // Current time in UTC
+        DateTime now = DateTime.UtcNow;
+
+        // Time difference
+        TimeSpan diff = now - dateTime;
+
+        // Display result
+        if (diff.TotalSeconds < 60)
+        {
+            return $"{(int)diff.TotalSeconds} seconds ago";
+        }
+        else if (diff.TotalMinutes < 60)
+        {
+            return $"{(int)diff.TotalMinutes} minutes ago";
+        }
+        else if (diff.TotalHours < 24)
+        {
+            return $"{(int)diff.TotalHours} hours ago";
+        }
+        else
+        {
+            return $"{(int)diff.TotalDays} days ago";
+        }
     }
 
     public void OnResize(int width, int height)
