@@ -45,8 +45,8 @@ public class HBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
-        bool fitHorizontal = widget.Sizing.Horizontal == SizePolicy.Policy.Fit;
-        bool fitVertical = widget.Sizing.Vertical == SizePolicy.Policy.Fit;
+        bool fitHorizontal = widget.AutoSizing.Horizontal == SizePolicy.Policy.Fit;
+        bool fitVertical = widget.AutoSizing.Vertical == SizePolicy.Policy.Fit;
 
         if (!fitHorizontal && !fitVertical)
             return;
@@ -72,7 +72,7 @@ public class HBoxLayout : Layout
             if (fitHorizontal)
                 newWidth += child.Width;
 
-            if (widget.Sizing.Vertical == SizePolicy.Policy.Fit)
+            if (widget.AutoSizing.Vertical == SizePolicy.Policy.Fit)
                 newHeight = Math.Max(child.Height, widget.Height);
         }
 

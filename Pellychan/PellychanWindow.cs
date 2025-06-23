@@ -1,4 +1,5 @@
 ﻿using ExCSS;
+using MaterialDesign;
 using Pellychan.API.Models;
 using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
@@ -6,6 +7,7 @@ using Pellychan.GUI.Widgets;
 using Pellychan.Resources;
 using Pellychan.Widgets;
 using SkiaSharp;
+using System.Diagnostics;
 
 namespace Pellychan;
 
@@ -35,31 +37,38 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 Width = this.Width,
                 ScreenPosition = MenuBar.Orientation.Top,
             };
-            void AddMenu(string title, List<MenuItem> items)
+            void AddMenu(string title, List<MenuAction> items)
             {
-                var menu = new Menu(title, MenuBar);
+                // var menu = new Menu(title, MenuBar);
+                var menu = MenuBar.AddMenu(title);
                 foreach (var item in items)
                 {
-                    menu.AddItem(item);
+                    menu.AddAction(item);
                 }
-                MenuBar!.AddMenu(menu);
             }
+            AddMenu("File", [
+                new(MaterialIcons.Save, "Save"),
+                new(MaterialIcons.DoorFront, "Exit"),
+            ]);
             AddMenu("View", [
-                new("New Tab"),
-                new("Close Tab"),
-                new("Previous Tab"),
-                new("Next Tab"),
-                new("Go Back"),
-                new("Go Forward"),
-                new("Go to..."),
-                new("Preferences"),
+                new(MaterialIcons.Settings, "Preferences"),
+            ]);
+            AddMenu("Actions", [
+                new(MaterialIcons.Refresh, "Refresh All"),
             ]);
             AddMenu("Tools", [
-                new("Thread Downloader")
+                new(MaterialIcons.Cloud, "Thread Downloader")
             ]);
             AddMenu("Help", [
-                new("Website"),
-            new("About Pellychan")
+                new(MaterialIcons.Public, "Website"),
+                new(MaterialIcons.Info, "About Pellychan", () => {
+                    var info = new ProcessStartInfo()
+                    {
+                        FileName = "https://boxsubmus.com",
+                        UseShellExecute = true,
+                    };
+                    System.Diagnostics.Process.Start(info);
+                })
             ]);
         }
 
@@ -121,7 +130,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 m_threadsListWidget.ChildWidget = new NullWidget(m_threadsListWidget.ContentFrame)
                 {
                     Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                    Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+                    AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
                     Layout = new VBoxLayout
                     {
                         Spacing = 1,
@@ -156,7 +165,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 m_postsListWidget.ChildWidget = new NullWidget(m_postsListWidget.ContentFrame)
                 {
                     Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                    Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+                    AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
                     Layout = new VBoxLayout
                     {
                         Spacing = 1,

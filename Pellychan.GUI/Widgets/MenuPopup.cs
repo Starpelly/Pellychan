@@ -20,19 +20,24 @@ public class MenuPopup : Widget, IPaintHandler
         {
         };
         ContentsMargins = new(1);
-        Sizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
+        AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
 
         m_menu = menu;
 
-        X = m_menu.X;
+        X = m_menu.X - 1;
         Y = m_menu.Height;
         // Resize(10, 10);
 
-        foreach (var item in m_menu.Items)
+        foreach (var item in m_menu.Actions)
         {
-            var newMenu = new Menu(item.Text, this)
+            var newMenu = new Menu(item.Text, item.Icon, Menu.MenuItemType.MenuAction, item.Action, this)
             {
-                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                OnSubmitted = () =>
+                {
+                    m_menu.Close();
+                    this.Delete();
+                }
             };
             m_menus.Add(newMenu);
         }

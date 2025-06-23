@@ -39,8 +39,8 @@ public class VBoxLayout : Layout
 
     public override void FitSizingPass(Widget widget)
     {
-        bool fitHorizontal = widget.Sizing.Horizontal == SizePolicy.Policy.Fit;
-        bool fitVertical = widget.Sizing.Vertical == SizePolicy.Policy.Fit;
+        bool fitHorizontal = widget.AutoSizing.Horizontal == SizePolicy.Policy.Fit;
+        bool fitVertical = widget.AutoSizing.Vertical == SizePolicy.Policy.Fit;
 
         if (!fitHorizontal && !fitVertical)
             return;
@@ -70,7 +70,7 @@ public class VBoxLayout : Layout
             if (fitVertical)
                 newHeight += child.Height;
 
-            if (widget.Sizing.Horizontal == SizePolicy.Policy.Fit)
+            if (widget.AutoSizing.Horizontal == SizePolicy.Policy.Fit)
                 newWidth = Math.Max(child.Width, widget.Width);
         }
 

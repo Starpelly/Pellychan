@@ -10,6 +10,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="Resources\MaterialIconsRound-Regular.otf" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\MaterialIconsRound-Regular.otf" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
       <PackageReference Include="ppy.SDL3-CS" Version="2025.608.0" />
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />

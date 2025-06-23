@@ -1,0 +1,2 @@
+﻿* Hover events shouldn't be invoked when the window isn't in focus
+* The max width of post thumbnails should update when the size of the container widget is too small

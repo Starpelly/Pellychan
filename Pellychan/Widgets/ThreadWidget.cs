@@ -117,11 +117,11 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         var iconX = 0;
         void drawIconText(string icon, string label)
         {
-            var iconWidth = Pellychan.FontIcon.MeasureText(icon);
+            var iconWidth = Application.FontIcon.MeasureText(icon);
             var labelWidth = Application.DefaultFont.MeasureText(label);
             var spacing = 4;
 
-            canvas.DrawText(icon, new SKPoint(iconX, Pellychan.FontIcon.Size - 2), Pellychan.FontIcon, paint);
+            canvas.DrawText(icon, new SKPoint(iconX, Application.FontIcon.Size - 2), Application.FontIcon, paint);
             canvas.DrawText(label, new SKPoint(iconX + iconWidth + spacing, Application.DefaultFont.Size - 1), Application.DefaultFont, paint);
 
             iconX += (int)(iconWidth + labelWidth + spacing + 8);

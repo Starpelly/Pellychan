@@ -21,21 +21,30 @@ namespace Pellychan.GUI.Widgets
 
         private int m_nextX = 0;
 
+        private List<Menu> m_menus = [];
+
         public MenuBar(Widget? parent = null) : base(parent)
         {
             Height = MenuBarHeight + BorderSize;
         }
 
-        public void AddMenu(Menu menu)
+        private void AddMenu(Menu menu)
         {
+            if (m_menus.Contains(menu))
+                throw new Exception("Please don't add the same menu multiple times!");
+
             menu.SetPosition(m_nextX, 0);
             m_nextX += menu.Width;
             menu.Height = MenuBarHeight;
+
+            m_menus.Add(menu);
         }
 
-        public void AddMenu(string title)
+        public Menu AddMenu(string title)
         {
-            AddMenu(new Menu(title, this));
+            var t = new Menu(title, null, Menu.MenuItemType.SubMenu, null, this);
+            AddMenu(t);
+            return t;
         }
 
         public void OnPaint(SKCanvas canvas)

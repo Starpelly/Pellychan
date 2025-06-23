@@ -48,11 +48,17 @@ public class Application : IDisposable
     internal readonly List<Widget> TopLevelWidgets = [];
 
     private readonly SKFont m_defaultFont;
+    private readonly SKFont m_fontIcon;
     private readonly Style m_defaultStyle;
     private ColorPalette m_palette;
     
     public static SKFont DefaultFont => Instance!.m_defaultFont;
     public static Style DefaultStyle => Instance!.m_defaultStyle;
+
+    /// <summary>
+    /// !!!TEMP!!!
+    /// </summary>
+    public static SKFont FontIcon => Instance!.m_fontIcon;
 
     internal static bool DebugDrawing = false;
 
@@ -126,7 +132,23 @@ public class Application : IDisposable
             Typeface = typeface,
             Size = skiaFontSize
         };
+
+        using var iconsStream = typeof(Application).Assembly.GetManifestResourceStream("Pellychan.GUI.Resources.MaterialIconsRound-Regular.otf");
+        using var iconsTypeface = SKTypeface.FromStream(iconsStream);
+
+        const float iconFontSize = 12 * pixelsPerPoint;
+
+        m_fontIcon = new SKFont
+        {
+            Edging = SKFontEdging.SubpixelAntialias,
+            Hinting = SKFontHinting.Slight,
+            Subpixel = true,
+            Typeface = iconsTypeface,
+            Size = iconFontSize
+        };
+
         m_palette = getDefaultColorPalette();
+
 
         // Load default style last
         m_defaultStyle = new PhantomStyle();

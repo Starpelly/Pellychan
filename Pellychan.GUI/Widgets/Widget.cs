@@ -231,15 +231,15 @@ public class Widget : IDisposable
         }
     }
 
-    private SizePolicy m_sizePolicy = SizePolicy.FixedPolicy;
-    public SizePolicy Sizing
+    private SizePolicy m_autoSizePolicy = SizePolicy.FixedPolicy;
+    public SizePolicy AutoSizing
     {
-        get => m_sizePolicy;
+        get => m_autoSizePolicy;
         set
         {
-            if (m_sizePolicy != value)
+            if (m_autoSizePolicy != value)
             {
-                m_sizePolicy = value;
+                m_autoSizePolicy = value;
                 InvalidateLayout();
                 NotifyLayoutChange();
             }
@@ -1308,9 +1308,9 @@ public class Widget : IDisposable
         return null;
     }
 
-    // --------------------
-    // Native window events
-    // --------------------
+    #endregion
+
+    #region Native window events
 
     private void handleMouseEnter()
     {

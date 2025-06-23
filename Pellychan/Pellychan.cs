@@ -12,13 +12,6 @@ public class Pellychan
     public static PellychanWindow MainWindow { get; private set; }
     public static ChanClient ChanClient => s_instance.m_chanClient;
 
-    #region Resources
-
-    private SKFont? m_fontIcon;
-    public static SKFont FontIcon => s_instance.m_fontIcon!;
-
-    #endregion
-
     public Pellychan()
     {
         if (s_instance != null)
@@ -64,20 +57,6 @@ public class Pellychan
 
     private void InitializeFonts()
     {
-        using var iconsStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.MaterialIconsRound-Regular.otf");
-        using var iconsTypeface = SKTypeface.FromStream(iconsStream);
 
-        const int dpi = 96;
-        const float pixelsPerPoint = dpi / 72.0f;
-        const float skiaFontSize = 12 * pixelsPerPoint;
-
-        m_fontIcon = new SKFont
-        {
-            Edging = SKFontEdging.SubpixelAntialias,
-            Hinting = SKFontHinting.Slight,
-            Subpixel = true,
-            Typeface = iconsTypeface,
-            Size = skiaFontSize
-        };
     }
 }

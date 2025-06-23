@@ -1,16 +1,35 @@
-﻿using SkiaSharp;
+﻿using Pellychan.GUI.Platform.Windows.Native;
+using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
 
-public class MenuItem
+public interface IMenu
 {
-    public string Text;
-    public Action? OnClick;
 
-    public MenuItem(string text, Action? onClick = null)
+}
+
+public class MenuSeparator : IMenu
+{
+
+}
+
+public class MenuAction : IMenu
+{
+    public string? Icon;
+    public string Text;
+    public Action? Action;
+
+    public MenuAction(string icon, string text, Action? action = null)
+    {
+        Icon = icon;
+        Text = text;
+        Action = action;
+    }
+
+    public MenuAction(string text, Action? action = null)
     {
         Text = text;
-        OnClick = onClick;
+        Action = action;
     }
 }
 
@@ -20,46 +39,77 @@ public class MenuItem
 public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler, IMouseLeaveHandler,
         IMouseDownHandler
 {
-    private const int XPadding = 8;
+    internal enum MenuItemType
+    {
+        SubMenu,
+        MenuAction,
+        Separator,
+        Widget,
+    }
 
-    public string Title;
-    public readonly List<MenuItem> Items = [];
+    private const int XPadding = 8;
+    private const int IconWidth = 20;
+    private const int IconSpacing = 4;
+
+    private int p_iconWidth => m_itemType == MenuItemType.MenuAction ? IconWidth + IconSpacing : 0;
 
     private int m_hoveredIndex = -1;
     private bool m_open = false;
     private bool m_hovering = false;
 
-    private MenuPopup? m_popup;
+    private readonly MenuItemType m_itemType;
 
-    public Menu(string title, Widget? parent = null) : base(parent)
+    private MenuPopup? m_popup;
+    private Action? m_onClick;
+
+    internal readonly List<MenuAction> Actions = [];
+    public string Title { get; set; }
+    public string? Icon { get; set; }
+
+    /// <summary>
+    /// Used to close the popup that hosts this menu.
+    /// </summary>
+    internal Action? OnSubmitted;
+
+    internal Menu(string title, string? icon, MenuItemType type, Action? onClick, Widget? parent = null) : base(parent)
     {
         Title = title;
-        Width = (int)Application.DefaultFont.MeasureText(title) + (XPadding * 2);
+        Icon = icon;
+
+        Width = MeasureWidth();
         Height = 24;
+
+        m_itemType = type;
+        m_onClick = onClick;
     }
 
-    public void AddItem(MenuItem item)
+    public MenuAction AddAction(MenuAction action)
     {
-        Items.Add(item);
+        Actions.Add(action);
+        return action;
     }
 
-    public void AddItem(string text, Action? onClick = null)
+    public MenuAction AddAction(string text, Action action)
     {
-        Items.Add(new MenuItem(text, onClick));
+        var n = new MenuAction(text, action);
+        Actions.Add(n);
+        return n;
     }
 
     public void Popup()
     {
         m_popup = new MenuPopup(this)
         {
-
         };
         m_popup.Show();
     }
 
     public int MeasureWidth()
     {
-        return (int)Application.DefaultFont.MeasureText(Title) + (XPadding * 2);
+        var a = p_iconWidth + (int)Application.DefaultFont.MeasureText(Title) + (XPadding * 2);
+        var b = p_iconWidth;
+
+        return a + b;
     }
 
     #region Events
@@ -76,16 +126,24 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
             : EffectivePalette.Get(ColorRole.Text);
 
         int roundness = 0;
+        var labelXOffset = p_iconWidth;
 
         using var paint = new SKPaint();
         paint.Color = bgColor;
         paint.IsAntialias = roundness > 0;
         canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), roundness, roundness), paint);
 
+        // Draw label
         using var textPaint = new SKPaint();
         textPaint.Color = textColor;
         textPaint.IsAntialias = true;
-        canvas.DrawText(Title, XPadding, 16, Application.DefaultFont, textPaint);
+        canvas.DrawText(Title, labelXOffset + XPadding, 16, Application.DefaultFont, textPaint);
+
+        // Draw icon
+        if (!string.IsNullOrEmpty(Icon))
+        {
+            canvas.DrawText(Icon, XPadding, 16 + 4, Application.FontIcon, textPaint);
+        }
     }
 
     public bool OnMouseMove(int x, int y)
@@ -93,7 +151,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         if (!m_open) return false;
 
         int itemIndex = (y - Height) / 24;
-        if (itemIndex >= 0 && itemIndex < Items.Count)
+        if (itemIndex >= 0 && itemIndex < Actions.Count)
         {
             m_hoveredIndex = itemIndex;
             TriggerRepaint();
@@ -109,30 +167,13 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     public bool OnMouseDown(int x, int y)
     {
-        if (!m_open && y < Height)
+        if (!m_open)
         {
-            m_open = true;
-
-            Popup();
-
-            TriggerRepaint();
-        }
-        else if (m_open && y >= Height)
-        {
-            int itemIndex = (y - Height) / 24;
-            if (itemIndex >= 0 && itemIndex < Items.Count)
-            {
-                Items[itemIndex].OnClick?.Invoke();
-                m_open = false;
-                TriggerRepaint();
-            }
+            Open();
         }
         else
         {
-            m_popup?.Delete();
-
-            m_open = false;
-            TriggerRepaint();
+            Close();
         }
 
         return true;
@@ -146,6 +187,38 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     public void OnMouseLeave()
     {
         m_hovering = false;
+    }
+
+    #endregion
+
+    #region Internal methods
+
+    internal void Open()
+    {
+        m_open = true;
+
+        switch (m_itemType)
+        {
+            case MenuItemType.SubMenu:
+                Popup();
+                break;
+            case MenuItemType.MenuAction:
+                m_onClick?.Invoke();
+                m_popup?.Delete();
+                break;
+        }
+
+        OnSubmitted?.Invoke();
+
+        TriggerRepaint();
+    }
+
+    internal void Close()
+    {
+        m_open = false;
+        m_popup?.Delete();
+
+        TriggerRepaint();
     }
 
     #endregion

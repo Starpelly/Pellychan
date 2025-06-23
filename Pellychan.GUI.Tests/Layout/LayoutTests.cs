@@ -1,7 +1,7 @@
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 
-namespace Pellychan.GUI.Tests;
+namespace Pellychan.GUI.Tests.Layout;
 
 public class LayoutTests : IDisposable
 {
@@ -34,7 +34,7 @@ public class LayoutTests : IDisposable
             Width = 100,
             Height = 50,
 
-            Fitting = Layouts.FitPolicy.FixedPolicy
+            Fitting = FitPolicy.FixedPolicy
         };
         parent.PerformLayoutUpdate(LayoutFlushType.All);
 
@@ -61,7 +61,7 @@ public class LayoutTests : IDisposable
             Width = 100,
             Height = 100,
 
-            Fitting = Layouts.FitPolicy.FixedPolicy
+            Fitting = FitPolicy.FixedPolicy
         };
         var b = new Widget(parent)
         {
@@ -70,7 +70,7 @@ public class LayoutTests : IDisposable
             Width = 100,
             Height = 100,
 
-            Fitting = Layouts.FitPolicy.FixedPolicy
+            Fitting = FitPolicy.FixedPolicy
         };
         parent.PerformLayoutUpdate(LayoutFlushType.All);
 
@@ -186,7 +186,7 @@ public class LayoutTests : IDisposable
         };
         var child = new Widget(parent)
         {
-            Fitting = Layouts.FitPolicy.ExpandingPolicy
+            Fitting = FitPolicy.ExpandingPolicy
         };
         parent.PerformLayoutUpdate(LayoutFlushType.All);
 
@@ -215,7 +215,7 @@ public class LayoutTests : IDisposable
         };
         var child = new Widget(parent)
         {
-            Fitting = Layouts.FitPolicy.ExpandingPolicy
+            Fitting = FitPolicy.ExpandingPolicy
         };
         parent.PerformLayoutUpdate(LayoutFlushType.All);
 
