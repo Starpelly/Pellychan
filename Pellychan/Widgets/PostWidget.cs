@@ -11,6 +11,8 @@ namespace Pellychan.Widgets;
 
 public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHandler, IMouseLeaveHandler
 {
+    public const int MaxImageWidth = 1280;
+
     private readonly Post m_ApiPost;
 
     private SKImage? m_thumbnailBitmap;
@@ -93,6 +95,24 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         MouseCursor.Set(MouseCursor.CursorType.Arrow);
     }
 
+    internal void FitToMaxWidth(int maxWidth)
+    {
+        if (Bitmap == null)
+            return;
+
+        var newWidth = Bitmap.Width;
+        var newHeight = Bitmap.Height;
+
+        if (newWidth > maxWidth || newWidth > Thumbnail.MaxImageWidth)
+        {
+            newWidth = maxWidth;
+            newHeight = (int)(((float)newWidth / Bitmap.Width) * Bitmap.Height);
+        }
+        Resize(newWidth, newHeight);
+    }
+
+    #region Private methods
+
     private void updateImage(SKImage? bitmap)
     {
         Bitmap = bitmap;
@@ -103,16 +123,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             return;
         }
 
-        var newWidth = Bitmap.Width;
-        var newHeight = Bitmap.Height;
-
-        if (newWidth > 1280)
-        {
-            newWidth = 1280;
-            newHeight = (int)(((float)newWidth / Bitmap.Width) * Bitmap.Height);
-        }
-
-        Resize(newWidth, newHeight);
+        FitToMaxWidth(MaxImageWidth);
 
         (Parent as PostWidget)?.SetHeight();
     }
@@ -159,6 +170,8 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             });
         }
     }
+
+    #endregion
 
     public override void Dispose()
     {
@@ -283,6 +296,10 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
 
     public void OnResize(int width, int height)
     {
+        // Fit thumbnail
+        var spaceForText = 200;
+        m_previewBitmap.FitToMaxWidth(Width - spaceForText);
+
         SetHeight();
     }
 
@@ -311,6 +328,8 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
 
     internal void SetPositions()
     {
+
+
         m_commentLabel.X = Padding.Left + (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Width + 8) : 0);
 
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
