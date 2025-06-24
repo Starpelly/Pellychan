@@ -60,16 +60,30 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     private readonly MenuItemType m_itemType;
 
     private MenuPopup? m_popup;
-    private Action? m_onClick;
+    private bool m_ownsPopup = false;
+
+    private readonly Action? m_onClick;
 
     internal readonly List<MenuAction> Actions = [];
     public string Title { get; set; }
     public string? Icon { get; set; }
 
+    #region Internal events
+
     /// <summary>
     /// Used to close the popup that hosts this menu.
     /// </summary>
     internal Action? OnSubmitted;
+
+    /// <summary>
+    /// Used to move a popup when hovering over a new menu.
+    /// </summary>
+    internal Action? OnHovered;
+
+    internal Action? OnUserOpened;
+    internal Action? OnUserClosed;
+
+    #endregion
 
     internal Menu(string title, string? icon, MenuItemType type, Action? onClick, Widget? parent = null) : base(parent)
     {
@@ -96,12 +110,23 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         return n;
     }
 
-    public void Popup()
+    internal void Popup(MenuPopup? popup)
     {
-        m_popup = new MenuPopup(this)
+        if (popup == null)
         {
-        };
-        m_popup.Show();
+            m_popup = new MenuPopup(this)
+            {
+            };
+            m_popup.Show();
+            m_ownsPopup = true;
+        }
+        else
+        {
+            m_popup = popup;
+            popup.SetMenu(this);
+            popup.Show();
+            m_ownsPopup = false;
+        }
     }
 
     public int MeasureWidth()
@@ -169,11 +194,14 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     {
         if (!m_open)
         {
-            Open();
+            if (OnUserOpened != null)
+                OnUserOpened?.Invoke();
+            else
+                Open(null);
         }
         else
         {
-            Close();
+            UserClose();
         }
 
         return true;
@@ -182,6 +210,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     public void OnMouseEnter()
     {
         m_hovering = true;
+        OnHovered?.Invoke();
     }
 
     public void OnMouseLeave()
@@ -193,32 +222,46 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     #region Internal methods
 
-    internal void Open()
+    internal void Open(MenuPopup? popup)
     {
+        if (m_open) return;
+
         m_open = true;
 
         switch (m_itemType)
         {
             case MenuItemType.SubMenu:
-                Popup();
+                Popup(popup);
                 break;
             case MenuItemType.MenuAction:
                 m_onClick?.Invoke();
-                m_popup?.Delete();
+                OnSubmitted?.Invoke();
                 break;
         }
-
-        OnSubmitted?.Invoke();
 
         TriggerRepaint();
     }
 
     internal void Close()
     {
+        if (!m_open) return;
+
         m_open = false;
-        m_popup?.Delete();
+
+        if (m_ownsPopup)
+        {
+            m_popup?.Delete();
+        }
+        m_popup = null;
 
         TriggerRepaint();
+    }
+
+    internal void UserClose()
+    {
+        OnUserClosed?.Invoke();
+        m_popup?.Hide();
+        Close();
     }
 
     #endregion

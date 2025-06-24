@@ -5,28 +5,33 @@ namespace Pellychan.GUI.Widgets;
 
 public class MenuPopup : Widget, IPaintHandler
 {
-    private readonly Menu m_menu;
-    private const int ItemHeight = 16;
-    private const int ItemTextPadding = 8;
-
+    private Menu? m_menu;
     private readonly List<Menu> m_menus = [];
 
-    public MenuPopup(Menu menu) : base(menu, WindowType.Popup)
+    public MenuPopup(Widget? parent = null) : base(parent, WindowType.Popup)
     {
-        // I assume the reason opening a popup takes so long is because of OpenGL initialization bullshit
-        // We should move to Vulkan or something (maybe)
+        // I assume the reason opening a popup takes so long is because of OpenGL initialization bullshit (maybe)
 
         Layout = new VBoxLayout
         {
         };
         ContentsMargins = new(1);
         AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
+    }
 
+    internal void SetMenu(Menu menu)
+    {
         m_menu = menu;
 
         X = m_menu.X - 1;
         Y = m_menu.Height;
-        // Resize(10, 10);
+        SetPosition(X, Y);
+
+        foreach (var m in m_menus)
+        {
+            m.Delete();
+        }
+        m_menus.Clear();
 
         foreach (var item in m_menu.Actions)
         {
@@ -35,8 +40,7 @@ public class MenuPopup : Widget, IPaintHandler
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                 OnSubmitted = () =>
                 {
-                    m_menu.Close();
-                    this.Delete();
+                    m_menu.UserClose();
                 }
             };
             m_menus.Add(newMenu);

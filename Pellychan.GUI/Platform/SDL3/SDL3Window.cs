@@ -181,6 +181,11 @@ namespace Pellychan.GUI.Platform.SDL3
             SDL_ShowWindow(SDLWindowHandle);
         }
 
+        public void Hide()
+        {
+            SDL_HideWindow(SDLWindowHandle);
+        }
+
         #region SDL Event Handling
 
         private const int events_per_peep = 64;

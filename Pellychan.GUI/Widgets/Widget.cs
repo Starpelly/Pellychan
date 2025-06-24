@@ -465,6 +465,12 @@ public class Widget : IDisposable
         */
     }
 
+    public void Hide()
+    {
+        m_visible = false;
+        m_nativeWindow?.Window.Hide();
+    }
+
     /// <summary>
     /// Sets the parent of the widget to the parent. The widget is moved to position (0, 0) in its new parent.
     /// 
@@ -506,6 +512,9 @@ public class Widget : IDisposable
     {
         m_x = x;
         m_y = y;
+
+        if (m_nativeWindow != null)
+            m_nativeWindow.Window.Position = new System.Drawing.Point(m_x, m_y);
     }
 
     public void SetRect(int x, int y, int width, int height)

@@ -28,6 +28,11 @@ namespace Pellychan.GUI.Platform
         void Show();
 
         /// <summary>
+        /// Attempts to hide the window, making it invisible and hidden from the taskbar.
+        /// </summary>
+        void Hide();
+
+        /// <summary>
         /// Sets the window icon by copying it from another window.
         /// </summary>
         /// <param name="window"></param>

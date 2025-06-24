@@ -23,9 +23,15 @@ namespace Pellychan.GUI.Widgets
 
         private List<Menu> m_menus = [];
 
+        private Menu? m_openedMenu = null;
+
+        private MenuPopup m_stdPopup;
+        private bool m_popupOpen = false;
+
         public MenuBar(Widget? parent = null) : base(parent)
         {
             Height = MenuBarHeight + BorderSize;
+            m_stdPopup = new MenuPopup(this);
         }
 
         private void AddMenu(Menu menu)
@@ -36,6 +42,30 @@ namespace Pellychan.GUI.Widgets
             menu.SetPosition(m_nextX, 0);
             m_nextX += menu.Width;
             menu.Height = MenuBarHeight;
+
+            menu.OnHovered = () =>
+            {
+                if (m_popupOpen && m_openedMenu != menu)
+                {
+                    m_openedMenu?.Close();
+                    menu.Open(m_stdPopup);
+                    m_openedMenu = menu;
+                }
+            };
+            menu.OnUserOpened = () =>
+            {
+                m_openedMenu = menu;
+                m_popupOpen = true;
+
+                menu.Open(m_stdPopup);
+            };
+            menu.OnUserClosed = () =>
+            {
+                if (m_openedMenu != menu) return;
+
+                m_openedMenu = null;
+                m_popupOpen = false;
+            };
 
             m_menus.Add(menu);
         }

@@ -98,7 +98,7 @@ internal unsafe class SkiaWindow
         {
             RenderTarget?.Dispose();
 
-            SDL_GetWindowSizeInPixels(SDLWindowHandle, &w, &h);
+            // SDL_GetWindowSizeInPixels(SDLWindowHandle, &w, &h);
             // SDL_GL_GetIntegerv(SDL.SDL.GLAttribute.FramebufferBinding, out int framebuffer);
 
             var glInfo = new GRGlFramebufferInfo((uint)0, SKColorType.Rgba8888.ToGlSizedFormat());
