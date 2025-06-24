@@ -5,17 +5,20 @@ using Pellychan.API.Responses;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
+using System.Net;
 using System.Runtime.InteropServices;
+using System.Web;
 using Thread = Pellychan.API.Models.Thread;
 
 namespace Pellychan;
 
 public class ChanClient
 {
-    private readonly HttpClient m_httpClient = new();
+    private readonly HttpClientHandler m_httpsClientHandler;
+    private readonly HttpClient m_httpClient;
     private readonly SemaphoreSlim m_throttler = new(8); // 8 concurrent downloads
 
-    public string CurrentBoard { get; set; }
+    public string CurrentBoard { get; set; } = string.Empty;
     public Thread CurrentThread { get; set; }
 
     public BoardsResponse Boards;
@@ -23,10 +26,58 @@ public class ChanClient
 
     public ChanClient()
     {
+        m_httpsClientHandler = new HttpClientHandler
+        {
+            CookieContainer = new CookieContainer()
+        };
+
+        // https://gitlab.com/catamphetamine/imageboard/-/blob/master/docs/engines/4chan.md#post-a-comment
+
+        // COOKIES
+        // WE AINT NO ROOKIES
+        var cookieUri = new Uri("https://sys.4chan.org");
+        m_httpsClientHandler.CookieContainer.Add(cookieUri, new Cookie("cf_clearance", Pellychan.Settings.Cookies.CloudflareClearance));
+        m_httpsClientHandler.CookieContainer.Add(cookieUri, new Cookie("4chan_pass", Pellychan.Settings.Cookies.FourchanPasskey));
+
+        m_httpClient = new HttpClient(m_httpsClientHandler);
+
         // The 4chan API requires a UserAgent or else it won't work.
-        m_httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
-            "My4ChanClient/1.0 (+https://github.com/Starpelly/pellychan)"
-        );
+        // Pretend to be a browser or else Cloudflare will refuse post requests
+        m_httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0");
+        // m_httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("My4ChanClient/1.0 (+https://github.com/Starpelly/pellychan)");
+
+        // The 4chan API says we need this but adding it just causes requests to fail so I'm unconvinced.
+        // string lastCheck = DateTime.UtcNow.AddHours(-1).ToString("R"); // "R" means RFC1123 pattern
+        // m_httpClient.DefaultRequestHeaders.Add("If-Modified-Since", lastCheck);
+
+        // Idk if this is required
+        m_httpClient.DefaultRequestHeaders.Add("Referer", "https://boards.4chan.org/");
+
+        // _ = testc();
+    }
+
+    private async Task testc()
+    {
+        var baseUrl = "https://sys.4chan.org/captcha";
+
+        var uriBuilder = new UriBuilder(baseUrl);
+        var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+
+        query["board"] = "v";
+        query["thread_id"] = "713509556";
+
+        uriBuilder.Query = query.ToString();
+        var finalUrl = uriBuilder.ToString();
+
+        try
+        {
+            var json = await m_httpClient.GetStringAsync(finalUrl);
+            Console.WriteLine(json);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"HTTP Request failed: {ex.Message}");
+        }
     }
 
     public async Task<BoardsResponse> GetBoardsAsync()

@@ -1,30 +1,28 @@
 ﻿using Pellychan.GUI;
 using Pellychan.Resources;
-using SkiaSharp;
 
 namespace Pellychan;
 
-public class Pellychan
+public static class Pellychan
 {
-    private static Pellychan s_instance = new();
-    private readonly ChanClient m_chanClient = new();
+    public static Settings Settings { get; private set; }
 
     public static PellychanWindow MainWindow { get; private set; }
-    public static ChanClient ChanClient => s_instance.m_chanClient;
+    public static ChanClient ChanClient { get; private set; }
 
-    public Pellychan()
+    private static void init()
     {
-        if (s_instance != null)
-            throw new Exception("There can only be one Pellychan instance!");
-        s_instance = this;
+        // Load settings first
+        Settings = Settings.Load();
 
-        m_chanClient.Boards = m_chanClient.GetBoardsAsync().GetAwaiter().GetResult();
-
-        InitializeFonts();
+        ChanClient = new();
+        ChanClient.Boards = ChanClient.GetBoardsAsync().GetAwaiter().GetResult();
     }
 
     public static void Start()
     {
+        init();
+
         using var app = new Application();
 
         MainWindow = new PellychanWindow();
@@ -52,10 +50,5 @@ public class Pellychan
     {
         MainWindow.LoadThreadPosts(threadID);
         MainWindow.SetWindowTitle($"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/");
-    }
-
-    private void InitializeFonts()
-    {
-
     }
 }
