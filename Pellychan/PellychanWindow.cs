@@ -1,10 +1,8 @@
-﻿using ExCSS;
-using MaterialDesign;
+﻿using MaterialDesign;
 using Pellychan.API.Models;
 using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
-using Pellychan.Resources;
 using Pellychan.Widgets;
 using SkiaSharp;
 using System.Diagnostics;
@@ -13,8 +11,8 @@ namespace Pellychan;
 
 public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 {
+    private readonly List<ThreadWidget> m_threadWidgets = [];
     private readonly List<PostWidget> m_postWidgets = [];
-    public List<PostWidget> Tester => m_postWidgets;
 
     private ScrollArea m_threadsListWidget;
     private ScrollArea m_postsListWidget;
@@ -106,11 +104,46 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
             // Boards list
             {
-                new NullWidget(mainHolder)
+                var boardsListHolder = new NullWidget(mainHolder)
                 {
                     Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-                    Width = 64
+                    Width = 176,
+
+                    Layout = new VBoxLayout { }
                 };
+
+                var m_boardsListWidget = new ScrollArea(boardsListHolder)
+                {
+                    Fitting = FitPolicy.ExpandingPolicy
+                };
+
+                m_boardsListWidget.ContentFrame.Layout = new HBoxLayout
+                {
+                };
+
+                m_boardsListWidget.ChildWidget = new NullWidget(m_boardsListWidget.ContentFrame)
+                {
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+                    Layout = new VBoxLayout
+                    {
+                        Padding = new(8),
+                        Spacing = 4,
+                    },
+                    Name = "Boards Lists Holder"
+                };
+
+                foreach (var board in Pellychan.ChanClient.Boards.Boards)
+                {
+                    new PushButton(board.Title, m_boardsListWidget.ChildWidget)
+                    {
+                        Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                        OnClicked = () =>
+                        {
+                            Pellychan.LoadCatalog(board.URL);
+                        }
+                    };
+                }
             }
 
             CreateSeparator();
@@ -221,6 +254,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     public void LoadBoardCatalog(string board)
     {
+        clearThreads();
+        clearPosts();
+
         Pellychan.ChanClient.CurrentBoard = board;
         Pellychan.ChanClient.Catalog = Pellychan.ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
 
@@ -230,11 +266,12 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         {
             foreach (var thread in page.Threads)
             {
-                new ThreadWidget(thread, m_threadsListWidget.ChildWidget)
+                var widget = new ThreadWidget(thread, m_threadsListWidget.ChildWidget)
                 {
                     Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                     Height = 50,
                 };
+                m_threadWidgets.Add(widget);
             }
         }
 
@@ -248,12 +285,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     public void LoadThreadPosts(string threadID)
     {
-        foreach (var widget in m_postWidgets)
-        {
-            widget.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...
-        }
-        m_postWidgets.Clear();
-        m_postsListWidget.VerticalScrollbar.Value = 0;
+        clearPosts();
 
         Pellychan.ChanClient.CurrentThread = Pellychan.ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
         m_threadTitleLabel.Text = $"/{Pellychan.ChanClient.CurrentBoard}/{Pellychan.ChanClient.CurrentThread.Posts[0].No}/";
@@ -276,6 +308,26 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 }
             });
         }
+    }
+
+    private void clearThreads()
+    {
+        foreach (var widget in m_threadWidgets)
+        {
+            widget.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...
+        }
+        m_threadWidgets.Clear();
+        m_threadsListWidget.VerticalScrollbar.Value = 0;
+    }
+
+    private void clearPosts()
+    {
+        foreach (var widget in m_postWidgets)
+        {
+            widget.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...
+        }
+        m_postWidgets.Clear();
+        m_postsListWidget.VerticalScrollbar.Value = 0;
     }
 
     public new void OnResize(int width, int height)

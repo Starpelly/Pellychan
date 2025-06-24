@@ -24,7 +24,7 @@ public class ScrollArea : Widget, IMouseWheelHandler
     /// <summary>
     /// If toggled on, the <see cref="ContentFrame"/> will be scrolled smoothly when the user "wheels" over the <see cref="ScrollArea"/>.
     /// </summary>
-    public bool SmoothScroll { get; set; } = true;
+    public bool SmoothScroll { get; set; } = false;
 
     public ScrollArea(Widget? parent = null) : base(parent)
     {
@@ -44,7 +44,9 @@ public class ScrollArea : Widget, IMouseWheelHandler
             Y = 16,
             Width = 16,
             Height = 400,
-            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
+            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
+            Minimum = 0,
+            Maximum = 0
         };
         VerticalScrollbar.OnValueChanged += delegate (int value)
         {
@@ -133,12 +135,6 @@ public class ScrollArea : Widget, IMouseWheelHandler
 
     private void fitScrollbarsToContent()
     {
-        if (m_childWidget == null)
-        {
-
-            return;
-        }
-
         var maxY = 0;
 
         if (ContentFrame.Layout != null)
@@ -146,12 +142,15 @@ public class ScrollArea : Widget, IMouseWheelHandler
             maxY = ContentFrame.Layout.Padding.Bottom * 2;
         }
 
-        VerticalScrollbar.Minimum = 0;
-        VerticalScrollbar.Maximum = Math.Max(0, (m_childWidget.Height - ContentFrame.Height) + maxY);
-        VerticalScrollbar.PageStep = ContentFrame.Height;
+        if (m_childWidget != null)
+        {
+            VerticalScrollbar.Minimum = 0;
+            VerticalScrollbar.Maximum = Math.Max(0, (m_childWidget.Height - ContentFrame.Height) + maxY);
+            VerticalScrollbar.PageStep = ContentFrame.Height;
+        }
 
         VerticalScrollbar.Value = Math.Clamp(VerticalScrollbar.Value, VerticalScrollbar.Minimum, VerticalScrollbar.Maximum);
-        VerticalScrollbar.Enabled = VerticalScrollbar.Maximum > 0;
+        VerticalScrollbar.Enabled = VerticalScrollbar.Maximum > VerticalScrollbar.Minimum;
 
         // So the reason it looks as if the list scrolls back up to the top when the window is resized (or equivalent)-
         // is because the layout for m_mainContentWidget is setting the position of the list in the Layout?.PositionsPass().
