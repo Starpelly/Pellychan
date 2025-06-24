@@ -23,7 +23,7 @@ public class MenuPopup : Widget, IPaintHandler
     {
         m_menu = menu;
 
-        X = m_menu.X - 1;
+        X = m_menu.X;
         Y = m_menu.Height;
         SetPosition(X, Y);
 

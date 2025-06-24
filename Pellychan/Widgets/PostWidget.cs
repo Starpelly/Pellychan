@@ -31,7 +31,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         updateImage(null);
     }
 
-    public void SetThumbnail(SKImage? thumbnail)
+    public void SetThumbnail(SKImage thumbnail)
     {
         m_thumbnailBitmap = thumbnail;
 
@@ -141,9 +141,8 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             string url = $"https://{Domains.UserContent}/{Pellychan.ChanClient.CurrentBoard}/{post.Tim}{post.Ext}";
 
             Console.WriteLine(url);
-            Task.Run(async () =>
+            _ = m_gifPlayer.LoadAsync(url, () =>
             {
-                await m_gifPlayer.LoadAsync(url);
                 m_loadedFull = true;
                 m_usingThumbnail = !m_usingThumbnail;
             });
@@ -156,7 +155,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         }
         else
         {
-            Pellychan.ChanClient.LoadAttachment(m_ApiPost, (thumbnail) =>
+            _ = Pellychan.ChanClient.DownloadAttachmentAsync(m_ApiPost, (thumbnail) =>
             {
                 if (thumbnail != null)
                 {

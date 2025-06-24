@@ -24,7 +24,7 @@ public class ScrollArea : Widget, IMouseWheelHandler
     /// <summary>
     /// If toggled on, the <see cref="ContentFrame"/> will be scrolled smoothly when the user "wheels" over the <see cref="ScrollArea"/>.
     /// </summary>
-    public bool SmoothScroll { get; set; } = false;
+    public bool SmoothScroll { get; set; } = true;
 
     public ScrollArea(Widget? parent = null) : base(parent)
     {

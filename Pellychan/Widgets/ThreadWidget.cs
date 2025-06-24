@@ -47,27 +47,34 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
             ShouldCache = false
         };
 
+        /*
         Pellychan.ChanClient.LoadThumbnail(thread, (thumbnail) =>
         {
             if (thumbnail != null)
             {
-                m_previewImage.Bitmap = thumbnail;
 
-                var newWidth = thumbnail.Width;
-                var newHeight = thumbnail.Height;
-
-                if (newWidth > MaxImageWidth)
-                {
-                    newWidth = MaxImageWidth;
-                    newHeight = (int)(((float)newWidth / thumbnail.Width) * thumbnail.Height);
-                }
-
-                m_previewImage.Width = newWidth;
-                m_previewImage.Height = newHeight;
-
-                updateLayout();
             }
         });
+        */
+    }
+
+    public void SetBitmapPreview(SKImage image)
+    {
+        m_previewImage.Bitmap = image;
+
+        var newWidth = image.Width;
+        var newHeight = image.Height;
+
+        if (newWidth > MaxImageWidth)
+        {
+            newWidth = MaxImageWidth;
+            newHeight = (int)(((float)newWidth / image.Width) * image.Height);
+        }
+
+        m_previewImage.Width = newWidth;
+        m_previewImage.Height = newHeight;
+
+        updateLayout();
     }
 
     public void OnPaint(SKCanvas canvas)
@@ -139,28 +146,24 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTime);
         DateTime dateTime = dateTimeOffset.UtcDateTime;
 
-        // Current time in UTC
         DateTime now = DateTime.UtcNow;
-
-        // Time difference
         TimeSpan diff = now - dateTime;
 
-        // Display result
         if (diff.TotalSeconds < 60)
         {
-            return $"{(int)diff.TotalSeconds} seconds ago";
+            return $"{(int)diff.TotalSeconds} second{(diff.Seconds != 1 ? "s" : "")} ago";
         }
         else if (diff.TotalMinutes < 60)
         {
-            return $"{(int)diff.TotalMinutes} minutes ago";
+            return $"{(int)diff.TotalMinutes} minute{(diff.Minutes != 1 ? "s" : "")} ago";
         }
         else if (diff.TotalHours < 24)
         {
-            return $"{(int)diff.TotalHours} hours ago";
+            return $"{(int)diff.TotalHours} hour{(diff.Hours != 1 ? "s" : "")} ago";
         }
         else
         {
-            return $"{(int)diff.TotalDays} days ago";
+            return $"{(int)diff.TotalDays} day{(diff.Days != 1 ? "s" : "")} ago";
         }
     }
 

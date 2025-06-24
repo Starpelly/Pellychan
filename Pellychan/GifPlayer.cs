@@ -11,7 +11,7 @@ public class GifPlayer : IDisposable
 
     public SKImage? CurrentImage => m_frames.Count > 0 ? m_frames[m_currentFrame].Image : null;
 
-    public async Task LoadAsync(string url)
+    public async Task LoadAsync(string url, Action onComplete)
     {
         m_frames = await Pellychan.ChanClient.LoadGifFromUrlAsync(url);
 
@@ -19,6 +19,8 @@ public class GifPlayer : IDisposable
         {
             Start();
         }
+
+        onComplete.Invoke();
     }
 
     public void Start()

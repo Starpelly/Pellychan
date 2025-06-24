@@ -156,7 +156,7 @@ namespace Pellychan.GUI.Platform.SDL3
             if (Application.HardwareAccel)
             {
                 // VSync
-                SDL_GL_SetSwapInterval(1);
+                // SDL_GL_SetSwapInterval(1);
             }
 
             ParentWindow = parentWindow;

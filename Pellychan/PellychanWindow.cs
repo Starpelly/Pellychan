@@ -56,7 +56,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 new(MaterialIcons.Refresh, "Refresh All"),
             ]);
             AddMenu("Tools", [
-                new(MaterialIcons.Cloud, "Thread Downloader")
+                new(MaterialIcons.Cloud, "Thread Downloader"),
+                new(MaterialIcons.Terminal, "Toggle System Console"),
             ]);
             AddMenu("Help", [
                 new(MaterialIcons.Code, "Source Code", () => {
@@ -262,6 +263,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         m_boardTitleLabel.Text = $"/{board}/";
 
+        var ids = new Dictionary<long, ThreadWidget>();
         void loadPage(CatalogPage page)
         {
             foreach (var thread in page.Threads)
@@ -272,6 +274,11 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     Height = 50,
                 };
                 m_threadWidgets.Add(widget);
+
+                if (thread.Tim != null && thread.Tim > 0)
+                {
+                    ids.Add((long)thread.Tim, widget);
+                }
             }
         }
 
@@ -281,6 +288,15 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         {
             loadPage(page);
         }
+
+        // Load thumbnails for threads
+        _ = Pellychan.ChanClient.LoadThumbnailsAsync(ids.Keys, (long tim, SKImage? image) =>
+        {
+            if (image != null)
+            {
+                ids[tim].SetBitmapPreview(image);
+            }
+        });
     }
 
     public void LoadThreadPosts(string threadID)
@@ -290,6 +306,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         Pellychan.ChanClient.CurrentThread = Pellychan.ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
         m_threadTitleLabel.Text = $"/{Pellychan.ChanClient.CurrentBoard}/{Pellychan.ChanClient.CurrentThread.Posts[0].No}/";
 
+        var ids = new Dictionary<long, PostWidget>();
         for (var i = 0; i < Pellychan.ChanClient.CurrentThread.Posts.Count; i++)
         {
             var post = Pellychan.ChanClient.CurrentThread.Posts[i];
@@ -299,15 +316,20 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             };
             m_postWidgets.Add(widget);
 
-            Pellychan.ChanClient.LoadThumbnail(post, (thumbnail) =>
+            if (post.Tim != null && post.Tim > 0)
             {
-                if (thumbnail != null)
-                {
-                    Console.WriteLine($"Loaded {(long)post.Tim!}.jpg");
-                    widget.SetBitmapPreview(thumbnail);
-                }
-            });
+                ids.Add((long)post.Tim, widget);
+            }
         }
+
+        // Load thumbnails for posts
+        _ = Pellychan.ChanClient.LoadThumbnailsAsync(ids.Keys, (long tim, SKImage? image) =>
+        {
+            if (image != null)
+            {
+                ids[tim].SetBitmapPreview(image);
+            }
+        });
     }
 
     private void clearThreads()

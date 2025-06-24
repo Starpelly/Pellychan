@@ -38,7 +38,6 @@ public class Pellychan
         MainWindow.SetIconFromStream(iconStream!);
 
         MainWindow.Show();
-        LoadCatalog("g");
 
         app.Run();
     }

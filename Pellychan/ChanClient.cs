@@ -13,6 +13,7 @@ namespace Pellychan;
 public class ChanClient
 {
     private readonly HttpClient m_httpClient = new();
+    private readonly SemaphoreSlim m_throttler = new(8); // 8 concurrent downloads
 
     public string CurrentBoard { get; set; }
     public Thread CurrentThread { get; set; }
@@ -74,7 +75,7 @@ public class ChanClient
         }
     }
 
-    public async Task<SKImage?> DownloadAttachmentAsync(Post post)
+    public async Task DownloadAttachmentAsync(Post post, Action<SKImage?> onComplete)
     {
         string url = $"https://{Domains.UserContent}/{CurrentBoard}/{post.Tim}{post.Ext}";
 
@@ -82,39 +83,37 @@ public class ChanClient
         {
             byte[] imageBytes = await m_httpClient.GetByteArrayAsync(url);
             using var ms = new MemoryStream(imageBytes);
-            return SKImage.FromEncodedData(ms); // Decode into SKBitmap
+            var ret = SKImage.FromEncodedData(ms); // Decode into SKBitmap
+            onComplete.Invoke(ret);
         }
         catch
         {
-            return null; // Handle gracefully if image isn't available
+            onComplete?.Invoke(null);
+            // return null; // Handle gracefully if image isn't available
         }
     }
 
-    public void LoadThumbnail(Post post, Action<SKImage?> onComplete)
+    public async Task LoadThumbnailsAsync(IEnumerable<long> imageIds, Action<long, SKImage?> onComplete)
     {
-        Task.Run(async () =>
+        var tasks = imageIds.Select(async tim =>
         {
-            var thumb = await DownloadThumbnailAsync((long)post.Tim!);
-            onComplete?.Invoke(thumb);
-        });
-    }
+            await m_throttler.WaitAsync();
+            try
+            {
+                var img = await DownloadThumbnailAsync(tim);
 
-    public void LoadThumbnail(CatalogThread post, Action<SKImage?> onComplete)
-    {
-        Task.Run(async () =>
-        {
-            var thumb = await DownloadThumbnailAsync((long)post.Tim!);
-            onComplete?.Invoke(thumb);
+                if (img != null)
+                {
+                    onComplete.Invoke(tim, img);
+                }
+            }
+            finally
+            {
+                m_throttler.Release();
+            }
         });
-    }
 
-    public void LoadAttachment(Post post, Action<SKImage?> onComplete)
-    {
-        Task.Run(async () =>
-        {
-            var attachment = await DownloadAttachmentAsync(post);
-            onComplete?.Invoke(attachment);
-        });
+        await Task.WhenAll(tasks);
     }
 
     public class GifFrame
