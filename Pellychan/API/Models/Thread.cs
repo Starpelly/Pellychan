@@ -5,10 +5,13 @@ namespace Pellychan.API.Models;
 /// <summary>
 /// A full thread, consisting of the OP and all replies.
 /// </summary>
-public struct Thread
+public class Thread
 {
+    [JsonIgnore]
+    public int No => Posts[0].No;
+
     [JsonProperty("posts")]
-    public List<Post> Posts;
+    public List<Post> Posts = [];
 }
 
 /// <summary>

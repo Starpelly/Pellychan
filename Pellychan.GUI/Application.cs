@@ -48,11 +48,13 @@ public class Application : IDisposable
     internal readonly List<Widget> TopLevelWidgets = [];
 
     private readonly SKFont m_defaultFont;
+    private readonly SKFont m_defaultFontBold;
     private readonly SKFont m_fontIcon;
     private readonly Style m_defaultStyle;
     private ColorPalette m_palette;
     
     public static SKFont DefaultFont => Instance!.m_defaultFont;
+    public static SKFont DefaultFontBold => Instance!.m_defaultFontBold;
     public static Style DefaultStyle => Instance!.m_defaultStyle;
 
     /// <summary>
@@ -115,22 +117,27 @@ public class Application : IDisposable
                           SDL3 Revision: {SDL3.SDL_GetRevision()}
                           SDL3 Video driver: {SDL3.SDL_GetCurrentVideoDriver()}");
 
-        // using var fontStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Fonts.lucidagrande.ttf");
-        using var typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-        // using var typeface = SKTypeface.FromStream(fontStream);
-
         const int dpi = 96;
         const float pixelsPerPoint = dpi / 72.0f;
         const float skiaFontSize = 9 * pixelsPerPoint;
 
-        m_defaultFont = new SKFont
+        static SKFont createUIFont(SKFontStyleWeight weight)
         {
-            Edging = SKFontEdging.SubpixelAntialias,
-            Hinting = SKFontHinting.Slight,
-            Subpixel = true,
-            Typeface = typeface,
-            Size = skiaFontSize
-        };
+            // I kinda like Century Gothic
+            using var typeface = SKTypeface.FromFamilyName("Segoe UI", weight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
+            return new SKFont
+            {
+                Edging = SKFontEdging.SubpixelAntialias,
+                Hinting = SKFontHinting.Slight,
+                Subpixel = true,
+                Typeface = typeface,
+                Size = skiaFontSize
+            };
+        }
+
+        m_defaultFont = createUIFont(SKFontStyleWeight.Normal);
+        m_defaultFontBold = createUIFont(SKFontStyleWeight.Bold);
 
         using var iconsStream = typeof(Application).Assembly.GetManifestResourceStream("Pellychan.GUI.Resources.MaterialIconsRound-Regular.otf");
         using var iconsTypeface = SKTypeface.FromStream(iconsStream);

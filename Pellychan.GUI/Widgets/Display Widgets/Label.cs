@@ -5,7 +5,12 @@ namespace Pellychan.GUI.Widgets;
 
 public class Label : Widget, IPaintHandler
 {
-    private SKFont m_font;
+    private readonly int m_maxWidth = int.MaxValue;
+
+    private readonly SKPaint m_paint = new()
+    {
+        Color = Application.Palette.Get(ColorRole.Text),
+    };
 
     public enum TextAnchor
     {
@@ -20,6 +25,29 @@ public class Label : Widget, IPaintHandler
         BottomRight,
     }
 
+    public class TextFragment
+    {
+        public string Text { get; set; } = "";
+
+        public SKColor TextColor { get; set; }
+        public bool IsBold { get; set; } = false;
+        public bool IsUnderline { get; set; } = false;
+
+        public SKFont GetFont()
+        {
+            if (IsBold)
+                return Application.DefaultFontBold;
+            else
+                return Application.DefaultFont;
+        }
+
+        public float GetFontSize()
+        {
+            return GetFont().Size + ((IsUnderline) ? 1 : 0);
+        }
+    }
+    private readonly List<TextFragment> m_textFragments = [];
+
     private string m_text = string.Empty;
     public string Text
     {
@@ -28,91 +56,83 @@ public class Label : Widget, IPaintHandler
         {
             m_text = value;
 
-            parseHtml(value, m_font);
+            parseHtml(value);
             updateSize();
             TriggerRepaint();
         }
     }
 
-    private SKPaint m_paint { get; set; } = new SKPaint
-    {
-        Color = Application.Palette.Get(ColorRole.Text),
-        IsAntialias = true
-    };
-
-    public const int LineSpacing = 4;
+    public int LineSpacing { get; set; } = 4;
 
     public bool WordWrap { get; set; } = false;
     public bool ElideRight { get; set; } = false;
-    public SKFontMetrics FontMetrics;
 
     public TextAnchor Anchor = TextAnchor.TopLeft;
 
-    private List<TextFragment> m_textFragments = [];
-
-    private int m_maxWidth = int.MaxValue;
-
-    public class TextFragment
+    public Label(Widget? parent = null) : base(parent)
     {
-        public string Text { get; set; } = "";
-
-        public SKColor TextColor { get; set; }
-        public bool IsBold { get; set; } = false;
-    }
-
-    public Label(SKFont font, Widget? parent = null) : base(parent)
-    {
-        m_font = font;
     }
 
     public void OnPaint(SKCanvas canvas)
     {
-        float x = 0, y = m_font.Size;
+        float x = 0, y = 0;
 
         float yStart = 0;
-        switch (Anchor)
+
+        if (m_textFragments.Count > 0)
         {
-            case TextAnchor.TopLeft:
-            case TextAnchor.TopCenter:
-            case TextAnchor.TopRight:
-                yStart = 0;
-                break;
-            case TextAnchor.CenterLeft:
-            case TextAnchor.CenterCenter:
-            case TextAnchor.CenterRight:
-                yStart = ((Height - m_font.Size) / 2) - 2;
-                break;
-            case TextAnchor.BottomLeft:
-            case TextAnchor.BottomCenter:
-            case TextAnchor.BottomRight:
-                yStart = Height - m_font.Size;
-                break;
+            var fontSize = m_textFragments[0].GetFontSize();
+            y = fontSize;
+            switch (Anchor)
+            {
+                case TextAnchor.TopLeft:
+                case TextAnchor.TopCenter:
+                case TextAnchor.TopRight:
+                    yStart = 0;
+                    break;
+                case TextAnchor.CenterLeft:
+                case TextAnchor.CenterCenter:
+                case TextAnchor.CenterRight:
+                    yStart = ((Height - fontSize) / 2) - 2;
+                    break;
+                case TextAnchor.BottomLeft:
+                case TextAnchor.BottomCenter:
+                case TextAnchor.BottomRight:
+                    yStart = Height - fontSize;
+                    break;
+            }
         }
-
-        // canvas.DrawText(Text, new SKPoint(0, m_font.Size), m_font, m_paint);
-        // return;
-
+        
         foreach (var frag in m_textFragments)
         {
             var words = frag.Text.Split(' ');
 
-            m_font.Embolden = frag.IsBold;
             m_paint.Color = frag.TextColor;
+
+            // @INVESTIGATE
+            // This draws a line even when the text is split on different lines.
+            // Hrmmmm
+            if (frag.IsUnderline)
+            {
+                var realTextWidth = frag.GetFont().MeasureText(frag.Text);
+                m_paint.IsAntialias = false;
+                canvas.DrawLine(new SKPoint(x, y + yStart + 1), new SKPoint(x + realTextWidth, y + yStart + 1), m_paint);
+            }
 
             foreach (var word in words)
             {
                 if (word == "\n")
                 {
                     x = 0;
-                    y += m_font.Size + LineSpacing;
+                    y += frag.GetFontSize() + LineSpacing;
                     continue;
                 }
 
-                var textWidth = m_font.MeasureText(word + " ");
+                var textWidth = frag.GetFont().MeasureText(word + " ");
                 if (WordWrap && x + textWidth > Width)
                 {
                     x = 0;
-                    y += m_font.Size + LineSpacing;
+                    y += frag.GetFontSize() + LineSpacing;
                 }
 
                 float xStart = 0;
@@ -135,7 +155,8 @@ public class Label : Widget, IPaintHandler
                         break;
                 }
 
-                canvas.DrawText(word + " ", x + xStart, y + yStart, m_font, m_paint);
+                canvas.DrawText(word + " ", x + xStart, y + yStart, frag.GetFont(), m_paint);
+
                 x += textWidth;
             }
         }
@@ -144,7 +165,15 @@ public class Label : Widget, IPaintHandler
     public int MeasureHeightFromWidth(int width)
     {
         float x = 0;
-        float retHeight = m_font.Size + LineSpacing;
+        //float retHeight = m_font.Size + LineSpacing;
+        float retHeight = 0;
+
+        if (m_textFragments.Count > 0)
+        {
+            retHeight = m_textFragments[0].GetFontSize();
+        }
+
+        float lastLineDescent = 0;
         foreach (var frag in m_textFragments)
         {
             var words = frag.Text.Split(' ');
@@ -154,36 +183,46 @@ public class Label : Widget, IPaintHandler
                 if (word == "\n")
                 {
                     x = 0;
-                    retHeight += m_font.Size + LineSpacing;
+                    retHeight += frag.GetFontSize() + LineSpacing;
                     continue;
                 }
 
-                var textWidth = m_font.MeasureText(word + " ");
+                var textWidth = frag.GetFont().MeasureText(word + " ");
                 if (WordWrap && x + textWidth > width)
                 {
                     x = 0;
-                    retHeight += m_font.Size + LineSpacing;
+                    retHeight += frag.GetFontSize() + LineSpacing;
                 }
 
                 x += textWidth;
+
             }
+            lastLineDescent = frag.GetFont().Metrics.Descent;
         }
-        return (int)retHeight;
+
+        return (int)(retHeight + lastLineDescent);
     }
 
     public (int, int) MeasureSizeFromText()
     {
         float maxLineWidth = 0;
         float currentLineWidth = 0;
-        float totalHeight = m_font.Size + LineSpacing;
+        // float totalHeight = m_font.Size + LineSpacing;
+        float totalHeight = 0;
 
-        void onNewLine()
+        if (m_textFragments.Count > 0)
+        {
+            totalHeight = m_textFragments[0].GetFontSize();
+        }
+
+        void onNewLine(TextFragment frag)
         {
             maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
-            totalHeight += m_font.Size + LineSpacing;
+            totalHeight += frag.GetFontSize() + LineSpacing;
             currentLineWidth = 0;
         }
 
+        float lastLineDescent = 0;
         foreach (var frag in m_textFragments)
         {
             var words = frag.Text.Split(' ');
@@ -192,48 +231,51 @@ public class Label : Widget, IPaintHandler
             {
                 if (word == "\n")
                 {
-                    onNewLine();
+                    onNewLine(frag);
                     continue;
                 }
 
-                var textWidth = m_font.MeasureText(word + " ");
+                var textWidth = frag.GetFont().MeasureText(word + " ");
                 if (WordWrap && currentLineWidth + textWidth > m_maxWidth)
                 {
-                    onNewLine();
+                    onNewLine(frag);
                 }
 
                 currentLineWidth += textWidth;
             }
+            lastLineDescent = frag.GetFont().Metrics.Descent;
         }
 
         maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
 
         int width = WordWrap ? Math.Min((int)maxLineWidth, m_maxWidth) : (int)maxLineWidth;
-        int height = (int)totalHeight;
+        int height = (int)(totalHeight + lastLineDescent);
         return (width, height);
     }
 
     #region Private methods
 
-    public void parseHtml(string input, SKFont font)
+    private void parseHtml(string input)
     {
         m_textFragments.Clear();
         var doc = new HtmlDocument();
-        doc.LoadHtml($"<body>{input}</body>");
+        // doc.LoadHtml($"<body>{input}</body>");
+        doc.LoadHtml(input);
 
-        foreach (var node in doc.DocumentNode.SelectSingleNode("//body").ChildNodes)
+        foreach (var node in doc.DocumentNode.ChildNodes)
         {
+            var text = System.Net.WebUtility.HtmlDecode(node.InnerText);
             var color = m_paint.Color;
             var bold = false;
+            var underline = false;
 
             switch (node.Name)
             {
                 case "#text":
-                    m_textFragments.Add(new TextFragment { Text = System.Net.WebUtility.HtmlDecode(node.InnerText), TextColor = color });
                     break;
 
                 case "br":
-                    m_textFragments.Add(new TextFragment { Text = "\n", TextColor = color });
+                    text = "\n";
                     break;
 
                 case "a":
@@ -241,9 +283,9 @@ public class Label : Widget, IPaintHandler
                     {
                         case "quotelink":
                             color = SKColor.Parse("#5F89AC");
+                            underline = true;
                             break;
                     }
-                    m_textFragments.Add(new TextFragment { Text = System.Net.WebUtility.HtmlDecode(node.InnerText), TextColor = color, IsBold = bold });
                     break;
 
                 case "span":
@@ -255,19 +297,18 @@ public class Label : Widget, IPaintHandler
                             break;
                         case "name":
                             // color = SKColor.Parse("#5F89AC");
-                            // bold = true;
+                            bold = true;
                             break;
                         case "date":
-                            color = color.WithAlpha(50);
-                            break;
                         case "postID":
-                            color = SKColor.Parse("#5F89AC").WithAlpha(150);
+                            color = color.WithAlpha(50);
+                            // color = SKColor.Parse("#5F89AC").WithAlpha(150);
                             break;
                     }
-
-                    m_textFragments.Add(new TextFragment { Text = System.Net.WebUtility.HtmlDecode(node.InnerText), TextColor = color, IsBold = bold });
                     break;
             }
+
+            m_textFragments.Add(new TextFragment { Text = text, TextColor = color, IsBold = bold, IsUnderline = underline });
         }
     }
 
@@ -281,50 +322,6 @@ public class Label : Widget, IPaintHandler
 
         var res = MeasureSizeFromText();
         Resize(res.Item1, res.Item2);
-
-        /*
-        float maxLineWidth = 0;
-        float currentLineWidth = 0;
-        float totalHeight = m_font.Size;
-        float spaceWidth = m_font.Size / 4; // Rough estimate
-
-        foreach (var frag in m_textFragments)
-        {
-            var words = frag.Text.Split(' ');
-
-            foreach (var word in words)
-            {
-                if (word == "\n")
-                {
-                    maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
-                    currentLineWidth = 0;
-                    totalHeight += m_font.Size + LineSpacing;
-                    continue;
-                }
-
-                string displayWord = word + " ";
-                // float wordWidth = frag.Paint.MeasureText(displayWord);
-                float wordWidth = Application.DefaultFont.MeasureText(displayWord);
-
-                if (WordWrap && currentLineWidth + wordWidth > m_maxWidth)
-                {
-                    maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
-                    currentLineWidth = wordWidth;
-                    totalHeight += m_font.Size + LineSpacing;
-                }
-                else
-                {
-                    currentLineWidth += wordWidth;
-                }
-            }
-        }
-
-        maxLineWidth = Math.Max(maxLineWidth, currentLineWidth);
-        int width = WordWrap ? Math.Min((int)maxLineWidth, m_maxWidth) : (int)maxLineWidth;
-        int height = (int)totalHeight + 4;
-
-        Resize(width, height);
-        */
     }
 
     // Truncate text to fit with "..." at the end

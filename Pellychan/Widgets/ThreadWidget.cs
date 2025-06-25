@@ -36,7 +36,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
 
-        m_commentLabel = new Label(Application.DefaultFont, this)
+        m_commentLabel = new Label(this)
         {
             X = Padding.Left,
             Y = Padding.Top,
@@ -107,11 +107,11 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         ]);
 
         // paint.IsAntialias = true;
-        paint.Color = Palette.Get(ColorRole.Window);
+        paint.Color = Palette.Get(ColorRole.Window).Lighter(1.1f);
         canvas.DrawRoundRect(roundRect, paint);
 
         paint.IsStroke = true;
-        paint.Color = Application.DefaultStyle.GetFrameColor();
+        paint.Color = Palette.Get(ColorRole.Window);
         canvas.DrawRoundRect(roundRect, paint);
         paint.IsAntialias = false;
 

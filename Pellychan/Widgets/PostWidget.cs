@@ -103,6 +103,12 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         var newWidth = Bitmap.Width;
         var newHeight = Bitmap.Height;
 
+        var fullPreviewWidth = m_fullBitmap != null ? m_fullBitmap.Width : newWidth;
+        if (maxWidth > newWidth)
+        {
+            maxWidth = newWidth;
+        }
+
         if (newWidth > maxWidth || newWidth > Thumbnail.MaxImageWidth)
         {
             newWidth = maxWidth;
@@ -123,7 +129,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             return;
         }
 
-        FitToMaxWidth(MaxImageWidth);
+        FitToMaxWidth(m_fullBitmap != null ? m_fullBitmap.Width : MaxImageWidth);
 
         (Parent as PostWidget)?.SetHeight();
     }
@@ -204,7 +210,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
         m_apiPost = post;
 
         // UI Layout
-        m_nameLabel = new Label(Application.DefaultFont, this)
+        m_nameLabel = new Label(this)
         {
             X = Padding.Left,
             Y = Padding.Top,
@@ -212,7 +218,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
             CatchCursorEvents = false,
         };
 
-        m_dateLabel = new Label(Application.DefaultFont, this)
+        m_dateLabel = new Label(this)
         {
             X = Padding.Left,
             Y = Padding.Top,
@@ -220,28 +226,25 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
             CatchCursorEvents = false,
         };
 
-        m_postIDLabel = new Label(Application.DefaultFont, this)
+        m_postIDLabel = new Label(this)
         {
             X = Padding.Left,
             Y = Padding.Top,
-            Text = $"<span class=\"postID\">{post.No}</span>",
+            Text = $"<span class=\"postID\">#{post.No}</span>",
             CatchCursorEvents = false,
         };
 
         var rawComment = post.Com == null ? string.Empty : post.Com;
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
-
         var commentInput = decoded;
+
         // sanitize html
-        /*
         {
             var doc = new HtmlDocument();
-            doc.LoadHtml($"<body>{decoded}</body>");
+            doc.LoadHtml(decoded);
 
-            doc.CreateTextNode()
-
-            foreach (var node in doc.DocumentNode.SelectSingleNode("//body").ChildNodes)
+            foreach (var node in doc.DocumentNode.ChildNodes)
             {
                 switch (node.Name)
                 {
@@ -249,14 +252,20 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
                         switch (node.GetAttributeValue("class", ""))
                         {
                             case "quotelink":
-                                node.InnerText
+                                if (node.InnerText == $">>{Pellychan.ChanClient.CurrentThread.No}")
+                                {
+
+                                    node.InnerHtml = $"{node.InnerHtml} (OP)";
+                                }
                                 break;
                         }
                         break;
                 }
             }
+
+            commentInput = doc.DocumentNode.OuterHtml;
+            // Console.WriteLine(commentInput);
         }
-        */
 
         var commentY = m_nameLabel.Y + m_nameLabel.Height + 4;
 
@@ -266,7 +275,7 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
             Y = commentY,
         };
 
-        m_commentLabel = new Label(Application.DefaultFont, this)
+        m_commentLabel = new Label(this)
         {
             Y = commentY,
 
@@ -327,13 +336,12 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
 
     internal void SetPositions()
     {
-
-
         m_commentLabel.X = Padding.Left + (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Width + 8) : 0);
 
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
-        m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
+        // m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
+        m_postIDLabel.X = Width - Padding.Right - m_postIDLabel.Width;
     }
 
     #endregion

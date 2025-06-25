@@ -104,6 +104,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             */
 
             // Boards list
+            if (true)
             {
                 var boardsListHolder = new NullWidget(mainHolder)
                 {
@@ -229,7 +230,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     Layout = new HBoxLayout
                     { }
                 };
-                w = new Label(Application.DefaultFont, bg)
+                w = new Label(bg)
                 {
                     Fitting = FitPolicy.ExpandingPolicy,
                     Anchor = Label.TextAnchor.CenterCenter,
