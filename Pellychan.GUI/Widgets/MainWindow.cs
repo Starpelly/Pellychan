@@ -1,5 +1,4 @@
-﻿using Pellychan.GUI.Platform.Skia;
-using SkiaSharp;
+﻿using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
 

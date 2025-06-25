@@ -43,11 +43,18 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     menu.AddAction(item);
                 }
             }
+            /*
             AddMenu("File", [
                 new(MaterialIcons.Save, "Save"),
                 new(MaterialIcons.DoorFront, "Exit"),
             ]);
+            */
             AddMenu("View", [
+                new("New Window"),
+                new("")
+                {
+                    IsSeparator = true,
+                },
                 new(MaterialIcons.Settings, "Preferences", () => {
                     new PreferencesWindow(this).Show();
                 }),

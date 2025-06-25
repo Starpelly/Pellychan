@@ -6,7 +6,7 @@ namespace Pellychan.GUI.Widgets;
 public class MenuPopup : Widget, IPaintHandler
 {
     private Menu? m_menu;
-    private readonly List<Menu> m_menus = [];
+    private readonly List<Widget> m_widgetItems = [];
 
     public MenuPopup(Widget? parent = null) : base(parent, WindowType.Popup)
     {
@@ -27,15 +27,15 @@ public class MenuPopup : Widget, IPaintHandler
         Y = m_menu.Height;
         SetPosition(X, Y);
 
-        foreach (var m in m_menus)
+        foreach (var m in m_widgetItems)
         {
             m.Delete();
         }
-        m_menus.Clear();
+        m_widgetItems.Clear();
 
         foreach (var item in m_menu.Actions)
         {
-            var newMenu = new Menu(item.Text, item.Icon, Menu.MenuItemType.MenuAction, item.Action, this)
+            var newMenu = new Menu(item, item.IsSeparator ? Menu.MenuItemType.Separator : Menu.MenuItemType.MenuAction, this)
             {
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                 OnSubmitted = () =>
@@ -43,7 +43,7 @@ public class MenuPopup : Widget, IPaintHandler
                     m_menu.UserClose();
                 }
             };
-            m_menus.Add(newMenu);
+            m_widgetItems.Add(newMenu);
         }
 
         fitContent();
@@ -76,11 +76,14 @@ public class MenuPopup : Widget, IPaintHandler
     private void fitContent()
     {
         var maxWidth = 10f;
-        foreach (var item in m_menus)
+        foreach (var item in m_widgetItems)
         {
-            var iw = item.MeasureWidth();
-            if (iw > maxWidth)
-                maxWidth = iw;
+            if (item is Menu menu)
+            {
+                var iw = menu.MeasureWidth();
+                if (iw > maxWidth)
+                    maxWidth = iw;
+            }
         }
         Width = (int)maxWidth + ContentsMargins.Left + ContentsMargins.Right;
     }

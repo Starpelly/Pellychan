@@ -1,5 +1,5 @@
-﻿using Pellychan.GUI.Platform;
-using Pellychan.GUI.Platform.Skia;
+﻿using Pellychan.GUI.Framework.Platform.Skia;
+using Pellychan.GUI.Platform;
 using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
@@ -173,17 +173,17 @@ public class Application : IDisposable
                 window.Value.SkiaWindow.PollEvents();
             }
             */
+
             SkiaWindow.PollEvents();
 
             RunMainLoop();
 
-            foreach (var win in WindowRegistry.WidgetWindows.ToList())
+            foreach (var win in WindowRegistry.WidgetWindows)
             {
-                var w = win.Value.Widget;
-                if (w.ShouldClose())
+                if (win.Value.SkiaWindow.ShouldClose)
                 {
-                    w.Dispose();
-                    TopLevelWidgets.Remove(w);
+                    win.Value.Widget.Dispose();
+                    TopLevelWidgets.Remove(win.Value.Widget);
                 }
             }
 
@@ -211,6 +211,11 @@ public class Application : IDisposable
     {
         // Flush any pending layout requests
         LayoutQueue.Flush();
+
+        foreach (var win in WindowRegistry.WidgetWindows)
+        {
+            win.Value.SkiaWindow.RunCommands();
+        }
 
         UpdateDeltaTime();
         RenderAllWindows();

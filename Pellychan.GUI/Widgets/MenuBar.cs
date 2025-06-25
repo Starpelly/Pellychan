@@ -72,14 +72,14 @@ namespace Pellychan.GUI.Widgets
 
         public Menu AddMenu(string title)
         {
-            var t = new Menu(title, null, Menu.MenuItemType.SubMenu, null, this);
+            var t = new Menu(new MenuAction(title), Menu.MenuItemType.MenuBarSubMenu, this);
             AddMenu(t);
             return t;
         }
 
         public Menu AddMenu(string icon, string title)
         {
-            var t = new Menu(title, icon, Menu.MenuItemType.SubMenu, null, this);
+            var t = new Menu(new MenuAction(icon, title), Menu.MenuItemType.MenuBarSubMenu, this);
             AddMenu(t);
             return t;
         }
