@@ -1,4 +1,5 @@
 ﻿using MaterialDesign;
+using Pellychan.GUI;
 using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 
@@ -19,7 +20,8 @@ public class PreferencesWindow : MainWindow
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
         };
         var file = menubar.AddMenu("File");
-        file.AddAction(new(MaterialIcons.Folder, "Open Settings & Data Path", delegate () {
+        file.AddAction(new(MaterialIcons.Folder, "Open Settings & Data Path", () =>
+        {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
             {
                 FileName = Settings.GetAppFolder(),
@@ -27,7 +29,10 @@ public class PreferencesWindow : MainWindow
                 Verb = "open"
             });
         }));
-        file.AddAction(new(MaterialIcons.ContentCopy, "Copy Settings & Data Path to Clipboard", delegate () { }));
+        file.AddAction(new(MaterialIcons.ContentCopy, "Copy Settings & Data Path to Clipboard", () =>
+        {
+            Application.Clipboard.SetText(Settings.GetAppFolder().Replace("\\", "/"));
+        }));
         var window = menubar.AddMenu("Window");
         window.AddAction(new(MaterialIcons.Close, "Close", delegate(){
             this.Delete();

@@ -1,8 +1,11 @@
-﻿using Pellychan.GUI.Framework.Platform.Skia;
+﻿using Pellychan.GUI.Framework.Platform;
+using Pellychan.GUI.Framework.Platform.SDL3;
+using Pellychan.GUI.Framework.Platform.Skia;
 using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;
 using SDL;
+using SixLabors.ImageSharp.Formats.Png;
 using SkiaSharp;
 
 namespace Pellychan.GUI;
@@ -67,6 +70,9 @@ public class Application : IDisposable
     public static bool HeadlessMode { get; set; } = false;
     public static bool HardwareAccel { get; private set; } = true;
 
+    private readonly Clipboard s_clipboard;
+    public static Clipboard Clipboard => Instance!.s_clipboard;
+
     public enum RendererType
     {
         SDL,
@@ -115,6 +121,8 @@ public class Application : IDisposable
                           SDL3 Version: {SDL3.SDL_VERSIONNUM_MAJOR(version)}.{SDL3.SDL_VERSIONNUM_MINOR(version)}.{SDL3.SDL_VERSIONNUM_MICRO(version)}
                           SDL3 Revision: {SDL3.SDL_GetRevision()}
                           SDL3 Video driver: {SDL3.SDL_GetCurrentVideoDriver()}");
+
+        s_clipboard = new SDL3Clipboard(PngFormat.Instance);
 
         const int dpi = 96;
         const float pixelsPerPoint = dpi / 72.0f;
