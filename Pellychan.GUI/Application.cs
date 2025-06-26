@@ -12,48 +12,34 @@ namespace Pellychan.GUI;
 
 internal static class WindowRegistry
 {
-    internal struct WidgetWindow
-    {
-        public SkiaWindow SkiaWindow;
-        public Widget Widget;
+    internal static readonly Dictionary<SDL.SDL_WindowID, SkiaWindow> Windows = [];
 
-        public WidgetWindow(SkiaWindow skiaWindow, Widget widget)
-        {
-            this.SkiaWindow = skiaWindow;
-            this.Widget = widget;
-        }
+    public static void Register(SkiaWindow window)
+    {
+        Windows[window.SDLWindowID] = window;
     }
 
-    internal static readonly Dictionary<SDL.SDL_WindowID, WidgetWindow> WidgetWindows = [];
-    // internal static readonly Dictionary<SDL.SDL_WindowID, IWindow> Windows = [];
-
-    public static void Register(WidgetWindow window)
+    public static void Remove(SkiaWindow window)
     {
-        WidgetWindows[window.SkiaWindow.SDLWindowID] = window;
-        // Windows[window.SkiaWindow.SDLWindowID] = window.SkiaWindow.Window;
+        Windows.Remove(window.SDLWindowID);
     }
 
-    public static void Remove(WidgetWindow window)
-    {
-        WidgetWindows.Remove(window.SkiaWindow.SDLWindowID);
-        // Windows.Remove(window.SkiaWindow.SDLWindowID);
-    }
-
-    public static WidgetWindow? Get(SDL.SDL_WindowID id) =>
-        WidgetWindows.GetValueOrDefault(id);
+    public static SkiaWindow? Get(SDL.SDL_WindowID id) =>
+        Windows.GetValueOrDefault(id);
 }
 
 public class Application : IDisposable
 {
     internal static Application? Instance { get; private set; }
     
-    internal readonly List<Widget> TopLevelWidgets = [];
+    private readonly List<Widget> m_topLevelWidgets = [];
+    private readonly Queue<Widget> m_widgetsToDelete = [];
 
     private readonly SKFont m_defaultFont;
     private readonly SKFont m_defaultFontBold;
     private readonly SKFont m_fontIcon;
     private readonly Style m_defaultStyle;
-    private ColorPalette m_palette;
+    private readonly ColorPalette m_palette;
     
     public static SKFont DefaultFont => Instance!.m_defaultFont;
     public static SKFont DefaultFontBold => Instance!.m_defaultFontBold;
@@ -169,29 +155,40 @@ public class Application : IDisposable
 
     public void Run()
     {
-        while (TopLevelWidgets.Count > 0)
+        while (m_topLevelWidgets.Count > 0)
         {
-            /*
-            // @INVESTIGATE
-            // For now, we just copy the windows list. Maybe this isn't smart and we should
-            // dispatch it until the next frame to actually create the window?
-            foreach (var window in WindowRegistry.WidgetWindows.ToList())
-            {
-                window.Value.SkiaWindow.PollEvents();
-            }
-            */
-
             SkiaWindow.PollEvents();
 
-            RunMainLoop();
-
-            foreach (var win in WindowRegistry.WidgetWindows)
+            // Main loop
             {
-                if (win.Value.SkiaWindow.ShouldClose)
+                // Flush any pending layout requests
+                LayoutQueue.Flush();
+
+                foreach (var win in WindowRegistry.Windows)
                 {
-                    win.Value.Widget.Dispose();
-                    TopLevelWidgets.Remove(win.Value.Widget);
+                    win.Value.RunCommands();
                 }
+
+                UpdateDeltaTime();
+                RenderAllWindows();
+
+                CurrentFrame++;
+            }
+
+            // Delete old widgets
+            {
+                // @NOTE - pelly
+                // So the reason windows seem to turn black for a second when closing is because the window doesn't draw
+                // its final frame because it's not "visible" because "m_deleting" is set to true when we're... deleting.
+                // So fix that, or don't. I'm not my dad.
+                foreach (var widget in m_widgetsToDelete)
+                {
+                    if (widget.IsDeleting)
+                    {
+                        widget.Dispose();
+                    }
+                }
+                m_widgetsToDelete.Clear();
             }
 
             // Glfw.WaitEvents(); // <- This tells Glfw to wait until the user does something to actually update
@@ -201,7 +198,7 @@ public class Application : IDisposable
 
     public void Dispose()
     {
-        foreach (var w in TopLevelWidgets)
+        foreach (var w in m_topLevelWidgets)
         {
             w.Dispose();
         }
@@ -214,22 +211,6 @@ public class Application : IDisposable
 
     #region Internal methods
 
-    internal void RunMainLoop()
-    {
-        // Flush any pending layout requests
-        LayoutQueue.Flush();
-
-        foreach (var win in WindowRegistry.WidgetWindows)
-        {
-            win.Value.SkiaWindow.RunCommands();
-        }
-
-        UpdateDeltaTime();
-        RenderAllWindows();
-
-        CurrentFrame++;
-    }
-
     internal void UpdateDeltaTime()
     {
         DeltaTiming.Last = DeltaTiming.Now;
@@ -240,12 +221,27 @@ public class Application : IDisposable
 
     internal void RenderAllWindows()
     {
-        foreach (var win in WindowRegistry.WidgetWindows)
+        foreach (var win in WindowRegistry.Windows)
         {
-            var w = win.Value.Widget;
+            var w = win.Value.ParentWidget;
             w.UpdateTopLevel(DeltaTiming.DT);
             w.RenderTopLevel(Application.DebugDrawing);
         }
+    }
+
+    internal void AddTopLevel(Widget widget)
+    {
+        m_topLevelWidgets.Add(widget);
+    }
+
+    internal void RemoveTopLevel(Widget widget)
+    {
+        m_topLevelWidgets.Remove(widget);
+    }
+
+    internal void EnqueueWidgetForDeletion(Widget widget)
+    {
+        m_widgetsToDelete.Enqueue(widget);
     }
 
     #endregion

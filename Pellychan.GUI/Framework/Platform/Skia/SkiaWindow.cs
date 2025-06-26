@@ -19,20 +19,24 @@ internal unsafe class SkiaWindow
     internal SDL_Window* SDLWindowHandle => ((SDL3Window)Window).SDLWindowHandle;
     internal SDL_WindowID SDLWindowID => ((SDL3Window)Window).SDLWindowID;
 
-    // Hardware acceleration
+    #region Hardware Acceleration
+
     internal SDL_GLContextState* SDLGLContext { get; private set; }
     internal GRGlInterface? InterfaceGL { get; private set; }
     internal GRContext? GRContext { get; private set; }
     internal GRBackendRenderTarget? RenderTarget { get; private set; }
 
-    // Software rendering mode
+    #endregion
+
+    #region Software Rendering
+
     internal SDL_Renderer* SDLRenderer { get; private set; }
     internal SDL_Texture* SDLTexture { get; private set; }
     internal SDL_Surface* SDLSurface { get; private set; }
 
     internal SKImageInfo ImageInfo { get; private set; }
 
-    internal bool ShouldClose { get; private set; }
+    #endregion
 
     private MouseCursor.CursorType? m_currentCursor = null;
     private MouseCursor.CursorType? m_lastCursorShape = null;
@@ -68,7 +72,7 @@ internal unsafe class SkiaWindow
 
         Window.ExitRequested += delegate ()
         {
-            ShouldClose = true;
+            ParentWidget?.RequestWindowClose();
         };
 
         ParentWidget = parent;
@@ -87,6 +91,8 @@ internal unsafe class SkiaWindow
         {
             SDLRenderer = SDL_CreateRenderer(SDLWindowHandle, (byte*)null);
         }
+
+        WindowRegistry.Register(this);
     }
 
     public void CreateFrameBuffer(int w, int h)
@@ -127,7 +133,7 @@ internal unsafe class SkiaWindow
 
     public void Dispose()
     {
-        // SkiaSurface?.Dispose();
+        WindowRegistry.Remove(this);
 
         GRContext?.Dispose();
         InterfaceGL?.Dispose();

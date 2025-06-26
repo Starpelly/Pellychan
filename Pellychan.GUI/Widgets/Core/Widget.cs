@@ -17,8 +17,14 @@ public partial class Widget : IDisposable
         set => m_name = value;
     }
 
+    /// <summary>
+    /// Marked for disposing.
+    /// </summary>
+    private bool m_deleting = false;
     private bool m_disposed = false;
     private bool m_hovered = false;
+
+    internal bool IsDeleting => m_deleting;
 
     private Widget? m_lastHovered = null;
     private static Widget? s_mouseGrabber = null;
@@ -156,12 +162,12 @@ public partial class Widget : IDisposable
         }
     }
 
-    internal bool ShouldDraw => Visible && !m_disposed;
+    internal bool ShouldDraw => Visible && !m_deleting;
 
     /// <summary>
     /// Doesn't look up the tree to see if the widget's visible.
     /// </summary>
-    internal bool ShouldDrawFast => m_visible && !m_disposed;
+    internal bool ShouldDrawFast => m_visible && !m_deleting;
 
     private bool m_catchCursorEvents = true;
 
@@ -350,7 +356,7 @@ public partial class Widget : IDisposable
         {
             if (!Application.HeadlessMode)
             {
-                Application.Instance!.TopLevelWidgets.Add(this);
+                Application.Instance!.AddTopLevel(this);
             }
             Visible = false;
         }
@@ -519,30 +525,39 @@ public partial class Widget : IDisposable
         return (ShouldDraw) && (x >= 0 && y >= 0 && x < m_width && y < m_height);
     }
 
+    internal void RequestWindowClose()
+    {
+        Delete();
+    }
+
     /// <summary>
     /// Deletes the widget from the hierarchy and disposes anything it may have allocated.
     /// </summary>
     public void Delete()
     {
-        Dispose();
+        m_deleting = true;
+        Application.Instance!.EnqueueWidgetForDeletion(this);
+        // Dispose();
     }
 
     public virtual void Dispose()
     {
-        Application.Instance!.TopLevelWidgets.Remove(this);
-        if (m_nativeWindow != null)
+        if (IsTopLevel)
         {
-            WindowRegistry.Remove(new(m_nativeWindow, this));
+            Application.Instance!.RemoveTopLevel(this);
+        }
+
+        // Dispose children first
+        foreach (var child in m_children.ToList())
+        {
+            child.Dispose();
         }
 
         m_parent?.m_children.Remove(this);
         m_parent = null;
 
-        m_nativeWindow?.Dispose();
         m_cachedSurface?.Dispose();
-
-        foreach (var child in m_children.ToList())
-            child.Dispose();
+        m_nativeWindow?.Dispose();
 
         m_disposed = true;
 
@@ -845,7 +860,6 @@ public partial class Widget : IDisposable
         }
 
         m_nativeWindow = new(this, GetType().Name, flags, parentWindow);
-        WindowRegistry.Register(new(m_nativeWindow, this));
 
         m_nativeWindow.Window.Resized += delegate ()
         {
