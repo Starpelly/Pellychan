@@ -1,5 +1,6 @@
 ﻿using Pellychan.GUI;
 using Pellychan.Resources;
+using Pellychan.Widgets;
 
 namespace Pellychan;
 

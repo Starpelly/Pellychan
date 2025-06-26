@@ -1,6 +1,5 @@
-﻿using Pellychan.GUI.Framework.Platform;
+﻿using Pellychan.GUI.Framework.Platform.SDL3;
 using Pellychan.GUI.Framework.Platform.Windows.Native;
-using Pellychan.GUI.Platform.SDL3;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;

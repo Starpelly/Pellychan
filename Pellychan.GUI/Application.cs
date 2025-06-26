@@ -1,5 +1,4 @@
 ﻿using Pellychan.GUI.Framework.Platform.Skia;
-using Pellychan.GUI.Platform;
 using Pellychan.GUI.Styles;
 using Pellychan.GUI.Styles.Phantom;
 using Pellychan.GUI.Widgets;

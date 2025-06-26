@@ -2,7 +2,7 @@
 using Pellychan.GUI.Framework.Platform.Input;
 using SDL;
 
-namespace Pellychan.GUI.Platform.SDL3
+namespace Pellychan.GUI.Framework.Platform.SDL3
 {
     internal partial class SDL3Window
     {

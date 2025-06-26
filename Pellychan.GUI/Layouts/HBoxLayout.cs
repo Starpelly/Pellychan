@@ -73,7 +73,7 @@ public class HBoxLayout : Layout
                 newWidth += child.Width;
 
             if (widget.AutoSizing.Vertical == SizePolicy.Policy.Fit)
-                newHeight = Math.Max(child.Height, widget.Height);
+                newHeight = Math.Max(child.Height, newHeight);
         }
 
         if (fitHorizontal)

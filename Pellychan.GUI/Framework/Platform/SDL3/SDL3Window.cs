@@ -1,5 +1,4 @@
 ﻿using Pellychan.GUI.Framework.Extensions.ImageExtensions;
-using Pellychan.GUI.Framework.Platform;
 using Pellychan.GUI.Framework.Threading;
 using Pellychan.GUI.Framework.Utils;
 using SDL;
@@ -9,7 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SDL.SDL3;
 
-namespace Pellychan.GUI.Platform.SDL3
+namespace Pellychan.GUI.Framework.Platform.SDL3
 {
     internal abstract unsafe partial class SDL3Window : IWindow
     {

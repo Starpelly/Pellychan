@@ -12,10 +12,17 @@ namespace Pellychan
 
         public CookieData Cookies = new();
 
-        public static Settings Load()
+        public static string GetAppFolder()
         {
             var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var appFolder = Path.Combine(localAppData, "Pellychan");
+
+            return appFolder;
+        }
+
+        public static Settings Load()
+        {
+            var appFolder = GetAppFolder();
             var jsonFilePath = Path.Combine(appFolder, "settings.json");
 
             if (!Directory.Exists(appFolder))

@@ -71,7 +71,7 @@ public class VBoxLayout : Layout
                 newHeight += child.Height;
 
             if (widget.AutoSizing.Horizontal == SizePolicy.Policy.Fit)
-                newWidth = Math.Max(child.Width, widget.Width);
+                newWidth = Math.Max(child.Width, newWidth);
         }
 
         if (fitHorizontal)
@@ -85,6 +85,13 @@ public class VBoxLayout : Layout
         }
 
         widget.Resize(newWidth, newHeight);
+    }
+
+    public static bool ApproximatelyLessThan(float a, float b, float epsilon = 1e-6f)
+    {
+        if (Math.Abs(a - b) <= epsilon)
+            return false;
+        return a < b;
     }
 
     public override void GrowSizingPass(Widget parent)
@@ -165,7 +172,7 @@ public class VBoxLayout : Layout
 
         remainingHeight = MathF.Round(remainingHeight);
 
-        while (remainingHeight < 0 && shrinkables.Count > 0) // Shrink elements
+        while (ApproximatelyLessThan(remainingHeight, 0) && shrinkables.Count > 0) // Shrink elements
         {
             float largest = shrinkables[0].Height;
             float secondLargest = 0;

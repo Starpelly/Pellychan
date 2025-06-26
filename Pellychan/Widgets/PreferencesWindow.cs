@@ -1,4 +1,6 @@
-﻿using Pellychan.GUI.Widgets;
+﻿using MaterialDesign;
+using Pellychan.GUI.Layouts;
+using Pellychan.GUI.Widgets;
 
 namespace Pellychan.Widgets;
 
@@ -6,13 +8,71 @@ public class PreferencesWindow : MainWindow
 {
     public PreferencesWindow(Widget? parent = null) : base(parent)
     {
-        Resize(400, 400);
+        Resize(642, 506);
 
-        new PushButton("Save", this)
+        Layout = new VBoxLayout
+        {
+        };
+
+        var menubar = new MenuBar(this)
+        {
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+        };
+        var file = menubar.AddMenu("File");
+        file.AddAction(new(MaterialIcons.Folder, "Open Settings & Data Path", delegate () {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+            {
+                FileName = Settings.GetAppFolder(),
+                UseShellExecute = true,
+                Verb = "open"
+            });
+        }));
+        file.AddAction(new(MaterialIcons.ContentCopy, "Copy Settings & Data Path to Clipboard", delegate () { }));
+        var window = menubar.AddMenu("Window");
+        window.AddAction(new(MaterialIcons.Close, "Close", delegate(){
+            this.Delete();
+        }));
+
+        new NullWidget(this)
+        {
+            Fitting = FitPolicy.ExpandingPolicy
+        };
+
+        var buttons = new NullWidget(this)
+        {
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+            Height = 39,
+            Layout = new HBoxLayout
+            {
+                Padding = new(9),
+                Spacing = 6
+            },
+            Name = "buttons"
+        };
+        new NullWidget(buttons)
+        {
+            Fitting = FitPolicy.ExpandingPolicy,
+        };
+        new PushButton("OK", buttons)
         {
             X = 16,
             Y = 16,
-            Width = 64
+            Width = 80,
+            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
+        };
+        new PushButton("Cancel", buttons)
+        {
+            X = 16,
+            Y = 16,
+            Width = 80,
+            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
+        };
+        new PushButton("Apply", buttons)
+        {
+            X = 16,
+            Y = 16,
+            Width = 80,
+            Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding)
         };
     }
 

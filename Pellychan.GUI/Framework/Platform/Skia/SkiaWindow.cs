@@ -1,12 +1,10 @@
-﻿using Pellychan.GUI.Framework.Platform;
+﻿using Pellychan.GUI.Framework.Platform.SDL3;
 using Pellychan.GUI.Framework.Platform.Windows;
 using Pellychan.GUI.Framework.Utils;
-using Pellychan.GUI.Platform.SDL3;
 using Pellychan.GUI.Widgets;
 using SDL;
 using SkiaSharp;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using static SDL.SDL3;
 
 namespace Pellychan.GUI.Framework.Platform.Skia;

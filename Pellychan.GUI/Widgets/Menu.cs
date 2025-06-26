@@ -53,7 +53,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     private const int IconWidth = 20;
     private const int IconSpacing = 4;
 
-    private int p_iconWidth => !string.IsNullOrEmpty(m_action.Icon) ? IconWidth + IconSpacing : 0;
+    private static int p_iconWidth => IconWidth + IconSpacing;
 
     private int m_hoveredIndex = -1;
     private bool m_open = false;
@@ -139,8 +139,18 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     public int MeasureWidth()
     {
-        var a = p_iconWidth + (int)Application.DefaultFont.MeasureText(m_action.Text) + (XPadding * 2);
-        var b = (m_itemType == MenuItemType.MenuAction) ? p_iconWidth : !string.IsNullOrEmpty(m_action.Icon) ? IconSpacing : 0; // Idk, this looks nicer
+        var a = 0;
+        var b = 0;
+
+        if (m_itemType == MenuItemType.MenuBarSubMenu)
+        {
+            a = (int)Application.DefaultFont.MeasureText(m_action.Text) + (XPadding * 2);
+        }
+        else
+        {
+            a = p_iconWidth + (int)Application.DefaultFont.MeasureText(m_action.Text) + (XPadding * 2);
+            b = (m_itemType == MenuItemType.MenuAction) ? p_iconWidth : !string.IsNullOrEmpty(m_action.Icon) ? IconSpacing : 0; // Idk, this looks nicer
+        }
 
         return a + b;
     }

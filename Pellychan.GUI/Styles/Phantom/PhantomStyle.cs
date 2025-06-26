@@ -227,8 +227,13 @@ public class PhantomStyle : Style
             paint.Reset();
             paint.Color = m_swatch.GetColor(isEnabled ? SwatchColor.Text : SwatchColor.WindowText_Disabled);
 
-            var labelX = button.Width / 2 - Application.DefaultFont.MeasureText(option.Text) / 2;
-            var labelY = Application.DefaultFont.Size + PushButton.TextPaddingH / 2;
+            var metrics = Application.DefaultFont.Metrics;
+            var textHeight = (-metrics.Ascent) + metrics.Descent;
+            Application.DefaultFont.MeasureText(option.Text, out var bounds);
+
+
+            var labelX = (button.Width - bounds.Width) / 2;
+            var labelY = (button.Height / 2) - (textHeight / 2) - metrics.Ascent;
 
             if (isDown)
             {
