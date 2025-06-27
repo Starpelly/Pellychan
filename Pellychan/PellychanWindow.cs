@@ -67,22 +67,21 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 new(MaterialIcons.Terminal, "Toggle System Console"),
             ]);
             AddMenu("Help", [
-                new(MaterialIcons.Code, "Source Code", () => {
-                   var info = new ProcessStartInfo()
-                    {
-                        FileName = "https://github.com/Starpelly/pellychan",
-                        UseShellExecute = true,
-                    };
-                    System.Diagnostics.Process.Start(info);
-                }),
                 new(MaterialIcons.Public, "Website", () => {
-                    var info = new ProcessStartInfo()
-                    {
-                        FileName = "https://boxsubmus.com",
-                        UseShellExecute = true,
-                    };
-                    System.Diagnostics.Process.Start(info);
+                    Application.OpenURL("https://boxsubmus.com");
+
                 }),
+                new(MaterialIcons.ImportContacts, "Wiki", () => {
+                    Application.OpenURL("https://github.com/Starpelly/pellychan/wiki");
+                }),
+                new("")
+                {
+                    IsSeparator = true,
+                },
+                new(MaterialIcons.Code, "Source Code", () => {
+                    Application.OpenURL("https://github.com/Starpelly/pellychan");
+                }),
+
                 new(MaterialIcons.Info, "About Pellychan")
             ]);
         }
@@ -376,7 +375,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         */
     }
 
-    public bool OnMouseDown(int x, int y)
+    public bool OnMouseDown(MouseEvent evt)
     {
         return true;
     }

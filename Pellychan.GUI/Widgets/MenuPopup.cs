@@ -15,17 +15,13 @@ public class MenuPopup : Widget, IPaintHandler
         Layout = new VBoxLayout
         {
         };
-        ContentsMargins = new(1);
+        ContentsMargins = new(0);
         AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
     }
 
-    internal void SetMenu(Menu menu)
+    public void SetMenu(Menu menu)
     {
         m_menu = menu;
-
-        X = m_menu.X;
-        Y = m_menu.Height;
-        SetPosition(X, Y);
 
         foreach (var m in m_widgetItems)
         {
@@ -41,6 +37,7 @@ public class MenuPopup : Widget, IPaintHandler
                 OnSubmitted = () =>
                 {
                     m_menu.UserClose();
+                    this.Delete();
                 }
             };
             m_widgetItems.Add(newMenu);

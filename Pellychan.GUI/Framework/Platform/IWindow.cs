@@ -1,4 +1,4 @@
-﻿using Pellychan.GUI.Framework.Platform.Input;
+﻿using Pellychan.GUI.Input;
 using System.Drawing;
 using System.Numerics;
 

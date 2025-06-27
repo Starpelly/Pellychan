@@ -7,6 +7,7 @@ using Pellychan.GUI.Widgets;
 using SDL;
 using SixLabors.ImageSharp.Formats.Png;
 using SkiaSharp;
+using System.Diagnostics;
 
 namespace Pellychan.GUI;
 
@@ -207,6 +208,16 @@ public class Application : IDisposable
 
         SDL3.SDL_Quit();
         GC.SuppressFinalize(this);
+    }
+
+    public static void OpenURL(string url)
+    {
+        var info = new ProcessStartInfo()
+        {
+            FileName = url,
+            UseShellExecute = true,
+        };
+        System.Diagnostics.Process.Start(info);
     }
 
     #region Internal methods

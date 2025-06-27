@@ -101,9 +101,9 @@ public class ScrollArea : Widget, IMouseWheelHandler
         validate();
     }
 
-    public bool OnMouseScroll(int x, int y, int deltaX, int deltaY)
+    public bool OnMouseScroll(MouseWheelEvent evt)
     {
-        var newValue = m_newScrollY - deltaY * VerticalScrollbar.PageStep / 4;
+        var newValue = m_newScrollY - evt.deltaY * VerticalScrollbar.PageStep / 4;
         newValue = Math.Clamp(newValue, VerticalScrollbar.Minimum, VerticalScrollbar.Maximum);
         VerticalScrollbar.Value = newValue;
 

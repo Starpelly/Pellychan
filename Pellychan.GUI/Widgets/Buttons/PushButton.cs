@@ -64,7 +64,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         TriggerRepaint();
     }
 
-    public bool OnMouseDown(int x, int y)
+    public bool OnMouseDown(MouseEvent evt)
     {
         m_pressed = true;
         OnPressed?.Invoke();
@@ -74,7 +74,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         return true;
     }
 
-    public bool OnMouseUp(int x, int y)
+    public bool OnMouseUp(MouseEvent evt)
     {
         m_pressed = false;
         OnReleased?.Invoke();
@@ -84,7 +84,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         return true;
     }
 
-    public bool OnMouseClick(int x, int y)
+    public bool OnMouseClick(MouseEvent evt)
     {
         OnClicked?.Invoke();
     

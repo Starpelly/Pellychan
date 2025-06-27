@@ -17,7 +17,8 @@ public partial class Widget
         //if (!ShouldCache)
         //    return;
 
-        var globalPos = getGlobalPosition();
+        var gs = getGlobalPosition(this);
+        var globalPos = new SKPoint(gs.Item1, gs.Item2);
 
         canvas.Save();
         canvas.ResetMatrix();
@@ -112,7 +113,8 @@ public partial class Widget
         if (m_height <= 0 || m_height <= 0 || !ShouldDrawFast)
             return;
 
-        var globalPos = getGlobalPosition();
+        var gs = getGlobalPosition(this);
+        var globalPos = new SKPoint(gs.Item1, gs.Item2);
 
         var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
         var currentClip = SKRect.Intersect(clipRect, thisRect);
@@ -230,7 +232,8 @@ public partial class Widget
         if (m_height <= 0 || m_height <= 0 || !ShouldDrawFast)
             return;
 
-        var globalPos = getGlobalPosition();
+        var gs = getGlobalPosition(this);
+        var globalPos = new SKPoint(gs.Item1, gs.Item2);
 
         var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
         var currentClip = SKRect.Intersect(clipRect, thisRect);

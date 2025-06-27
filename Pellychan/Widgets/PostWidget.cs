@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using MaterialDesign;
 using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.GUI;
@@ -38,8 +39,11 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         updateImage(m_thumbnailBitmap);
     }
 
-    public bool OnMouseDown(int x, int y)
+    public bool OnMouseDown(MouseEvent evt)
     {
+        if (evt.button != GUI.Input.MouseButton.Left)
+            return false;
+
         if (m_usingThumbnail)
         {
             if (!m_loadedFull)
@@ -190,7 +194,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
     }
 }
 
-public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
+public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseDownHandler
 {
     private static readonly Padding Padding = new(8);
 
@@ -309,6 +313,36 @@ public class PostWidget : NullWidget, IPaintHandler, IResizeHandler
         m_previewBitmap.FitToMaxWidth(Width - spaceForText);
 
         SetHeight();
+    }
+
+    public bool OnMouseDown(MouseEvent evt)
+    {
+        if (evt.button == GUI.Input.MouseButton.Right)
+        {
+            var postURL = $"https://boards.4chan.org/{Pellychan.ChanClient.CurrentBoard}/thread/{Pellychan.ChanClient.CurrentThread.No}#q{m_apiPost.No}";
+
+            MenuPopup a = new(this);
+            var m = new Menu(this);
+            m.AddAction(MaterialIcons.Link, "Copy Post URL to Clipboard", () =>
+            {
+                Application.Clipboard.SetText(postURL);
+            });
+            m.AddAction(MaterialIcons.Public, "Open Post in Browser", () =>
+            {
+                Application.OpenURL(postURL);
+            });
+
+            m.AddSeparator();
+            m.AddAction(MaterialIcons.Reply, "Reply", null);
+
+            a.SetMenu(m);
+            a.SetPosition(evt.globalX, evt.globalY);
+
+            a.Show();
+        }
+
+
+        return true;
     }
 
     #region Private methods

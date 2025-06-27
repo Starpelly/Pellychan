@@ -98,7 +98,7 @@ namespace Pellychan.GUI.Widgets
             canvas.DrawRect(0, 0, Width, Height - BorderSize, paint);
         }
 
-        public bool OnMouseDown(int x, int y)
+        public bool OnMouseDown(MouseEvent evt)
         {
             return true;
         }

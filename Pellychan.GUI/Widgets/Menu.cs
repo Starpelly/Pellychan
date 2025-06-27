@@ -85,6 +85,10 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     #endregion
 
+    public Menu(Widget? parent = null) : base(parent)
+    {
+    }
+
     internal Menu(MenuAction action, MenuItemType type, Widget? parent = null) : base(parent)
     {
         m_action = action;
@@ -102,6 +106,11 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     {
         Actions.Add(action);
         return action;
+    }
+
+    public MenuAction AddAction(string icon, string text, Action action)
+    {
+        return AddAction(new MenuAction(icon, text, action));
     }
 
     public MenuAction AddAction(string text, Action action)
@@ -132,6 +141,8 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         {
             m_popup = popup;
             popup.SetMenu(this);
+            popup.SetPosition(this.X, this.Height);
+
             popup.Show();
             m_ownsPopup = false;
         }
@@ -173,7 +184,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
         var bgColor = active
             ? EffectivePalette.Get(ColorRole.Highlight)
-            : EffectivePalette.Get(ColorRole.Window);
+            : EffectivePalette.Get(ColorRole.Window).WithAlpha(0);
         var textColor = active
             ? EffectivePalette.Get(ColorRole.HighlightedText)
             : EffectivePalette.Get(ColorRole.Text);
@@ -218,7 +229,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         return true;
     }
 
-    public bool OnMouseDown(int x, int y)
+    public bool OnMouseDown(MouseEvent evt)
     {
         if (!m_open)
         {

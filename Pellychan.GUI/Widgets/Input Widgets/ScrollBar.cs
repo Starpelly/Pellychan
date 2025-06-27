@@ -146,13 +146,13 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
         return SubControl.None;
     }
 
-    public bool OnMouseDown(int x, int y)
+    public bool OnMouseDown(MouseEvent evt)
     {
-        m_pressed = hitTest(x, y);
+        m_pressed = hitTest(evt.x, evt.y);
         if (m_pressed == SubControl.Slider)
         {
             m_dragging = true;
-            m_dragOffset = y - m_subControlRects[SubControl.Slider].Top;
+            m_dragOffset = evt.y - m_subControlRects[SubControl.Slider].Top;
         }
         else if (m_pressed == SubControl.SubLine)
         {
@@ -196,7 +196,7 @@ public class ScrollBar : Widget, IPaintHandler, IMouseDownHandler, IMouseMoveHan
         return true;
     }
 
-    public bool OnMouseUp(int x, int y)
+    public bool OnMouseUp(MouseEvent evt)
     {
         m_pressed = SubControl.None;
         m_dragging = false;

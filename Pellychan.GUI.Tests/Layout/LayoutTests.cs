@@ -7,13 +7,13 @@ namespace Pellychan.GUI.Tests.Layout;
 public partial class LayoutTests
 {
     [SetUp]
-    public void Setup()
+    public void SetUp()
     {
         Application.HeadlessMode = true;
     }
 
     [TearDown]
-    public void Shutdown()
+    public void TearDown()
     {
         Application.HeadlessMode = false;
     }

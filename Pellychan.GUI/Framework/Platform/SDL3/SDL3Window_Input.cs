@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using Pellychan.GUI.Framework.Platform.Input;
+using Pellychan.GUI.Input;
 using SDL;
 
 namespace Pellychan.GUI.Framework.Platform.SDL3

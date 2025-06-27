@@ -1,7 +1,9 @@
-﻿namespace Pellychan.GUI.Framework.Platform.Input
+﻿namespace Pellychan.GUI.Input
 {
     public enum MouseButton
     {
+        None,
+
         Left,
         Middle,
         Right,

@@ -1,5 +1,6 @@
 ﻿using Pellychan.API.Models;
 using Pellychan.GUI;
+using Pellychan.GUI.Input;
 using Pellychan.GUI.Widgets;
 using SkiaSharp;
 using System.Net;
@@ -186,9 +187,12 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         TriggerRepaint();
     }
 
-    public bool OnMouseDown(int x, int y)
+    public bool OnMouseDown(MouseEvent evt)
     {
-        Pellychan.LoadThread(Thread.No.ToString());
+        if (evt.button == MouseButton.Left)
+        {
+            Pellychan.LoadThread(Thread.No.ToString());
+        }
 
         return true;
     }

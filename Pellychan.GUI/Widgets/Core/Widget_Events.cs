@@ -1,6 +1,28 @@
-﻿using SkiaSharp;
+﻿using Pellychan.GUI.Input;
+using SkiaSharp;
 
 namespace Pellychan.GUI.Widgets;
+
+public struct MouseEvent
+{
+    public int x;
+    public int y;
+    public int globalX;
+    public int globalY;
+
+    public MouseButton button;
+}
+
+public struct MouseWheelEvent
+{
+    public int x;
+    public int y;
+    public int globalX;
+    public int globalY;
+
+    public int deltaX;
+    public int deltaY;
+}
 
 public interface IPaintHandler
 {
@@ -29,22 +51,22 @@ public interface IMouseMoveHandler
 
 public interface IMouseDownHandler
 {
-    public bool OnMouseDown(int x, int y);
+    public bool OnMouseDown(MouseEvent evt);
 }
 
 public interface IMouseUpHandler
 {
-    public bool OnMouseUp(int x, int y);
+    public bool OnMouseUp(MouseEvent evt);
 }
 
 public interface IMouseClickHandler
 {
-    public bool OnMouseClick(int x, int y);
+    public bool OnMouseClick(MouseEvent evt);
 }
 
 public interface IMouseWheelHandler
 {
-    public bool OnMouseScroll(int x, int y, int deltaX, int deltaY);
+    public bool OnMouseScroll(MouseWheelEvent evt);
 }
 
 public interface IResizeHandler

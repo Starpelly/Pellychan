@@ -1,5 +1,4 @@
 ﻿using Pellychan.GUI.Framework.Platform;
-using Pellychan.GUI.Framework.Platform.Input;
 using Pellychan.GUI.Framework.Platform.Skia;
 using Pellychan.GUI.Input;
 using Pellychan.GUI.Layouts;
@@ -792,15 +791,15 @@ public partial class Widget : IDisposable
 
     #region Private Methods
 
-    private SKPoint getGlobalPosition()
+    private static (int, int) getGlobalPosition(Widget widget)
     {
-        if (IsWindow)
-            return new(0, 0);
+        if (widget.IsWindow)
+            return (0, 0);
 
-        var x = m_x;
-        var y = m_y;
+        var x = widget.m_x;
+        var y = widget.m_y;
 
-        Widget? current = m_parent;
+        Widget? current = widget.m_parent;
         while (current != null)
         {
             if (current.IsWindow)
@@ -811,7 +810,23 @@ public partial class Widget : IDisposable
             current = current.m_parent;
         }
 
-        return new(x, y);
+        return (x, y);
+    }
+
+    private (int, int) getLocalPosition(Widget widget, int globalX, int globalY)
+    {
+        int lx = globalX;
+        int ly = globalY;
+
+        Widget? current = widget;
+        while (current != null && current != this)
+        {
+            lx -= current.m_x;
+            ly -= current.m_y;
+            current = current.Parent;
+        }
+
+        return (lx, ly);
     }
 
     private void dispatchResize()
@@ -867,19 +882,19 @@ public partial class Widget : IDisposable
         };
         m_nativeWindow.Window.MouseMove += delegate (System.Numerics.Vector2 pos)
         {
-            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Move);
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Move, MouseButton.None);
         };
         m_nativeWindow.Window.MouseDown += delegate(System.Numerics.Vector2 pos, MouseButton button)
         {
-            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Down);
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Down, button);
         };
         m_nativeWindow.Window.MouseUp += delegate (System.Numerics.Vector2 pos, MouseButton button)
         {
-            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Up);
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Up, button);
         };
         m_nativeWindow.Window.MouseWheel += delegate (System.Numerics.Vector2 pos, System.Numerics.Vector2 delta, bool precise)
         {
-            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Wheel, (int)delta.X, (int)delta.Y);
+            onNativeWindowMouseEvent((int)pos.X, (int)pos.Y, MouseEventType.Wheel, MouseButton.None, (int)delta.X, (int)delta.Y);
         };
         m_nativeWindow.Window.MouseEntered += delegate()
         {
@@ -898,22 +913,6 @@ public partial class Widget : IDisposable
         if (m_hasDirtyDescendants) return;
         m_hasDirtyDescendants = true;
         Parent?.markChildDirty();
-    }
-
-    private (int, int) getLocalPosition(Widget widget, int globalX, int globalY)
-    {
-        int lx = globalX;
-        int ly = globalY;
-
-        Widget? current = widget;
-        while (current != null && current != this)
-        {
-            lx -= current.m_x;
-            ly -= current.m_y;
-            current = current.Parent;
-        }
-
-        return (lx, ly);
     }
 
     private Widget? findHoveredWidget(int x, int y, bool checkRaycast)
