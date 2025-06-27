@@ -45,16 +45,14 @@ public class MenuPopup : Widget, IPaintHandler
                     OnSubmitted = () =>
                     {
                         m_menu.UserClose();
-                        if (OnSubmitted != null)
-                            OnSubmitted.Invoke();
-                        else
-                            this.Delete();
+                        Submit();
                     }
                 };
                 m_widgetItems.Add(newMenu);
             }
         }
         fitContent();
+        Show();
     }
 
     public void OnPaint(SKCanvas canvas)
@@ -78,6 +76,18 @@ public class MenuPopup : Widget, IPaintHandler
         }*/
 
     }
+
+    #region Internal methods
+
+    internal void Submit()
+    {
+        if (OnSubmitted != null)
+            OnSubmitted.Invoke();
+        else
+            this.Delete();
+    }
+
+    #endregion
 
     #region Private methods
 

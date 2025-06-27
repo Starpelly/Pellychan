@@ -55,7 +55,7 @@ public class Application : IDisposable
     internal const bool SupportPaintCaching = false;
 
     public static bool HeadlessMode { get; set; } = false;
-    public static bool HardwareAccel { get; private set; } = false;
+    public static bool HardwareAccel { get; private set; } = true;
 
     private readonly Clipboard s_clipboard;
     public static Clipboard Clipboard => Instance!.s_clipboard;

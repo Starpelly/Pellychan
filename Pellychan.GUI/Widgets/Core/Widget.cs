@@ -377,6 +377,11 @@ public partial class Widget : IDisposable
             CreateWinID();
         }
 
+        if (m_windowType == WindowType.Popup)
+        {
+            s_openPopupMenu = this;
+        }
+
         if (m_nativeWindow != null)
         {
             m_nativeWindow.Window.Size = new System.Drawing.Size(m_width, m_height);
@@ -407,6 +412,16 @@ public partial class Widget : IDisposable
     {
         m_visible = false;
         m_nativeWindow?.Window.Hide();
+
+        if (s_openPopupMenu == this)
+        {
+            s_openPopupMenu = null;
+        }
+    }
+
+    public void SetModal(bool modal)
+    {
+
     }
 
     /// <summary>
@@ -559,6 +574,9 @@ public partial class Widget : IDisposable
         m_nativeWindow?.Dispose();
 
         m_disposed = true;
+
+        if (s_openPopupMenu == this)
+            s_openPopupMenu = null;
 
         GC.SuppressFinalize(this);
     }
@@ -908,6 +926,19 @@ public partial class Widget : IDisposable
         };
     }
 
+    private bool isFocusedHack()
+    {
+        if (s_openPopupMenu != null && this is not MenuBar)
+        {
+            if (s_openPopupMenu != this)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private void markChildDirty()
     {
         if (m_hasDirtyDescendants) return;
@@ -915,7 +946,7 @@ public partial class Widget : IDisposable
         Parent?.markChildDirty();
     }
 
-    private Widget? findHoveredWidget(int x, int y, bool checkRaycast)
+    private Widget? findHoveredWidget(int x, int y, bool checkRaycast, bool inFocused = false)
     {
         var thisX = (IsWindow) ? 0 : this.m_x;
         var thisY = (IsWindow) ? 0 : this.m_y;
@@ -926,7 +957,15 @@ public partial class Widget : IDisposable
         bool canCatchEvents = true;
         if (checkRaycast)
         {
-            if (!CatchCursorEvents)
+            if (!inFocused)
+            {
+                if (isFocusedHack())
+                {
+                    inFocused = true;
+                }
+            }
+
+            if (!CatchCursorEvents || !inFocused)
             {
                 canCatchEvents = false;
             }
@@ -942,7 +981,7 @@ public partial class Widget : IDisposable
             if (!child.VisibleWidget)
                 continue;
 
-            var result = child.findHoveredWidget(localX, localY, checkRaycast);
+            var result = child.findHoveredWidget(localX, localY, checkRaycast, inFocused);
             if (result != null)
                 return result;
         }

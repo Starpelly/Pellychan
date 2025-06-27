@@ -35,6 +35,10 @@ namespace Pellychan.GUI.Widgets
             m_stdPopup.OnSubmitted = () =>
             {
                 m_stdPopup.Hide();
+                m_openedMenu?.Close();
+
+                m_openedMenu = null;
+                m_popupOpen = false;
             };
         }
 

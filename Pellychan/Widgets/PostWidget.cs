@@ -194,7 +194,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
     }
 }
 
-public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseDownHandler
+public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHandler
 {
     private static readonly Padding Padding = new(8);
 
@@ -315,7 +315,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseDownHandl
         SetHeight();
     }
 
-    public bool OnMouseDown(MouseEvent evt)
+    public bool OnMouseClick(MouseEvent evt)
     {
         if (evt.button == GUI.Input.MouseButton.Right)
         {

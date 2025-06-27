@@ -121,7 +121,7 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                 parentWindow = parent as SDL3Window;
             }
 
-            SDL_WindowFlags flags = SDL_WindowFlags.SDL_WINDOW_RESIZABLE |
+            var flags = SDL_WindowFlags.SDL_WINDOW_RESIZABLE |
                                     SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
                                     SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
@@ -132,7 +132,7 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
 
             if (wf.HasFlag(WindowFlags.PopupMenu))
             {
-                flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU | SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
+                flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU;
                 flags |= SDL_WindowFlags.SDL_WINDOW_TRANSPARENT;
             }
 
@@ -148,6 +148,11 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                 SDLWindowHandle = SDL_CreateWindow(m_title, Size.Width, Size.Height, flags);
             }
             SDLWindowID = SDL_GetWindowID(SDLWindowHandle);
+
+            if (SDLWindowHandle == null)
+            {
+                Console.WriteLine(SDL_GetError());
+            }
 
             if (parentWindow != null)
             {

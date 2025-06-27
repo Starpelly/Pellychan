@@ -1,10 +1,11 @@
 ﻿using Pellychan.GUI.Input;
-using System.Threading;
 
 namespace Pellychan.GUI.Widgets;
 
 public partial class Widget
 {
+    private static Widget? s_openPopupMenu = null;
+
     private void handleMouseEnter()
     {
         if (!m_hovered)
@@ -25,6 +26,15 @@ public partial class Widget
 
     private void onNativeWindowMouseEvent(int mouseX, int mouseY, MouseEventType type, MouseButton button, int deltaX = 0, int deltaY = 0)
     {
+        if (type == MouseEventType.Down)
+        {
+            if (s_openPopupMenu != null && !s_openPopupMenu.HitTest(mouseX, mouseY))
+            {
+                (s_openPopupMenu as MenuPopup)?.Submit();
+                s_openPopupMenu = null;
+            }
+        }
+
         var hovered = findHoveredWidget(mouseX, mouseY, true);
 
         if (hovered != m_lastHovered)
@@ -40,24 +50,21 @@ public partial class Widget
         if (s_mouseGrabber != null && s_mouseGrabber.Enabled)
         {
             var (lx, ly) = getLocalPosition(s_mouseGrabber, mouseX, mouseY);
-            var (gx, gy) = getGlobalPosition(s_mouseGrabber);
-            gx = mouseX - gx;
-            gy = mouseY - gy;
 
             var mouseEvent = new MouseEvent()
             {
                 x = lx,
                 y = ly,
-                globalX = gx,
-                globalY = gy,
+                globalX = mouseX,
+                globalY = mouseY,
                 button = button
             };
             var scrollEvent = new MouseWheelEvent()
             {
                 x = lx,
                 y = ly,
-                globalX = gx,
-                globalY = gy,
+                globalX = mouseX,
+                globalY = mouseY,
                 deltaX = deltaX,
                 deltaY = deltaY,
             };
@@ -109,14 +116,13 @@ public partial class Widget
                     if (s_mouseGrabber == hovered && upHandled)
                     {
                         var (lx, ly) = getLocalPosition(hovered, mouseX, mouseY);
-                        var (gx, gy) = getGlobalPosition(hovered);
 
                         var mouseEvent = new MouseEvent()
                         {
                             x = lx,
                             y = ly,
-                            globalX = gx,
-                            globalY = gy,
+                            globalX = mouseX,
+                            globalY = mouseY,
                             button = button
                         };
 
