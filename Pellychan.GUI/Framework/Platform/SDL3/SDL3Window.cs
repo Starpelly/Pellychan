@@ -182,6 +182,19 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
             }
         }
 
+        public void Raise()
+        {
+            ScheduleCommand(() =>
+            {
+                var flags = SDL_GetWindowFlags(SDLWindowHandle);
+
+                if (flags.HasFlag(SDL_WindowFlags.SDL_WINDOW_MINIMIZED))
+                    SDL_RestoreWindow(SDLWindowHandle);
+
+                SDL_RaiseWindow(SDLWindowHandle);
+            });
+        }
+
         public void Show()
         {
             ScheduleCommand(() => SDL_ShowWindow(SDLWindowHandle));

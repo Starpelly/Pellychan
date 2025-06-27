@@ -319,10 +319,12 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseDownHandl
     {
         if (evt.button == GUI.Input.MouseButton.Right)
         {
-            var postURL = $"https://boards.4chan.org/{Pellychan.ChanClient.CurrentBoard}/thread/{Pellychan.ChanClient.CurrentThread.No}#q{m_apiPost.No}";
+            var threadURL = $"https://boards.4chan.org/{Pellychan.ChanClient.CurrentBoard}/thread/{Pellychan.ChanClient.CurrentThread.No}";
+            var postURL = $"{threadURL}#q{m_apiPost.No}";
 
             MenuPopup a = new(this);
             var m = new Menu(this);
+
             m.AddAction(MaterialIcons.Link, "Copy Post URL to Clipboard", () =>
             {
                 Application.Clipboard.SetText(postURL);
@@ -330,6 +332,10 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseDownHandl
             m.AddAction(MaterialIcons.Public, "Open Post in Browser", () =>
             {
                 Application.OpenURL(postURL);
+            });
+            m.AddAction(MaterialIcons.Feed, "Open Thread in Browser", () =>
+            {
+                Application.OpenURL(threadURL);
             });
 
             m.AddSeparator();

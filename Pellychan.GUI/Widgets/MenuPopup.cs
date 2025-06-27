@@ -5,8 +5,14 @@ namespace Pellychan.GUI.Widgets;
 
 public class MenuPopup : Widget, IPaintHandler
 {
-    private Menu? m_menu;
+    private Menu? m_menu = null;
     private readonly List<Widget> m_widgetItems = [];
+
+    /// <summary>
+    /// By default, the popup will close & delete itself once a MenuAction is triggered.
+    /// You can override this behavior by setting this.
+    /// </summary>
+    public Action? OnSubmitted = null;
 
     public MenuPopup(Widget? parent = null) : base(parent, WindowType.Popup)
     {
@@ -19,7 +25,7 @@ public class MenuPopup : Widget, IPaintHandler
         AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
     }
 
-    public void SetMenu(Menu menu)
+    public void SetMenu(Menu? menu)
     {
         m_menu = menu;
 
@@ -29,20 +35,25 @@ public class MenuPopup : Widget, IPaintHandler
         }
         m_widgetItems.Clear();
 
-        foreach (var item in m_menu.Actions)
+        if (m_menu != null)
         {
-            var newMenu = new Menu(item, item.IsSeparator ? Menu.MenuItemType.Separator : Menu.MenuItemType.MenuAction, this)
+            foreach (var item in m_menu.Actions)
             {
-                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                OnSubmitted = () =>
+                var newMenu = new Menu(item, item.IsSeparator ? Menu.MenuItemType.Separator : Menu.MenuItemType.MenuAction, this)
                 {
-                    m_menu.UserClose();
-                    this.Delete();
-                }
-            };
-            m_widgetItems.Add(newMenu);
+                    Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+                    OnSubmitted = () =>
+                    {
+                        m_menu.UserClose();
+                        if (OnSubmitted != null)
+                            OnSubmitted.Invoke();
+                        else
+                            this.Delete();
+                    }
+                };
+                m_widgetItems.Add(newMenu);
+            }
         }
-
         fitContent();
     }
 

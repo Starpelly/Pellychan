@@ -6,6 +6,8 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
 {
     internal partial class SDL3Window
     {
+        private bool m_cursorInWindow = false;
+
         private Point m_position;
 
         public unsafe Point Position
@@ -33,6 +35,25 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                 ScheduleCommand(() => SDL_SetWindowResizable(SDLWindowHandle, value));
             }
         }
+
+        private bool m_focused;
+
+        public bool Focused
+        {
+            get => m_focused;
+            set
+            {
+                if (value == m_focused)
+                    return;
+
+                m_isActive = m_focused = value;
+                Console.WriteLine(value);
+            }
+        }
+
+        private bool m_isActive;
+
+        public bool IsActive => m_isActive;
 
         // This had another default value, but it creates like a white flash before the window draws the first frame.
         // So I shrunk it down to 0,0. Which still creates a pixel but it's less noticable I feel.
@@ -128,11 +149,23 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                     break;
 
                 case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER:
+                    m_cursorInWindow = true;
                     MouseEntered?.Invoke();
                     break;
 
                 case SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE:
+                    m_cursorInWindow = false;
                     MouseLeft?.Invoke();
+                    break;
+
+                case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
+                case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
+                    Focused = true;
+                    break;
+
+                case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
+                case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
+                    Focused = false;
                     break;
 
                 case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:

@@ -61,9 +61,6 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     private readonly MenuItemType m_itemType;
 
-    private MenuPopup? m_popup;
-    private bool m_ownsPopup = false;
-
     private MenuAction m_action;
 
     internal readonly List<MenuAction> Actions = [];
@@ -125,27 +122,6 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         var n = new MenuAction("", null);
         n.IsSeparator = true;
         Actions.Add(n);
-    }
-
-    internal void Popup(MenuPopup? popup)
-    {
-        if (popup == null)
-        {
-            m_popup = new MenuPopup(this)
-            {
-            };
-            m_popup.Show();
-            m_ownsPopup = true;
-        }
-        else
-        {
-            m_popup = popup;
-            popup.SetMenu(this);
-            popup.SetPosition(this.X, this.Height);
-
-            popup.Show();
-            m_ownsPopup = false;
-        }
     }
 
     public int MeasureWidth()
@@ -233,10 +209,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
     {
         if (!m_open)
         {
-            if (OnUserOpened != null)
-                OnUserOpened?.Invoke();
-            else
-                Open(null);
+            Open();
         }
         else
         {
@@ -261,7 +234,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
     #region Internal methods
 
-    internal void Open(MenuPopup? popup)
+    internal void Open()
     {
         if (m_open) return;
 
@@ -271,7 +244,7 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
         {
             case MenuItemType.SubMenu:
             case MenuItemType.MenuBarSubMenu:
-                Popup(popup);
+                OnUserOpened?.Invoke();
                 break;
             case MenuItemType.MenuAction:
                 m_action.Action?.Invoke();
@@ -288,19 +261,12 @@ public class Menu : Widget, IPaintHandler, IMouseMoveHandler, IMouseEnterHandler
 
         m_open = false;
 
-        if (m_ownsPopup)
-        {
-            m_popup?.Delete();
-        }
-        m_popup = null;
-
         TriggerRepaint();
     }
 
     internal void UserClose()
     {
         OnUserClosed?.Invoke();
-        m_popup?.Hide();
         Close();
     }
 

@@ -55,7 +55,7 @@ public class Application : IDisposable
     internal const bool SupportPaintCaching = false;
 
     public static bool HeadlessMode { get; set; } = false;
-    public static bool HardwareAccel { get; private set; } = true;
+    public static bool HardwareAccel { get; private set; } = false;
 
     private readonly Clipboard s_clipboard;
     public static Clipboard Clipboard => Instance!.s_clipboard;
@@ -165,13 +165,13 @@ public class Application : IDisposable
                 // Flush any pending layout requests
                 LayoutQueue.Flush();
 
+                UpdateDeltaTime();
+                RenderAllWindows();
+
                 foreach (var win in WindowRegistry.Windows)
                 {
                     win.Value.RunCommands();
                 }
-
-                UpdateDeltaTime();
-                RenderAllWindows();
 
                 CurrentFrame++;
             }

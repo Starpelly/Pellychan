@@ -32,6 +32,10 @@ namespace Pellychan.GUI.Widgets
         {
             Height = MenuBarHeight + BorderSize;
             m_stdPopup = new MenuPopup(this);
+            m_stdPopup.OnSubmitted = () =>
+            {
+                m_stdPopup.Hide();
+            };
         }
 
         private void AddMenu(Menu menu)
@@ -48,8 +52,7 @@ namespace Pellychan.GUI.Widgets
                 if (m_popupOpen && m_openedMenu != menu)
                 {
                     m_openedMenu?.Close();
-                    menu.Open(m_stdPopup);
-                    m_openedMenu = menu;
+                    menu.Open();
                 }
             };
             menu.OnUserOpened = () =>
@@ -57,7 +60,10 @@ namespace Pellychan.GUI.Widgets
                 m_openedMenu = menu;
                 m_popupOpen = true;
 
-                menu.Open(m_stdPopup);
+                menu.Open();
+                m_stdPopup.SetMenu(menu);
+                m_stdPopup.SetPosition(menu.X, menu.Height);
+                m_stdPopup.Show();
             };
             menu.OnUserClosed = () =>
             {
@@ -65,6 +71,9 @@ namespace Pellychan.GUI.Widgets
 
                 m_openedMenu = null;
                 m_popupOpen = false;
+
+                m_stdPopup.SetMenu(null);
+                m_stdPopup.Hide();
             };
 
             m_menus.Add(menu);

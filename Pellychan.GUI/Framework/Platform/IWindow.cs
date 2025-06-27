@@ -23,6 +23,11 @@ namespace Pellychan.GUI.Framework.Platform
         void Close();
 
         /// <summary>
+        /// Attempts to raise the window, bringing it above other windows and requesting input focus.
+        /// </summary>
+        void Raise();
+
+        /// <summary>
         /// Attempts to show the window, making it visible.
         /// </summary>
         void Show();
@@ -42,6 +47,11 @@ namespace Pellychan.GUI.Framework.Platform
         /// Sets the window icon to the provided <paramref name="imageStream"/>.
         /// </summary>
         void SetIconFromStream(Stream imageStream);
+
+        /// <summary>
+        /// Whether this <see cref="IWindow"/> is active (in the foreground).
+        /// </summary>
+        bool IsActive { get; }
 
         /// <summary>
         /// Invoked when the window close (X) button or another platform-native exit action has been pressed.
