@@ -37,8 +37,8 @@ public static class Pellychan
         MainWindow.SetIconFromStream(iconStream!);
 
         MainWindow.Show();
-        // LoadCatalog("g");
-        // LoadThread("105694826");
+        LoadCatalog("g");
+        LoadThread("105694826");
 
         app.Run();
     }
@@ -52,6 +52,6 @@ public static class Pellychan
     public static void LoadThread(string threadID)
     {
         MainWindow.LoadThreadPosts(threadID);
-        MainWindow.SetWindowTitle($"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/");
+        MainWindow.SetWindowTitle($"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/ - {ChanClient.CurrentThread.Posts[0].Sub}");
     }
 }

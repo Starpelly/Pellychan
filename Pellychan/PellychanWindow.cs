@@ -228,18 +228,20 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             {
                 // @TODO
                 // Add anchor points
-                var bg = new Rect(Palette.Get(ColorRole.Base), parent)
+                var bg = new Rect(Palette.Get(ColorRole.Window), parent)
                 {
                     Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-                    Height = 20,
+                    Height = 48,
 
                     Layout = new HBoxLayout
-                    { }
+                    {
+                        Padding = new(8)
+                    }
                 };
                 w = new Label(bg)
                 {
                     Fitting = FitPolicy.ExpandingPolicy,
-                    Anchor = Label.TextAnchor.CenterCenter,
+                    Anchor = Label.TextAnchor.CenterLeft,
                 };
 
                 // Separator
@@ -268,7 +270,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         Pellychan.ChanClient.CurrentBoard = board;
         Pellychan.ChanClient.Catalog = Pellychan.ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
 
-        m_boardTitleLabel.Text = $"/{board}/";
+        m_boardTitleLabel.Text = $"<span class=\"header\">/{board}/</span>";
 
         var ids = new Dictionary<long, ThreadWidget>();
         void loadPage(CatalogPage page)
@@ -311,7 +313,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         clearPosts();
 
         Pellychan.ChanClient.CurrentThread = Pellychan.ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
-        m_threadTitleLabel.Text = $"/{Pellychan.ChanClient.CurrentBoard}/{Pellychan.ChanClient.CurrentThread.Posts[0].No}/";
+        m_threadTitleLabel.Text = $"<span class=\"header\">/{Pellychan.ChanClient.CurrentBoard}/{Pellychan.ChanClient.CurrentThread.Posts[0].No}/ - {Pellychan.ChanClient.CurrentThread.Posts[0].Sub}</span>";
 
         var ids = new Dictionary<long, PostWidget>();
         for (var i = 0; i < Pellychan.ChanClient.CurrentThread.Posts.Count; i++)

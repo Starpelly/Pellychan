@@ -38,12 +38,14 @@ public class Application : IDisposable
 
     private readonly SKFont m_defaultFont;
     private readonly SKFont m_defaultFontBold;
+    private readonly SKFont m_defaultFontBoldBig;
     private readonly SKFont m_fontIcon;
     private readonly Style m_defaultStyle;
     private readonly ColorPalette m_palette;
     
     public static SKFont DefaultFont => Instance!.m_defaultFont;
     public static SKFont DefaultFontBold => Instance!.m_defaultFontBold;
+    public static SKFont DefaultFontBoldBig => Instance!.m_defaultFontBoldBig;
     public static Style DefaultStyle => Instance!.m_defaultStyle;
 
     /// <summary>
@@ -116,7 +118,7 @@ public class Application : IDisposable
         const float pixelsPerPoint = dpi / 72.0f;
         const float skiaFontSize = 9 * pixelsPerPoint;
 
-        static SKFont createUIFont(SKFontStyleWeight weight)
+        static SKFont createUIFont(SKFontStyleWeight weight, float sizeMult = 1.0f)
         {
             // I kinda like Century Gothic
             using var typeface = SKTypeface.FromFamilyName("Segoe UI", weight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
@@ -127,12 +129,13 @@ public class Application : IDisposable
                 Hinting = SKFontHinting.Slight,
                 Subpixel = true,
                 Typeface = typeface,
-                Size = skiaFontSize
+                Size = skiaFontSize * sizeMult
             };
         }
 
         m_defaultFont = createUIFont(SKFontStyleWeight.Normal);
         m_defaultFontBold = createUIFont(SKFontStyleWeight.Bold);
+        m_defaultFontBoldBig = createUIFont(SKFontStyleWeight.Bold, 1.5f);
 
         using var iconsStream = typeof(Application).Assembly.GetManifestResourceStream("Pellychan.GUI.Resources.MaterialIconsRound-Regular.otf");
         using var iconsTypeface = SKTypeface.FromStream(iconsStream);

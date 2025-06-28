@@ -230,6 +230,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
             CatchCursorEvents = false,
         };
 
+
         m_postIDLabel = new Label(this)
         {
             X = Padding.Left,
@@ -320,7 +321,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         if (evt.button == GUI.Input.MouseButton.Right)
         {
             var threadURL = $"https://boards.4chan.org/{Pellychan.ChanClient.CurrentBoard}/thread/{Pellychan.ChanClient.CurrentThread.No}";
-            var postURL = $"{threadURL}#q{m_apiPost.No}";
+            var postURL = $"{threadURL}#p{m_apiPost.No}";
 
             MenuPopup a = new(this);
             var m = new Menu(this);

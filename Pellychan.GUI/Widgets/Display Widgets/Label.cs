@@ -32,11 +32,12 @@ public class Label : Widget, IPaintHandler
         public SKColor TextColor { get; set; }
         public bool IsBold { get; set; } = false;
         public bool IsUnderline { get; set; } = false;
+        public bool IsBig { get; set; } = false;
 
         public SKFont GetFont()
         {
             if (IsBold)
-                return Application.DefaultFontBold;
+                return (IsBig) ? Application.DefaultFontBoldBig : Application.DefaultFontBold;
             else
                 return Application.DefaultFont;
         }
@@ -268,6 +269,7 @@ public class Label : Widget, IPaintHandler
             var color = m_paint.Color;
             var bold = false;
             var underline = false;
+            var big = false;
 
             switch (node.Name)
             {
@@ -304,11 +306,15 @@ public class Label : Widget, IPaintHandler
                             color = color.WithAlpha(50);
                             // color = SKColor.Parse("#5F89AC").WithAlpha(150);
                             break;
+                        case "header":
+                            bold = true;
+                            big = true;
+                            break;
                     }
                     break;
             }
 
-            m_textFragments.Add(new TextFragment { Text = text, TextColor = color, IsBold = bold, IsUnderline = underline });
+            m_textFragments.Add(new TextFragment { Text = text, TextColor = color, IsBold = bold, IsUnderline = underline, IsBig = big });
         }
     }
 
