@@ -41,6 +41,9 @@ internal unsafe class SkiaWindow
     private MouseCursor.CursorType? m_currentCursor = null;
     private MouseCursor.CursorType? m_lastCursorShape = null;
 
+    static GRGlInterface m_createdInterface;
+    static bool m_createdBaseGLContext;
+
     public SkiaWindow(Widget parent, string title, WindowFlags flags, SkiaWindow? parentWindow)
     {
         switch (RuntimeInfo.OS)
@@ -81,11 +84,28 @@ internal unsafe class SkiaWindow
 
         if (Application.HardwareAccel)
         {
-            SDLGLContext = SDL_GL_CreateContext(SDLWindowHandle);
-            SDL_GL_MakeCurrent(SDLWindowHandle, SDLGLContext);
+            if (Application.ShareGLContexts)
+            {
+                SDLGLContext = SDL_GL_CreateContext(SDLWindowHandle);
 
-            InterfaceGL = GRGlInterface.Create();
-            GRContext = GRContext.CreateGl(InterfaceGL);
+                if (!m_createdBaseGLContext)
+                {
+                    m_createdBaseGLContext = true;
+                    m_createdInterface = GRGlInterface.Create();
+                    SDL.SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+                }
+
+                InterfaceGL = m_createdInterface;
+                GRContext = GRContext.CreateGl(m_createdInterface);
+            }
+            else
+            {
+                SDLGLContext = SDL_GL_CreateContext(SDLWindowHandle);
+                // SDL_GL_MakeCurrent(SDLWindowHandle, SDLGLContext);
+
+                InterfaceGL = GRGlInterface.Create();
+                GRContext = GRContext.CreateGl(InterfaceGL);
+            }
         }
         else
         {
@@ -135,8 +155,11 @@ internal unsafe class SkiaWindow
     {
         WindowRegistry.Remove(this);
 
-        GRContext?.Dispose();
-        InterfaceGL?.Dispose();
+        if (!Application.ShareGLContexts)
+        {
+            GRContext?.Dispose();
+            InterfaceGL?.Dispose();
+        }
 
         if (SDLSurface != null)
         {

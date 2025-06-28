@@ -56,6 +56,7 @@ public class Application : IDisposable
 
     public static bool HeadlessMode { get; set; } = false;
     public static bool HardwareAccel { get; private set; } = true;
+    internal static bool ShareGLContexts { get; set; } = false;
 
     private readonly Clipboard s_clipboard;
     public static Clipboard Clipboard => Instance!.s_clipboard;
