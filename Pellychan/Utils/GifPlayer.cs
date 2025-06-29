@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using static Pellychan.ChanClient;
 
-namespace Pellychan;
+namespace Pellychan.Utils;
 
 public class GifPlayer : IDisposable
 {

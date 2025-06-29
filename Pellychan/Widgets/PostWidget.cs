@@ -4,6 +4,7 @@ using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.GUI;
 using Pellychan.GUI.Widgets;
+using Pellychan.Utils;
 using SkiaSharp;
 using System.Net;
 
@@ -120,7 +121,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
     public void SetBitmapPreview(SKImage thumbnail)
     {
         m_previewBitmap.SetThumbnail(thumbnail);
-        m_previewInfoLabel!.Text = $"{((long)m_apiPost.Fsize!).FormatBytes()} {m_apiPost.Ext}";
+        m_previewInfoLabel!.Text = $"<span class=\"date\">{((long)m_apiPost.Fsize!).FormatBytes()} {m_apiPost.Ext}</span>";
 
         SetHeight();
     }

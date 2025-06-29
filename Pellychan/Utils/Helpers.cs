@@ -2,7 +2,7 @@
 using SkiaSharp;
 using Svg.Skia;
 
-namespace Pellychan;
+namespace Pellychan.Utils;
 
 public static class Helpers
 {
