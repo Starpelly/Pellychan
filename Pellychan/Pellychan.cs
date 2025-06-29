@@ -38,7 +38,7 @@ public static class Pellychan
 
         MainWindow.Show();
         LoadCatalog("g");
-        LoadThread("105694826");
+        LoadThread("105724992");
 
         app.Run();
     }

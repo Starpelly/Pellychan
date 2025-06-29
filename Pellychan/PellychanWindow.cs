@@ -235,7 +235,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
                     Layout = new HBoxLayout
                     {
-                        Padding = new(8)
+                        Padding = new(12, 8)
                     }
                 };
                 w = new Label(bg)
@@ -270,7 +270,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         Pellychan.ChanClient.CurrentBoard = board;
         Pellychan.ChanClient.Catalog = Pellychan.ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
 
-        m_boardTitleLabel.Text = $"<span class=\"header\">/{board}/</span>";
+        m_boardTitleLabel.Text = $"<span class=\"header\">/{board}/ - {Pellychan.ChanClient.Boards.Boards.Find(c => c.URL == board).Title}</span>";
 
         var ids = new Dictionary<long, ThreadWidget>();
         void loadPage(CatalogPage page)
@@ -313,7 +313,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         clearPosts();
 
         Pellychan.ChanClient.CurrentThread = Pellychan.ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
-        m_threadTitleLabel.Text = $"<span class=\"header\">/{Pellychan.ChanClient.CurrentBoard}/{Pellychan.ChanClient.CurrentThread.Posts[0].No}/ - {Pellychan.ChanClient.CurrentThread.Posts[0].Sub}</span>";
+        m_threadTitleLabel.Text = $"<span class=\"header\">{Pellychan.ChanClient.CurrentThread.Posts[0].Sub}</span>";
 
         var ids = new Dictionary<long, PostWidget>();
         for (var i = 0; i < Pellychan.ChanClient.CurrentThread.Posts.Count; i++)

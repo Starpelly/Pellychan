@@ -1,4 +1,5 @@
 ﻿using SkiaSharp;
+using System.Diagnostics;
 using static Pellychan.ChanClient;
 
 namespace Pellychan;
@@ -7,7 +8,8 @@ public class GifPlayer : IDisposable
 {
     private List<GifFrame> m_frames = [];
     private int m_currentFrame = 0;
-    private Timer? m_timer; // DISGUSTING, WE SHOULD USE A STOPWATCH INSTEAD!!!
+    private double m_nextFrameTime = 0;
+    private readonly Stopwatch m_stopwatch = new();
 
     public SKImage? CurrentImage => m_frames.Count > 0 ? m_frames[m_currentFrame].Image : null;
 
@@ -25,24 +27,30 @@ public class GifPlayer : IDisposable
 
     public void Start()
     {
-        m_currentFrame = 0;
-        StartTimer(m_frames[m_currentFrame].Delay);
+        StartTimer();
     }
 
     public void Stop()
     {
-        m_timer?.Dispose();
+        m_currentFrame = 0;
+        m_stopwatch.Stop();
     }
 
-    private void StartTimer(int interval)
+    public void Update()
     {
-        m_timer?.Dispose();
-        m_timer = new Timer(_ =>
+        if (m_frames.Count == 0) return;
+        while (m_stopwatch.Elapsed.TotalSeconds >= m_nextFrameTime)
         {
             m_currentFrame = (m_currentFrame + 1) % m_frames.Count;
-            StartTimer(m_frames[m_currentFrame].Delay);
-            OnFrameChanged?.Invoke(); // hook to trigger repaint
-        }, null, interval, Timeout.Infinite);
+            m_nextFrameTime += m_frames[m_currentFrame].Delay * 0.001;
+            OnFrameChanged?.Invoke();
+        }
+    }
+
+    private void StartTimer()
+    {
+        m_stopwatch.Stop();
+        m_stopwatch.Start();
     }
 
     public Action? OnFrameChanged { get; set; }
@@ -51,7 +59,6 @@ public class GifPlayer : IDisposable
     {
         GC.SuppressFinalize(this);
 
-        m_timer?.Dispose();
         foreach (var frame in m_frames)
             frame.Image.Dispose();
         m_frames.Clear();

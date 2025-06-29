@@ -54,4 +54,20 @@ public static class Helpers
         canvas.DrawPicture(picture, in matrix);
         canvas.Restore();
     }
+
+    public static string FormatBytes(this long bytes)
+    {
+        const long KB = 1024;
+        const long MB = KB * 1024;
+        const long GB = MB * 1024;
+
+        if (bytes >= GB)
+            return $"{(double)bytes / GB:F2} GB";
+        else if (bytes >= MB)
+            return $"{(double)bytes / MB:F2} MB";
+        else if (bytes >= KB)
+            return $"{(double)bytes / KB:F2} KB";
+        else
+            return $"{bytes} Bytes";
+    }
 }

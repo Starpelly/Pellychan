@@ -16,8 +16,8 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
 
     private readonly Post m_ApiPost;
 
-    private SKImage? m_thumbnailBitmap;
-    private SKImage? m_fullBitmap;
+    private SKImage? m_thumbnailImage;
+    private SKImage? m_fullImage;
 
     private bool m_usingThumbnail = true;
     private bool m_loadedFull = false;
@@ -34,9 +34,9 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
 
     public void SetThumbnail(SKImage thumbnail)
     {
-        m_thumbnailBitmap = thumbnail;
+        m_thumbnailImage = thumbnail;
 
-        updateImage(m_thumbnailBitmap);
+        updateImage(m_thumbnailImage);
     }
 
     public bool OnMouseDown(MouseEvent evt)
@@ -54,8 +54,6 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
 
         if (!m_loadedFull) return false;
 
-        m_usingThumbnail = !m_usingThumbnail;
-
         if (!m_usingThumbnail)
         {
             m_gifPlayer?.Stop();
@@ -64,7 +62,8 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         {
             m_gifPlayer?.Start();
         }
-        updateImage((m_usingThumbnail) ? m_thumbnailBitmap : m_fullBitmap);
+        m_usingThumbnail = !m_usingThumbnail;
+        updateImage((m_usingThumbnail) ? m_thumbnailImage : m_fullImage);
 
         return true;
     }
@@ -72,12 +71,6 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
     public new void OnPaint(SKCanvas canvas)
     {
         canvas.Save();
-
-        /*
-        using var path = new SKPath();
-        path.AddRoundRect(new SKRect(0, 0, Width, Height), 6, 6);
-        canvas.ClipPath(path, SKClipOperation.Intersect, true);
-        */
 
         base.OnPaint(canvas);
 
@@ -87,6 +80,9 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         paint.Color = Application.DefaultStyle.GetFrameColor();
         paint.IsStroke = true;
         canvas.DrawRoundRect(new SKRect(0, 0, Width - 1, Height - 1), 0, 0, paint);
+
+        // Idk if we wanna update the gif while it isn't painted?
+        m_gifPlayer?.Update();
     }
 
     public void OnMouseEnter()
@@ -107,7 +103,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
         var newWidth = Bitmap.Width;
         var newHeight = Bitmap.Height;
 
-        var fullPreviewWidth = m_fullBitmap != null ? m_fullBitmap.Width : newWidth;
+        var fullPreviewWidth = m_fullImage != null ? m_fullImage.Width : newWidth;
         if (maxWidth > newWidth)
         {
             maxWidth = newWidth;
@@ -133,7 +129,7 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             return;
         }
 
-        FitToMaxWidth(m_fullBitmap != null ? m_fullBitmap.Width : MaxImageWidth);
+        FitToMaxWidth(m_fullImage != null ? m_fullImage.Width : MaxImageWidth);
 
         (Parent as PostWidget)?.SetHeight();
     }
@@ -155,9 +151,12 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             {
                 m_loadedFull = true;
                 m_usingThumbnail = !m_usingThumbnail;
+
+                // Fallback to the first frame in the gif for the full image
+                m_fullImage = m_gifPlayer.CurrentImage;
             });
 
-            m_gifPlayer.OnFrameChanged += delegate ()
+            m_gifPlayer.OnFrameChanged = () =>
             {
                 if (!m_usingThumbnail)
                     updateImage(m_gifPlayer.CurrentImage);
@@ -169,10 +168,10 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
             {
                 if (thumbnail != null)
                 {
-                    m_fullBitmap = thumbnail;
+                    m_fullImage = thumbnail;
 
                     m_usingThumbnail = !m_usingThumbnail;
-                    updateImage(m_fullBitmap);
+                    updateImage(m_fullImage);
 
                     m_loadedFull = true;
                 }
@@ -186,8 +185,8 @@ public class Thumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnterHan
     {
         base.Dispose();
 
-        m_thumbnailBitmap?.Dispose();
-        m_fullBitmap?.Dispose();
+        m_thumbnailImage?.Dispose();
+        m_fullImage?.Dispose();
         m_gifPlayer?.Dispose();
 
         Console.WriteLine("Dispose");
@@ -203,6 +202,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
     private readonly Thumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
     private readonly Label m_dateLabel;
+    private readonly Label? m_previewInfoLabel;
     private readonly Label m_postIDLabel;
     private readonly Label m_commentLabel;
 
@@ -238,6 +238,17 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
             Text = $"<span class=\"postID\">#{post.No}</span>",
             CatchCursorEvents = false,
         };
+
+        if (post.Tim != null)
+        {
+            m_previewInfoLabel = new Label(this)
+            {
+                X = Padding.Left,
+                Y = Padding.Top,
+
+                Text = $"{((long)post.Fsize!).FormatBytes()} {post.Ext}"
+            };
+        }
 
         var rawComment = post.Com == null ? string.Empty : post.Com;
         var htmlEncoded = rawComment;
@@ -372,7 +383,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         }
 
         // newHeight = Math.Max(100, newHeight);
-        Height = newHeight + Padding.Top + m_nameLabel.Height + Padding.Bottom;
+        Height = newHeight + Padding.Top + m_nameLabel.Height + Padding.Bottom + ((m_previewInfoLabel?.Height + 8) ?? 0);
     }
 
     internal void SetPositions()
@@ -383,6 +394,11 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
         // m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
         m_postIDLabel.X = Width - Padding.Right - m_postIDLabel.Width;
+
+        if (m_previewInfoLabel != null)
+        {
+            m_previewInfoLabel.Y = (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Y + m_previewBitmap.Height + 8) : 0);
+        }
     }
 
     #endregion
