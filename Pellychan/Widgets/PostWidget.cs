@@ -1,8 +1,8 @@
 ﻿using HtmlAgilityPack;
 using MaterialDesign;
-using Pellychan.API;
 using Pellychan.API.Models;
 using Pellychan.GUI;
+using Pellychan.GUI.Layouts;
 using Pellychan.GUI.Widgets;
 using Pellychan.Utils;
 using SkiaSharp;
@@ -10,11 +10,143 @@ using System.Net;
 
 namespace Pellychan.Widgets;
 
-public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHandler
+public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
 {
     private static readonly Padding Padding = new(8);
 
+    private PostWidget m_postWidget;
+    public PostWidget Test => m_postWidget;
+
+    private NullWidget? m_repliesHolder = null;
+    private PushButton? m_showRepliesButton;
+
+    private bool m_viewingReplies = false;
+
+    public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
+
+    private const bool UseLayout = false;
+
+    public PostWidgetContainer(Post post, Widget? parent = null) : base(parent)
+    {
+        if (UseLayout)
+        {
+            this.Layout = new VBoxLayout
+            {
+                Padding = new(8),
+                Spacing = 8
+            };
+            this.AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
+        }
+
+        m_postWidget = new PostWidget(post, this)
+        {
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
+        };
+        SetHeight();
+    }
+
+    public void SetReplies(List<PostWidgetContainer> replies)
+    {
+        if (replies.Count == 0) return;
+
+        m_showRepliesButton = new PushButton("View replies", this)
+        {
+            X = Padding.Left,
+            OnClicked = () =>
+            {
+                if (!m_viewingReplies)
+                {
+                    loadReplies(replies);
+                }
+            }
+        };
+    }
+
+    private void loadReplies(List<PostWidgetContainer> replies)
+    {
+        m_repliesHolder = new NullWidget(this)
+        {
+            Name = "Hello",
+            Width = this.Width,
+            
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
+            AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit),
+
+            Layout = new VBoxLayout
+            {
+                Padding = new(32, 0, -8, 0),
+                Spacing = 1,
+            },
+        };
+
+        m_viewingReplies = true;
+        var pw = new Dictionary<int, PostWidgetContainer>(replies.Count);
+        foreach (var item in replies)
+        {
+            var widget = new PostWidgetContainer(item.m_postWidget.APIPost, m_repliesHolder)
+            {
+                Width = this.Width,
+                Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed)
+            };
+            pw.Add(item.m_postWidget.APIPost.No, widget);
+        }
+
+        Pellychan.MainWindow.Bruhhh(pw);
+
+        m_repliesHolder.PerformLayoutUpdate(LayoutFlushType.All);
+
+        SetHeight();
+        // Resize(Width,)
+    }
+
+    public void SetHeight()
+    {
+        if (m_postWidget != null)
+        {
+            var newHeight = m_postWidget.Height + Padding.Bottom + Padding.Top;
+            newHeight += m_showRepliesButton?.Height ?? 0;
+            newHeight += m_repliesHolder?.Height ?? 0;
+            Height = newHeight;
+        }
+    }
+
+    #region Widget events
+
+    public void OnResize(int width, int height)
+    {
+        m_postWidget.X = Padding.Left;
+        m_postWidget.Y = Padding.Top;
+        m_postWidget.Width = width - Padding.Right - Padding.Left;
+        m_postWidget.OnResize();
+
+        if (m_showRepliesButton != null)
+        {
+            m_showRepliesButton.Y = m_postWidget.Height + Padding.Top;
+        }
+        if (m_repliesHolder != null)
+        {
+            m_repliesHolder.Width = width - Padding.Right - Padding.Left;
+            m_repliesHolder.Y = m_postWidget.Height + Padding.Top + (m_showRepliesButton?.Height ?? 0);
+        }
+
+        SetHeight();
+    }
+
+    public void OnPaint(SKCanvas canvas)
+    {
+        using var paint = new SKPaint();
+
+        paint.Color = Palette.Get(ColorRole.Base);
+        canvas.DrawRect(new(0, 0, this.Width, this.Height), paint);
+    }
+
+    #endregion
+}
+
+public class PostWidget : Widget, IMouseClickHandler
+{
     private readonly Post m_apiPost;
+    public Post APIPost => m_apiPost;
 
     private readonly PostThumbnail m_previewBitmap;
     private readonly Label m_nameLabel;
@@ -22,6 +154,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
     private readonly Label? m_previewInfoLabel;
     private readonly Label m_postIDLabel;
     private readonly Label m_commentLabel;
+
+    public readonly List<string> ReferencedPosts = [];
 
     public PostWidget(API.Models.Post post, Widget? parent = null) : base(parent)
     {
@@ -33,25 +167,24 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         // UI Layout
         m_nameLabel = new Label(this)
         {
-            X = Padding.Left,
-            Y = Padding.Top,
+            X = 0,
+            Y = 0,
             Text = $"<span class=\"name\">{post.Name}</span>",
             CatchCursorEvents = false,
         };
 
         m_dateLabel = new Label(this)
         {
-            X = Padding.Left,
-            Y = Padding.Top,
+            X = 0,
+            Y = 0,
             Text = $"<span class=\"date\">{post.Now}</span>",
             CatchCursorEvents = false,
         };
 
-
         m_postIDLabel = new Label(this)
         {
-            X = Padding.Left,
-            Y = Padding.Top,
+            X = 0,
+            Y = 0,
             Text = $"<span class=\"postID\">#{post.No}</span>",
             CatchCursorEvents = false,
         };
@@ -60,8 +193,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         {
             m_previewInfoLabel = new Label(this)
             {
-                X = Padding.Left,
-                Y = Padding.Top,
+                X = 0,
+                Y = 0,
             };
         }
 
@@ -83,9 +216,9 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
                         switch (node.GetAttributeValue("class", ""))
                         {
                             case "quotelink":
+                                ReferencedPosts.Add(node.InnerHtml.TrimStart('>'));
                                 if (node.InnerText == $">>{Pellychan.ChanClient.CurrentThread.No}")
                                 {
-
                                     node.InnerHtml = $"{node.InnerHtml} (OP)";
                                 }
                                 break;
@@ -102,7 +235,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
 
         m_previewBitmap = new(m_apiPost, this)
         {
-            X = Padding.Left,
+            X = 0,
             Y = commentY,
         };
 
@@ -116,6 +249,8 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
             Fitting = new(GUI.Layouts.FitPolicy.Policy.Fixed, GUI.Layouts.FitPolicy.Policy.Fixed),
             CatchCursorEvents = false,
         };
+
+        SetHeight();
     }
 
     public void SetBitmapPreview(SKImage thumbnail)
@@ -126,22 +261,7 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         SetHeight();
     }
 
-    public void OnPaint(SKCanvas canvas)
-    {
-        using var paint = new SKPaint();
-
-        paint.Color = Palette.Get(ColorRole.Base);
-        canvas.DrawRect(new(0, 0, Width, Height), paint);
-    }
-
-    public void OnResize(int width, int height)
-    {
-        // Fit thumbnail
-        var spaceForText = 200;
-        m_previewBitmap.FitToMaxWidth(Width - spaceForText);
-
-        SetHeight();
-    }
+    #region Widget events
 
     public bool OnMouseClick(MouseEvent evt)
     {
@@ -179,13 +299,24 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         return true;
     }
 
+    #endregion
+
     #region Private methods
+
+    internal void OnResize()
+    {
+        // Fit thumbnail
+        var spaceForText = 200;
+        m_previewBitmap.FitToMaxWidth(this.Width - spaceForText);
+
+        SetHeight();
+    }
 
     internal void SetHeight()
     {
         SetPositions();
 
-        m_commentLabel.Width = Width - m_commentLabel.X - Padding.Right;
+        m_commentLabel.Width = this.Width - m_commentLabel.X;
         m_commentLabel.Height = m_commentLabel.MeasureHeightFromWidth(m_commentLabel.Width);
 
         int newHeight = 0;
@@ -199,17 +330,19 @@ public class PostWidget : Widget, IPaintHandler, IResizeHandler, IMouseClickHand
         }
 
         // newHeight = Math.Max(100, newHeight);
-        Height = newHeight + Padding.Top + m_nameLabel.Height + Padding.Bottom + ((m_previewInfoLabel?.Height + 8) ?? 0);
+        this.Height = newHeight + m_nameLabel.Height + ((m_previewInfoLabel?.Height + 8) ?? 0);
+
+        (Parent as PostWidgetContainer)?.SetHeight();
     }
 
     internal void SetPositions()
     {
-        m_commentLabel.X = Padding.Left + (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Width + 8) : 0);
+        m_commentLabel.X = (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Width + 8) : 0);
 
         // m_dateLabel.X = Width - m_dateLabel.Width - Padding.Right;
         m_dateLabel.X = m_nameLabel.X + m_nameLabel.Width + 2;
         // m_postIDLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
-        m_postIDLabel.X = Width - Padding.Right - m_postIDLabel.Width;
+        m_postIDLabel.X = this.Width - m_postIDLabel.Width;
 
         if (m_previewInfoLabel != null)
         {

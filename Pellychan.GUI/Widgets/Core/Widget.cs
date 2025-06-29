@@ -714,6 +714,11 @@ public partial class Widget : IDisposable
 
     public void PerformLayoutUpdate(LayoutFlushType type)
     {
+        if (this.Name == "Hello")
+        {
+            var a = 0;
+        }
+
         if (Layout != null)
         {
             var oldSize = (Width, Height);

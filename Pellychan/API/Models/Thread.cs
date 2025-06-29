@@ -17,7 +17,7 @@ public class Thread
 /// <summary>
 /// A single post within a thread, including the OP.
 /// </summary>
-public struct Post
+public class Post
 {
     [JsonProperty("no")]
     public int No;
@@ -32,40 +32,40 @@ public struct Post
     public int? Closed;
 
     [JsonProperty("now")]
-    public string Now;
+    public string Now = string.Empty;
 
     [JsonProperty("time")]
     public int Time;
 
     [JsonProperty("name")]
-    public string Name;
+    public string Name = string.Empty;
 
     [JsonProperty("trip")]
-    public string Trip;
+    public string Trip = string.Empty;
 
     [JsonProperty("id")]
-    public string Id;
+    public string Id = string.Empty;
 
     [JsonProperty("capcode")]
-    public string Capcode;
+    public string Capcode = string.Empty;
 
     [JsonProperty("country")]
-    public string Country;
+    public string Country = string.Empty;
 
     [JsonProperty("country_name")]
-    public string CountryName;
+    public string CountryName = string.Empty;
 
     [JsonProperty("board_flag")]
-    public string BoardFlag;
+    public string BoardFlag = string.Empty;
 
     [JsonProperty("flag_name")]
-    public string FlagName;
+    public string FlagName = string.Empty;
 
     [JsonProperty("sub")]
-    public string Sub;
+    public string Sub = string.Empty;
 
     [JsonProperty("com")]
-    public string Com;
+    public string Com = string.Empty;
 
     /// <summary>
     /// Unix timestamp + microtime that an image was uploaded
@@ -75,16 +75,16 @@ public struct Post
     public long? Tim;
 
     [JsonProperty("filename")]
-    public string Filename;
+    public string Filename = string.Empty;
 
     [JsonProperty("ext")]
-    public string Ext;
+    public string Ext = string.Empty;
 
     [JsonProperty("fsize")]
     public int? Fsize;
 
     [JsonProperty("md5")]
-    public string Md5;
+    public string Md5 = string.Empty;
 
     [JsonProperty("w")]
     public int? W;
@@ -120,10 +120,10 @@ public struct Post
     public int? ImageLimit;
 
     [JsonProperty("tag")]
-    public string Tag;
+    public string Tag = string.Empty;
 
     [JsonProperty("semantic_url")]
-    public string SemanticUrl;
+    public string SemanticUrl = string.Empty;
 
     [JsonProperty("since4pass")]
     public int? Since4Pass;
