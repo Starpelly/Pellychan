@@ -95,7 +95,13 @@ public class HBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
+        foreach (var child in visibleChildren)
+            child.DisableResizeEvents = true;
+
         var finalPadding = GetFinalPadding(parent);
+
+        // Collect sizes for actually sending resize events
+        var lastChildrenSizes = visibleChildren.Select(c => new SKSizeI(c.Width, c.Height)).ToList();
 
         float remainingWidth = parent.Width;
         float remainingHeight = parent.Height;
@@ -221,6 +227,17 @@ public class HBoxLayout : Layout
                     child.Height += ((int)remainingHeight - child.Height);
                     child.Height = Math.Clamp(child.Height, child.MinimumHeight, child.MaximumHeight);
                     break;
+            }
+        }
+
+        for (var i = 0; i < visibleChildren.Count; i++)
+        {
+            Widget? child = visibleChildren[i];
+            child.DisableResizeEvents = false;
+
+            if (child.Size != lastChildrenSizes[i])
+            {
+                child.EnqueueLayout();
             }
         }
     }

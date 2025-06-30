@@ -9,6 +9,9 @@ namespace Pellychan.GUI.Widgets;
 
 public partial class Widget : IDisposable
 {
+    private Guid m_uid = Guid.NewGuid();
+    public Guid Guid => m_uid;
+
     private string m_name = string.Empty;
     public string Name
     {
@@ -40,6 +43,8 @@ public partial class Widget : IDisposable
     private int m_y = 0;
     private int m_width = 0;
     private int m_height = 0;
+
+    public bool DisableResizeEvents = false;
 
     /// <summary>
     /// X position of the widget relative to its parent, in pixels.
@@ -77,6 +82,9 @@ public partial class Widget : IDisposable
             {
                 m_width = value;
                 dispatchResize();
+
+                if (!DisableResizeEvents)
+                    this.NotifyLayoutChange();
             }
         }
     }
@@ -93,9 +101,14 @@ public partial class Widget : IDisposable
             {
                 m_height = value;
                 dispatchResize();
+
+                if (!DisableResizeEvents)
+                    this.NotifyLayoutChange();
             }
         }
     }
+
+    public SKSizeI Size => new(m_width, m_height);
 
     public SKRect Rect => new(m_x, m_y, m_x + m_width, m_y + m_height);
 
@@ -133,7 +146,6 @@ public partial class Widget : IDisposable
             {
                 m_visible = value;
                 EnqueueLayout();
-                NotifyLayoutChange();
             }
         }
     }
@@ -208,7 +220,6 @@ public partial class Widget : IDisposable
             {
                 m_fitPolicy = value;
                 EnqueueLayout();
-                NotifyLayoutChange();
             }
         }
     }
@@ -223,7 +234,6 @@ public partial class Widget : IDisposable
             {
                 m_autoSizePolicy = value;
                 EnqueueLayout();
-                NotifyLayoutChange();
             }
         }
     }
@@ -402,8 +412,11 @@ public partial class Widget : IDisposable
         }
 
         TriggerRepaint();
+
+        // We also enqueue all the children because we didn't queue anything the first time because the widget holding
+        // the children wasn't visible yet. Maybe this should change?
         EnqueueLayout(true);
-        NotifyLayoutChange();
+        // NotifyLayoutChange();
 
         OnShown();
     }
@@ -448,17 +461,19 @@ public partial class Widget : IDisposable
         {
             m_parent.Children.Add(this);
 
+            /*
             if (m_parent.Layout != null && m_parent.ShouldDraw)
                 m_parent.EnqueueLayout();
 
             if (Layout != null)
                 EnqueueLayout();
+            */
 
             m_parent.TriggerRepaint();
         }
 
         TriggerRepaint();
-        NotifyLayoutChange(); // In case grandparent needs to update layout too
+        NotifyLayoutChange();
     }
 
     public void SetPosition(int x, int y)
@@ -497,7 +512,7 @@ public partial class Widget : IDisposable
         }
 
         dispatchResize();
-        CallResizeEvents();
+        callResizeEvents();
     }
 
     public void TriggerRepaint()
@@ -720,6 +735,15 @@ public partial class Widget : IDisposable
 
             OnPreLayout();
 
+            if (Name == "PostWidgetContainer")
+            {
+                var a = 0;
+            }
+            if (Name == "Posts Lists Holder")
+            {
+                var a = 0;
+            }
+
             Layout.Start();
             switch (type)
             {
@@ -738,49 +762,37 @@ public partial class Widget : IDisposable
             }
             Layout.End();
 
-            if (this.Name == "Hello")
-            {
-                Console.WriteLine($"{Height} ({Application.CurrentFrame})");
-            }
+            if (Width != oldSize.Width || Height != oldSize.Height)
+                dispatchResize();
 
             OnPostLayout();
             OnPostLayoutUpdate?.Invoke();
 
-            TriggerRepaint();
 
-            if (Width != oldSize.Width || Height != oldSize.Height)
-                dispatchResize();
+            TriggerRepaint();
         }
     }
 
-    internal void EnqueueLayout(bool doChildrenAnyway = false)
+    public void EnqueueLayout(bool doChildren = false)
     {
         if (!ShouldDraw)
             return;
 
-        bool shouldInvalidateChildren = doChildrenAnyway;
-
-        if (Layout == null)
+        if (Layout != null)
         {
-            if (!doChildrenAnyway)
-                return;
-        }
-        else
-        {
-            if (Layout.PerformingPasses)
-                return;
-
-            LayoutQueue.Enqueue(this, LayoutFlushType.All);
-            shouldInvalidateChildren = true;
+            if (!Layout.PerformingPasses)
+            {
+                LayoutQueue.Enqueue(this, LayoutFlushType.All);
+            }
         }
 
-        if (shouldInvalidateChildren)
+        if (doChildren)
         {
             foreach (var child in m_children)
             {
                 if (child == null)
                     continue;
-                child.EnqueueLayout(doChildrenAnyway);
+                child.EnqueueLayout(doChildren);
             }
         }
     }
@@ -791,19 +803,22 @@ public partial class Widget : IDisposable
     public void NotifyLayoutChange()
     {
         var p = Parent;
-        if (p != null)
+        while (p != null)
         {
             if (p.Layout != null)
             {
                 p.EnqueueLayout();
-                // break;
             }
-            // Commented out because we only want to go one node upwards
-            // p = p.Parent;
+            else
+            {
+                break;
+            }
+
+            p = p.Parent;
         }
     }
 
-    internal void CallResizeEvents()
+    internal void callResizeEvents()
     {
         // Console.WriteLine($"Calling resize events for type: {GetType().Name}");
 
@@ -854,6 +869,9 @@ public partial class Widget : IDisposable
 
     private void dispatchResize()
     {
+        if (DisableResizeEvents)
+            return;
+
         var isFlusing = LayoutQueue.IsFlusing;
 
         if (Layout != null)
@@ -867,9 +885,8 @@ public partial class Widget : IDisposable
             }
             else
             {
-                CallResizeEvents();
+                callResizeEvents();
             }
-            NotifyLayoutChange();
 
             OnResized?.Invoke();
         }

@@ -10,7 +10,7 @@ using System.Net;
 
 namespace Pellychan.Widgets;
 
-public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
+public class PostWidgetContainer : Widget, IPaintHandler
 {
     private static readonly Padding Padding = new(8);
     private static readonly int Spacing = 2;
@@ -25,26 +25,22 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
 
     public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
 
-    private const bool UseLayout = false;
-
     public PostWidgetContainer(Post post, Widget? parent = null) : base(parent)
     {
-        if (UseLayout)
+        Name = "PostWidgetContainer";
+
+        this.Layout = new VBoxLayout
         {
-            this.Layout = new VBoxLayout
-            {
-                Padding = new(8),
-                Spacing = 8
-            };
-            this.AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
-        }
+            Padding = new(8),
+            Spacing = 8
+        };
+        this.AutoSizing = new(SizePolicy.Policy.Ignore, SizePolicy.Policy.Fit);
 
         m_postWidget = new PostWidget(post, this)
         {
             Width = this.Width,
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
         };
-        SetHeight();
     }
 
     public void SetReplies(List<PostWidgetContainer> replies)
@@ -103,45 +99,13 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
             pw.Add(item.m_postWidget.APIPost.No, widget);
         }
         Pellychan.MainWindow.Bruhhh(pw);
-        m_repliesHolder.OnPostLayoutUpdate = () =>
-        {
-            m_repliesHolder.Y = m_postWidget.Height + Padding.Top + (m_showRepliesButton?.Height + Spacing ?? 0) + Spacing;
-            SetHeight();
-            NotifyLayoutChange();
-        };
-    }
-
-    public void SetHeight()
-    {
-        if (m_postWidget != null)
-        {
-            var newHeight = m_postWidget.Height + Padding.Bottom + Padding.Top;
-            newHeight += m_showRepliesButton?.Height + Spacing ?? 0;
-            newHeight += m_repliesHolder?.Height + Spacing ?? 0;
-            Height = newHeight;
-        }
     }
 
     #region Widget events
 
-    public void OnResize(int width, int height)
+    public override void OnPostLayout()
     {
-        m_postWidget.X = Padding.Left;
-        m_postWidget.Y = Padding.Top;
-        m_postWidget.Width = width - Padding.Right - Padding.Left;
         m_postWidget.OnResize();
-
-        if (m_showRepliesButton != null)
-        {
-            m_showRepliesButton.Y = m_postWidget.Height + Padding.Top + Spacing;
-        }
-        if (m_repliesHolder != null)
-        {
-            m_repliesHolder.Width = width - Padding.Right - Padding.Left;
-            m_repliesHolder.Y = m_postWidget.Height + Padding.Top + (m_showRepliesButton?.Height + Spacing ?? 0) + Spacing;
-        }
-
-        SetHeight();
     }
 
     public void OnPaint(SKCanvas canvas)
@@ -331,30 +295,8 @@ public class PostWidget : Widget, IMouseClickHandler
         var spaceForText = 200;
         m_previewBitmap.FitToMaxWidth(this.Width - spaceForText);
 
-        SetHeight();
-    }
-
-    internal void SetHeight()
-    {
         SetPositions();
-
-        m_commentLabel.Width = this.Width - m_commentLabel.X;
-        m_commentLabel.Height = m_commentLabel.MeasureHeightFromWidth(m_commentLabel.Width);
-
-        int newHeight = 0;
-        if (m_commentLabel.Height > m_previewBitmap.Height)
-        {
-            newHeight += m_commentLabel.Height + 4;
-        }
-        else
-        {
-            newHeight = m_previewBitmap.Height + 4;
-        }
-
-        // newHeight = Math.Max(100, newHeight);
-        this.Height = newHeight + m_nameLabel.Height + ((m_previewInfoLabel?.Height + 8) ?? 0);
-
-        (Parent as PostWidgetContainer)?.SetHeight();
+        SetHeight();
     }
 
     internal void SetPositions()
@@ -372,6 +314,24 @@ public class PostWidget : Widget, IMouseClickHandler
         }
 
         m_repliesLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
+    }
+
+    internal void SetHeight()
+    {
+        m_commentLabel.Width = this.Width - m_commentLabel.X;
+        m_commentLabel.Height = m_commentLabel.MeasureHeightFromWidth(m_commentLabel.Width);
+
+        int newHeight = 0;
+        if (m_commentLabel.Height > m_previewBitmap.Height)
+        {
+            newHeight += m_commentLabel.Height + 4;
+        }
+        else
+        {
+            newHeight = m_previewBitmap.Height + 4;
+        }
+
+        this.Height = newHeight + m_nameLabel.Height + ((m_previewInfoLabel?.Height + 8) ?? 0);
     }
 
     #endregion

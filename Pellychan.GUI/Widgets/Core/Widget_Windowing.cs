@@ -201,7 +201,7 @@ public partial class Widget
             }
 
             dispatchResize();
-            CallResizeEvents();
+            // callResizeEvents();
         }
         m_nativeWindow!.CreateFrameBuffer(w, h);
 

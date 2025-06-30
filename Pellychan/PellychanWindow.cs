@@ -14,8 +14,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     private readonly List<ThreadWidget> m_threadWidgets = [];
     private readonly Dictionary<int, PostWidgetContainer> m_postWidgets = [];
 
-    private ScrollArea m_threadsListWidget;
-    private ScrollArea m_postsListWidget;
+    private ScrollArea? m_threadsListWidget;
+    private ScrollArea? m_postsListWidget;
 
     public readonly SKFont IconsFont;
 
@@ -34,6 +34,8 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             {
                 Width = this.Width,
                 ScreenPosition = MenuBar.Orientation.Top,
+
+                Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
             };
             void AddMenu(string title, List<MenuAction> items)
             {
@@ -185,13 +187,14 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     {
                         Spacing = 1,
                     },
-                    Name = "Threads Lists Holder"
+                    Name = "Threads List Holder"
                 };
             }
 
             CreateSeparator();
 
             // Main content
+            if (true)
             {
                 var postsListHolder = new NullWidget(mainHolder)
                 {
@@ -262,19 +265,20 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         }
     }
 
+    private Dictionary<long, ThreadWidget> m_threadIds = new();
+
     public void LoadBoardCatalog(string board)
     {
         clearThreads();
         clearPosts();
 
-        Pellychan.ChanClient.CurrentBoard = board;
-        Pellychan.ChanClient.Catalog = Pellychan.ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
+        m_threadIds.Clear();
 
         if (m_threadsListWidget == null)
             return;
         m_boardTitleLabel.Text = $"<span class=\"header\">/{board}/ - {Pellychan.ChanClient.Boards.Boards.Find(c => c.URL == board).Title}</span>";
 
-        var ids = new Dictionary<long, ThreadWidget>();
+        m_threadIds = new Dictionary<long, ThreadWidget>();
         void loadPage(CatalogPage page)
         {
             foreach (var thread in page.Threads)
@@ -288,7 +292,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
                 if (thread.Tim != null && thread.Tim > 0)
                 {
-                    ids.Add((long)thread.Tim, widget);
+                    m_threadIds.Add((long)thread.Tim, widget);
                 }
             }
         }
@@ -299,23 +303,34 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         {
             loadPage(page);
         }
+    }
+
+    public void T()
+    {
+        // @NOTE
+        // I'm too tired to figure this out right now, but thread widgets won't look right if thumbnails are loaded "immediately"
+        // AGH idk....
+        // -pelly
 
         // Load thumbnails for threads
-        _ = Pellychan.ChanClient.LoadThumbnailsAsync(ids.Keys, (long tim, SKImage? image) =>
+        _ = Pellychan.ChanClient.LoadThumbnailsAsync(m_threadIds.Keys, (long tim, SKImage? image) =>
         {
             if (image != null)
             {
-                ids[tim].SetBitmapPreview(image);
+                m_threadIds[tim].SetBitmapPreview(image);
             }
         });
     }
 
     public void LoadThreadPosts(string threadID)
     {
+        if (m_postsListWidget == null)
+            return;
+
         clearPosts();
 
-        Pellychan.ChanClient.CurrentThread = Pellychan.ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
         m_threadTitleLabel.Text = $"<span class=\"header\">{Pellychan.ChanClient.CurrentThread.Posts[0].Sub}</span>";
+
 
         var imageIDs = new Dictionary<long, PostWidgetContainer>();
 
@@ -354,30 +369,6 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         {
             refPosts.Add(key, []);
         }
-
-        /*
-        foreach (var widget in m_postWidgets.Values)
-        {
-            foreach (var tryID in widget.ReferencedPosts)
-            {
-                if (int.TryParse(tryID, out var id))
-                {
-                    // if (postWidgets.TryGetValue(id, out var value))
-                    if (m_postWidgets.ContainsKey(id))
-                    {
-                        // list.Add(value);
-                        refPosts[id].Add(widget);
-                    }
-                    else
-                    {
-                        // @NOTE
-                        // So this indicates the post comes from another thread
-                        // I need to add a case to handle this!
-                    }
-                }
-            }
-        }
-        */
 
         foreach (var widget in m_postWidgets)
         {
@@ -422,6 +413,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
     private void clearPosts()
     {
+        if (m_postsListWidget == null)
+            return;
+
         foreach (var widget in m_postWidgets)
         {
             widget.Value.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...

@@ -100,6 +100,9 @@ public class VBoxLayout : Layout
         if (visibleChildren.Count == 0)
             return;
 
+        foreach (var child in visibleChildren)
+            child.DisableResizeEvents = true;
+
         var finalPadding = GetFinalPadding(parent);
 
         // Collect sizes for actually sending resize events
@@ -232,12 +235,14 @@ public class VBoxLayout : Layout
             }
         }
 
-        // Send resize events
+        for (var i = 0; i < visibleChildren.Count; i++)
         {
-            for (var i = 0; i < visibleChildren.Count; i++)
+            Widget? child = visibleChildren[i];
+            child.DisableResizeEvents = false;
+
+            if (child.Size != lastChildrenSizes[i])
             {
-                if (lastChildrenSizes[i] != new SKSizeI(visibleChildren[i].Width, visibleChildren[i].Height))
-                    visibleChildren[i].CallResizeEvents();
+                child.EnqueueLayout();
             }
         }
     }
@@ -250,7 +255,7 @@ public class VBoxLayout : Layout
             return;
 
         var finalPadding = GetFinalPadding(parent);
-        var y = finalPadding.Top - parent.ContentsPositions.Y;
+        var y = finalPadding.Top - -parent.ContentsPositions.Y;
 
         foreach (var child in visibleChildren)
         {

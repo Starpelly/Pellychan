@@ -36,24 +36,32 @@ public static class Pellychan
         using var iconStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Images.4channy.ico");
         MainWindow.SetIconFromStream(iconStream!);
 
-        MainWindow.Show();
         LoadCatalog("v");
         LoadThread("713837282");
+        MainWindow.Show();
+        MainWindow.T();
 
         // LoadCatalog("g");
-        // LoadThread("105737118");
+        // LoadThread("105756382");
 
         app.Run();
     }
 
     public static void LoadCatalog(string board)
     {
+        ChanClient.CurrentBoard = board;
+        ChanClient.Catalog = ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
+
         MainWindow.LoadBoardCatalog(board);
         MainWindow.SetWindowTitle($"Pellychan - /{board}/");
+
+        MainWindow.T();
     }
 
     public static void LoadThread(string threadID)
     {
+        ChanClient.CurrentThread = ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
+
         MainWindow.LoadThreadPosts(threadID);
         MainWindow.SetWindowTitle($"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/ - {ChanClient.CurrentThread.Posts[0].Sub}");
     }

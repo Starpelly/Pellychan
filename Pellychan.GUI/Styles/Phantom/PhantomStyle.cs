@@ -553,7 +553,7 @@ public class PhantomStyle : Style
     {
         using var paint = new SKPaint();
         paint.IsStroke = true;
-        paint.StrokeWidth = 1;
+        // paint.StrokeWidth = 1;
         paint.Color = m_swatch.GetColor(SwatchColor.Window_Outline);
 
         var r = new SKRectI(0, 0, frame.Width, frame.Height);

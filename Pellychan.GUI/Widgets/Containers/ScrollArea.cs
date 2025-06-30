@@ -35,7 +35,13 @@ public class ScrollArea : Widget, IMouseWheelHandler
 
         ContentFrame = new NullWidget(this)
         {
-            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Expanding)
+            Name = "ScrollArea Content",
+            Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Expanding),
+
+            Layout = new VBoxLayout
+            {
+
+            }
         };
 
         VerticalScrollbar = new ScrollBar(this)

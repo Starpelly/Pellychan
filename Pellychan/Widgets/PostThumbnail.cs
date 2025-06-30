@@ -128,7 +128,7 @@ public class PostThumbnail : Image, IPaintHandler, IMouseDownHandler, IMouseEnte
 
         FitToMaxWidth(m_fullImage != null ? m_fullImage.Width : MaxImageWidth);
 
-        (Parent as PostWidget)?.SetHeight();
+        (Parent as PostWidget)?.OnResize();
     }
 
     private void loadFull()

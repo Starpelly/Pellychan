@@ -7,7 +7,7 @@ using System.Net;
 
 namespace Pellychan.Widgets;
 
-internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
+internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEnterHandler, IMouseLeaveHandler, IMouseDownHandler
 {
     private const int MaxImageWidth = 75;
     private static readonly Padding Padding = new(8);
@@ -33,7 +33,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
             CatchCursorEvents = false
         };
 
-        var rawComment = thread.Com == null ? string.Empty : thread.Com;
+        var rawComment = thread.Com ?? string.Empty;
         var htmlEncoded = rawComment;
         var decoded = WebUtility.HtmlDecode(htmlEncoded);
 
@@ -47,16 +47,6 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
             CatchCursorEvents = false,
             ShouldCache = false
         };
-
-        /*
-        Pellychan.ChanClient.LoadThumbnail(thread, (thumbnail) =>
-        {
-            if (thumbnail != null)
-            {
-
-            }
-        });
-        */
     }
 
     public void SetBitmapPreview(SKImage image)
@@ -168,7 +158,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IResizeH
         }
     }
 
-    public void OnResize(int width, int height)
+    public override void OnPostLayout()
     {
         updateLayout();
     }
