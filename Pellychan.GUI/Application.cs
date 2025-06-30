@@ -79,7 +79,7 @@ public class Application : IDisposable
     }
 
     internal static readonly DeltaTime DeltaTiming = new();
-    internal static uint CurrentFrame { get; private set; } = 0;
+    internal static uint CurrentFrame { get; set; } = 0;
 
     #endregion
 

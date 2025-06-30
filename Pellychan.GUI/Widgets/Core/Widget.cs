@@ -714,11 +714,6 @@ public partial class Widget : IDisposable
 
     public void PerformLayoutUpdate(LayoutFlushType type)
     {
-        if (this.Name == "Hello")
-        {
-            var a = 0;
-        }
-
         if (Layout != null)
         {
             var oldSize = (Width, Height);
@@ -742,6 +737,11 @@ public partial class Widget : IDisposable
                     break;
             }
             Layout.End();
+
+            if (this.Name == "Hello")
+            {
+                Console.WriteLine($"{Height} ({Application.CurrentFrame})");
+            }
 
             OnPostLayout();
             OnPostLayoutUpdate?.Invoke();
@@ -788,7 +788,7 @@ public partial class Widget : IDisposable
     /// <summary>
     /// Tells all parents to invalidate layouts (if they have layouts).
     /// </summary>
-    internal void NotifyLayoutChange()
+    public void NotifyLayoutChange()
     {
         var p = Parent;
         if (p != null)

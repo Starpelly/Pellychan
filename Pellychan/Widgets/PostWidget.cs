@@ -13,6 +13,7 @@ namespace Pellychan.Widgets;
 public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
 {
     private static readonly Padding Padding = new(8);
+    private static readonly int Spacing = 2;
 
     private PostWidget m_postWidget;
     public PostWidget Test => m_postWidget;
@@ -40,6 +41,7 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
 
         m_postWidget = new PostWidget(post, this)
         {
+            Width = this.Width,
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
         };
         SetHeight();
@@ -48,6 +50,16 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
     public void SetReplies(List<PostWidgetContainer> replies)
     {
         if (replies.Count == 0) return;
+
+        /*
+        var repliesString = new StringBuilder();
+
+        foreach (var widget in replies)
+        {
+            repliesString.Append($">{widget.m_postWidget.APIPost.No} ");
+        }
+        m_postWidget.SetReplies(repliesString.ToString());
+        */
 
         m_showRepliesButton = new PushButton("View replies", this)
         {
@@ -90,13 +102,13 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
             };
             pw.Add(item.m_postWidget.APIPost.No, widget);
         }
-
         Pellychan.MainWindow.Bruhhh(pw);
-
-        m_repliesHolder.PerformLayoutUpdate(LayoutFlushType.All);
-
-        SetHeight();
-        // Resize(Width,)
+        m_repliesHolder.OnPostLayoutUpdate = () =>
+        {
+            m_repliesHolder.Y = m_postWidget.Height + Padding.Top + (m_showRepliesButton?.Height + Spacing ?? 0) + Spacing;
+            SetHeight();
+            NotifyLayoutChange();
+        };
     }
 
     public void SetHeight()
@@ -104,8 +116,8 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
         if (m_postWidget != null)
         {
             var newHeight = m_postWidget.Height + Padding.Bottom + Padding.Top;
-            newHeight += m_showRepliesButton?.Height ?? 0;
-            newHeight += m_repliesHolder?.Height ?? 0;
+            newHeight += m_showRepliesButton?.Height + Spacing ?? 0;
+            newHeight += m_repliesHolder?.Height + Spacing ?? 0;
             Height = newHeight;
         }
     }
@@ -121,12 +133,12 @@ public class PostWidgetContainer : Widget, IPaintHandler, IResizeHandler
 
         if (m_showRepliesButton != null)
         {
-            m_showRepliesButton.Y = m_postWidget.Height + Padding.Top;
+            m_showRepliesButton.Y = m_postWidget.Height + Padding.Top + Spacing;
         }
         if (m_repliesHolder != null)
         {
             m_repliesHolder.Width = width - Padding.Right - Padding.Left;
-            m_repliesHolder.Y = m_postWidget.Height + Padding.Top + (m_showRepliesButton?.Height ?? 0);
+            m_repliesHolder.Y = m_postWidget.Height + Padding.Top + (m_showRepliesButton?.Height + Spacing ?? 0) + Spacing;
         }
 
         SetHeight();
@@ -154,6 +166,7 @@ public class PostWidget : Widget, IMouseClickHandler
     private readonly Label? m_previewInfoLabel;
     private readonly Label m_postIDLabel;
     private readonly Label m_commentLabel;
+    private readonly Label m_repliesLabel;
 
     public readonly List<string> ReferencedPosts = [];
 
@@ -187,6 +200,10 @@ public class PostWidget : Widget, IMouseClickHandler
             Y = 0,
             Text = $"<span class=\"postID\">#{post.No}</span>",
             CatchCursorEvents = false,
+        };
+
+        m_repliesLabel = new Label(this)
+        {
         };
 
         if (post.Tim != null)
@@ -301,6 +318,11 @@ public class PostWidget : Widget, IMouseClickHandler
 
     #endregion
 
+    internal void SetReplies(string replies)
+    {
+        m_repliesLabel.Text = replies;
+    }
+
     #region Private methods
 
     internal void OnResize()
@@ -348,6 +370,8 @@ public class PostWidget : Widget, IMouseClickHandler
         {
             m_previewInfoLabel.Y = (m_previewBitmap.Bitmap != null ? (m_previewBitmap.Y + m_previewBitmap.Height + 8) : 0);
         }
+
+        m_repliesLabel.X = m_dateLabel.X + m_dateLabel.Width + 2;
     }
 
     #endregion

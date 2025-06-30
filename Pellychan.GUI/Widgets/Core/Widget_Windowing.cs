@@ -205,6 +205,7 @@ public partial class Widget
         }
         m_nativeWindow!.CreateFrameBuffer(w, h);
 
+        Application.CurrentFrame++;
         TriggerRepaint();
 
         LayoutQueue.Flush();
