@@ -37,7 +37,7 @@ public static class Pellychan
         MainWindow.SetIconFromStream(iconStream!);
 
         LoadCatalog("v");
-        LoadThread("713837282");
+        LoadThread("714085510");
         MainWindow.Show();
         MainWindow.T();
 

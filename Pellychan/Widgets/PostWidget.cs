@@ -15,7 +15,9 @@ public class PostWidgetContainer : Widget, IPaintHandler
     private static readonly Padding Padding = new(8);
     private static readonly int Spacing = 2;
 
-    private PostWidget m_postWidget;
+    public Post APIPost => m_postWidget.APIPost;
+
+    private readonly PostWidget m_postWidget;
     public PostWidget Test => m_postWidget;
 
     private NullWidget? m_repliesHolder = null;

@@ -364,10 +364,17 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
     public void Bruhhh(Dictionary<int, PostWidgetContainer> widgetsToUpdate)
     {
         var refPosts = new Dictionary<int, List<PostWidgetContainer>>();
+        var imageIDs = new Dictionary<long, PostWidgetContainer>();
 
         foreach (var key in widgetsToUpdate.Keys)
         {
             refPosts.Add(key, []);
+
+            var post = widgetsToUpdate[key].APIPost;
+            if (post.Tim != null && post.Tim > 0)
+            {
+                imageIDs.Add((long)post.Tim, widgetsToUpdate[key]);
+            }
         }
 
         foreach (var widget in m_postWidgets)
@@ -392,10 +399,20 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
             }
         }
 
+
         foreach (var post in refPosts)
         {
             widgetsToUpdate[post.Key].SetReplies(post.Value);
         }
+
+        // Load thumbnails for posts
+        _ = Pellychan.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
+        {
+            if (image != null)
+            {
+                imageIDs[tim].Test.SetBitmapPreview(image);
+            }
+        });
     }
 
     private void clearThreads()

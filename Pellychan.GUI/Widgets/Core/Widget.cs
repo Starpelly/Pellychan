@@ -768,7 +768,6 @@ public partial class Widget : IDisposable
             OnPostLayout();
             OnPostLayoutUpdate?.Invoke();
 
-
             TriggerRepaint();
         }
     }
