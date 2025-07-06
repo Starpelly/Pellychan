@@ -275,6 +275,8 @@ public class PostWidget : Widget, IMouseClickHandler
             a.SetMenu(m);
             a.SetPosition(evt.globalX, evt.globalY);
 
+            Console.WriteLine(evt.globalY);
+
             a.Show();
         }
 

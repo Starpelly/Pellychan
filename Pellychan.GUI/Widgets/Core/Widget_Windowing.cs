@@ -26,16 +26,33 @@ public partial class Widget
 
     private void onNativeWindowMouseEvent(int mouseX, int mouseY, MouseEventType type, MouseButton button, int deltaX = 0, int deltaY = 0)
     {
-        if (type == MouseEventType.Down)
+        if (Application.POPUPS_MAKE_WINDOWS)
         {
-            if (s_openPopupMenu != null && !s_openPopupMenu.HitTest(mouseX, mouseY))
+            if (type == MouseEventType.Down)
             {
-                (s_openPopupMenu as MenuPopup)?.Submit();
-                s_openPopupMenu = null;
+                if (s_openPopupMenu != null && !s_openPopupMenu.HitTest(mouseX, mouseY))
+                {
+                    (s_openPopupMenu as MenuPopup)?.Submit();
+                    s_openPopupMenu = null;
+                }
             }
         }
 
-        var hovered = findHoveredWidget(mouseX, mouseY, true);
+        Widget? hovered = null;
+
+        // Check popups first
+        if (!Application.POPUPS_MAKE_WINDOWS)
+        {
+            var find = findHoveredPopupWidget(mouseX, mouseY, true);
+            if (find != null)
+            {
+                hovered = find.findHoveredWidget(mouseX, mouseY, true);
+            }
+        }
+        if (hovered == null)
+        {
+            hovered = findHoveredWidget(mouseX, mouseY, true);
+        }
 
         if (hovered != m_lastHovered)
         {

@@ -1,4 +1,5 @@
 ﻿using Pellychan.GUI.Framework.Extensions.ImageExtensions;
+using Pellychan.GUI.Framework.Platform.Windows;
 using Pellychan.GUI.Framework.Threading;
 using Pellychan.GUI.Framework.Utils;
 using SDL;
@@ -141,7 +142,34 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                 if (parentWindow == null)
                     throw new Exception("Popup and tool menus NEED to have parents!");
 
-                SDLWindowHandle = SDL_CreatePopupWindow(parentWindow.SDLWindowHandle, 0, 0, Size.Width, Size.Height, flags);
+                const bool createNativeWindow = false;
+
+                if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows && createNativeWindow)
+                {
+                    var parentHandle = parentWindow.WindowHandle;
+                    var ptr = WindowsWindow.CreatePopup(parentHandle, 0, 0, Size.Width, Size.Height);
+                    if (ptr == IntPtr.Zero)
+                    {
+                        throw new Exception("uhhh");
+                    }
+
+                    SDL_PropertiesID props = SDL_CreateProperties();
+                    SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, ptr);
+                    // SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, (long)flags);
+                    // SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, (nint)parentWindow.SDLWindowHandle);
+
+                    SDLWindowHandle = SDL_CreateWindowWithProperties(props);
+                    SDL_DestroyProperties(props);
+
+                    if (SDLWindowHandle == null)
+                    {
+                        throw new Exception(SDL_GetError());
+                    }
+                }
+                else
+                {
+                    SDLWindowHandle = SDL_CreatePopupWindow(parentWindow.SDLWindowHandle, 0, 0, Size.Width, Size.Height, flags);
+                }
             }
             else
             {

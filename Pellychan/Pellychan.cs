@@ -36,8 +36,8 @@ public static class Pellychan
         using var iconStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Images.4channy.ico");
         MainWindow.SetIconFromStream(iconStream!);
 
-        LoadCatalog("v");
-        LoadThread("714085510");
+        // LoadCatalog("v");
+        // LoadThread("714085510");
         MainWindow.Show();
         MainWindow.T();
 

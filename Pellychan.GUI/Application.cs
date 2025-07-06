@@ -58,7 +58,13 @@ public class Application : IDisposable
 
     public static bool HeadlessMode { get; set; } = false;
     public static bool HardwareAccel { get; private set; } = true;
-    internal static bool ShareGLContexts { get; set; } = false;
+
+    /// <summary>
+    /// When popups are created, they make native OS windows to handle them.
+    /// This also creates separate GL contexts.
+    /// </summary>
+    public const bool POPUPS_MAKE_WINDOWS = false;
+    public const bool SHARE_GL_CONTEXTS = false;
 
     private readonly Clipboard s_clipboard;
     public static Clipboard Clipboard => Instance!.s_clipboard;

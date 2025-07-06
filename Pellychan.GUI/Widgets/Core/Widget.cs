@@ -329,12 +329,12 @@ public partial class Widget : IDisposable
     #region Windowing
 
     internal bool IsTopLevel => Parent == null && IsWindow;
-    internal bool IsWindow => m_windowType == WindowType.Window || m_windowType == WindowType.Popup;
+    internal bool IsWindow => m_windowType == WindowType.Window || (m_windowType == WindowType.Popup && Application.POPUPS_MAKE_WINDOWS);
 
     /// <summary>
     /// Difference between this and <see cref="Visible"/> is this also checks if this is just a normal widget.
     /// </summary>
-    internal bool VisibleWidget => m_windowType == WindowType.Widget && ShouldDrawFast;
+    internal bool VisibleWidget => (m_windowType == WindowType.Widget) && ShouldDrawFast;
 
     private readonly WindowType m_windowType = WindowType.Widget;
 
@@ -626,14 +626,7 @@ public partial class Widget : IDisposable
 
     internal void Paint(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
     {
-        if (ShouldCache)
-        {
-            paintCache(canvas, clipRect, window);
-        }
-        else
-        {
-            paintNoCache(canvas, clipRect, window);
-        }
+        paintNoCache(canvas, clipRect, window);
         m_hasDirtyDescendants = false;
     }
 
@@ -694,6 +687,12 @@ public partial class Widget : IDisposable
 
             Paint(canvas, rootClip, m_nativeWindow);
 
+            if (!Application.POPUPS_MAKE_WINDOWS)
+            {
+                rootClip = new SKRect(0, 0, m_width, m_height);
+                PaintPopups(canvas, rootClip, m_nativeWindow);
+            }
+
             if (debug)
             {
                 renderDebug(canvas);
@@ -725,6 +724,21 @@ public partial class Widget : IDisposable
         }
 
         m_nativeWindow.EndPresent();
+    }
+
+    internal void PaintPopups(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
+    {
+        foreach (var child in m_children)
+        {
+            if (child.m_windowType == WindowType.Popup)
+            {
+                child.Paint(canvas, clipRect, window);
+            }
+            else if (child.m_windowType != WindowType.Widget)
+                break;
+
+            child.PaintPopups(canvas, clipRect, window);
+        }
     }
 
     public void PerformLayoutUpdate(LayoutFlushType type)
@@ -833,6 +847,11 @@ public partial class Widget : IDisposable
         if (widget.IsWindow)
             return (0, 0);
 
+        if (widget.m_windowType == WindowType.Popup)
+        {
+            return (widget.m_x, widget.m_y);
+        }
+
         var x = widget.m_x;
         var y = widget.m_y;
 
@@ -840,6 +859,8 @@ public partial class Widget : IDisposable
         while (current != null)
         {
             if (current.IsWindow)
+                break;
+            if (!Application.POPUPS_MAKE_WINDOWS && current.m_windowType == WindowType.Popup)
                 break;
 
             x += current.m_x;
@@ -949,6 +970,9 @@ public partial class Widget : IDisposable
 
     private bool isFocusedHack()
     {
+        if (!Application.POPUPS_MAKE_WINDOWS)
+            return true;
+
         if (s_openPopupMenu != null && this is not MenuBar)
         {
             if (s_openPopupMenu != this)
@@ -965,6 +989,55 @@ public partial class Widget : IDisposable
         if (m_hasDirtyDescendants) return;
         m_hasDirtyDescendants = true;
         Parent?.markChildDirty();
+    }
+
+    private Widget? findHoveredPopupWidget(int x, int y, bool checkRaycast, bool inFocused = false)
+    {
+        Widget? hoveredPopup = null;
+
+        /*
+        void look(Widget parent, int x, int y)
+        {
+            foreach (var child in parent.m_children.AsReadOnly().Reverse())
+            {
+                int localX = x - child.m_x;
+                int localY = y - child.m_y;
+
+                if (child.m_windowType == WindowType.Popup && child.ShouldDrawFast)
+                {
+                    if (child.HitTest(localX, localY))
+                    {
+                        hoveredPopup = child;
+                        // break;
+                    }
+                }
+
+                look(child, localX, localY);
+            }
+        }
+
+        look(this, x, y);
+        */
+
+        void look(Widget parent)
+        {
+            foreach (var child in parent.m_children.AsReadOnly().Reverse())
+            {
+                if (child.m_windowType == WindowType.Popup && child.ShouldDrawFast)
+                {
+                    var gs = getGlobalPosition(child);
+                    if ((x >= gs.Item1 && y >= gs.Item2 && x < gs.Item1 + child.m_width && y < gs.Item2 + child.m_height))
+                    {
+                        hoveredPopup = child;
+                        break;
+                    }
+                }
+                look(child);
+            }
+        }
+        look(this);
+
+        return hoveredPopup;
     }
 
     private Widget? findHoveredWidget(int x, int y, bool checkRaycast, bool inFocused = false)

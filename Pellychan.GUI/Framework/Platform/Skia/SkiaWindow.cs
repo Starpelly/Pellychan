@@ -60,17 +60,6 @@ internal unsafe class SkiaWindow
 
         Window.Create(parentWindow?.Window ?? null, flags);
 
-        if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows)
-        {
-            // Because of window styling, we need to reset this every time we create a window,
-            // or else "Pop menu" drop shadow will be applied to every window created. And that's no good!
-            (Window as SDL3WindowsWindow)?.ResetDropShadow();
-            if (flags.HasFlag(WindowFlags.PopupMenu))
-            {
-                (Window as SDL3WindowsWindow)?.AddDropShadow();
-            }
-        }
-
         Center();
 
         Window.ExitRequested += delegate ()
@@ -84,7 +73,7 @@ internal unsafe class SkiaWindow
 
         if (Application.HardwareAccel)
         {
-            if (Application.ShareGLContexts)
+            if (Application.SHARE_GL_CONTEXTS)
             {
                 SDLGLContext = SDL_GL_CreateContext(SDLWindowHandle);
 
@@ -155,7 +144,7 @@ internal unsafe class SkiaWindow
     {
         WindowRegistry.Remove(this);
 
-        if (!Application.ShareGLContexts)
+        if (!Application.SHARE_GL_CONTEXTS)
         {
             GRContext?.Dispose();
             InterfaceGL?.Dispose();

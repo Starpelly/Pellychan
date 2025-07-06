@@ -106,131 +106,17 @@ public partial class Widget
     }
 
     /// <summary>
-    /// Paints to the cache canvas, then paints the cache to the canvas.
-    /// </summary>
-    private void paintCache(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
-    {
-        if (m_height <= 0 || m_height <= 0 || !ShouldDrawFast)
-            return;
-
-        var gs = getGlobalPosition(this);
-        var globalPos = new SKPoint(gs.Item1, gs.Item2);
-
-        var thisRect = new SKRect(globalPos.X, globalPos.Y, globalPos.X + m_width, globalPos.Y + m_height);
-        var currentClip = SKRect.Intersect(clipRect, thisRect);
-
-        if (currentClip.IsEmpty)
-            return;
-
-        /*
-        foreach (var clip in clipStack)
-        {
-            var a = this;
-            if (!clip.IntersectsWith(thisRect))
-                return;
-        }
-
-        clipStack.Push(thisRect);
-        */
-
-        canvas.Save();
-        canvas.Translate(m_x, m_y);
-        canvas.ClipRect(new(0, 0, m_width, m_height));
-
-        if (m_isDirty || m_hasDirtyDescendants)
-        {
-            m_lastPaintFrame = Application.CurrentFrame;
-            m_isDirty = false;
-
-            bool recreateTexture = false;
-
-            if (!IsTopLevel)
-            {
-                /*
-                if (m_cachedBitmap != null || m_width != m_cachedWidth || m_height != m_cachedHeight)
-                {
-                    m_cachedBitmap?.Dispose();
-                    m_cachedBitmap = new SKBitmap(m_width, m_height);
-                    m_cachedWidth = m_width;
-                    m_cachedHeight = m_height;
-                }
-                */
-
-                if (m_width != m_cachedWidth || m_height != m_cachedHeight)
-                {
-                    recreateTexture = true;
-                    m_cachedBitmap?.Dispose();
-                    m_cachedBitmap = new SKBitmap(m_width, m_height);
-
-                    m_cachedWidth = m_width;
-                    m_cachedHeight = m_height;
-                }
-            }
-
-            // using var recorder = new SKPictureRecorder();
-            // var paintCanvas = recorder.BeginRecording(new SKRect(0, 0, m_width, m_height));
-
-            using (var paintCanvas = new SKCanvas(m_cachedBitmap))
-            {
-                Console.WriteLine("OnPaint");
-                paintCanvas.Clear(SKColors.Transparent);
-                (this as IPaintHandler)?.OnPaint(paintCanvas);
-
-                if (m_children.Count > 0)
-                {
-                    foreach (var child in m_children)
-                    {
-                        if (!child.VisibleWidget)
-                            continue;
-
-                        child.Paint(paintCanvas, clipRect, window);
-                    }
-                }
-            }
-
-            // m_cachedPicture = recorder.EndRecording();
-
-            unsafe
-            {
-                if (recreateTexture)
-                {
-                    var surface = SDL3.SDL_CreateSurfaceFrom(m_width, m_height, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888, m_cachedBitmap!.GetPixels(), m_cachedBitmap.RowBytes);
-
-                    if (m_cachedRenderTexture != null)
-                    {
-                        SDL3.SDL_DestroyTexture(m_cachedRenderTexture);
-                    }
-                    m_cachedRenderTexture = SDL3.SDL_CreateTextureFromSurface(window.SDLRenderer, surface);
-
-                    SDL3.SDL_DestroySurface(surface);
-                }
-                else
-                {
-                    SDL3.SDL_UpdateTexture(m_cachedRenderTexture, null, m_cachedBitmap!.GetPixels(), m_cachedBitmap.RowBytes);
-                }
-            }
-        }
-
-        if (m_cachedBitmap != null)
-        {
-            // canvas.DrawBitmap(m_cachedBitmap, m_x, m_y);
-        }
-        if (m_cachedPicture != null)
-        {
-            // m_cachedPicture.Playback(canvas);
-            // canvas.DrawPicture(m_cachedPicture, 0, 0);
-        }
-
-        canvas.Restore();
-    }
-
-    /// <summary>
     /// Paints to the canvas directly.
     /// </summary>
     private void paintNoCache(SKCanvas canvas, SKRect clipRect, SkiaWindow window)
     {
-        if (m_height <= 0 || m_height <= 0 || !ShouldDrawFast)
+        if (m_width <= 0 || m_height <= 0 || !ShouldDrawFast)
             return;
+
+        if (m_windowType == WindowType.Popup)
+        {
+            var a = 0;
+        }
 
         var gs = getGlobalPosition(this);
         var globalPos = new SKPoint(gs.Item1, gs.Item2);
@@ -269,7 +155,6 @@ public partial class Widget
             {
                 if (!child.VisibleWidget)
                     continue;
-
 
                 child.Paint(canvas, clipRect, window);
             }
