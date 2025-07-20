@@ -70,11 +70,7 @@ public partial class Widget
 
         if (m_cachedRenderTexture != null)
         {
-            if (Application.HardwareAccel)
-            {
-
-            }
-            else
+            if (!Application.HardwareAccel)
             {
                 SDL.SDL3.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                 var destRect = new SDL_FRect
@@ -145,6 +141,30 @@ public partial class Widget
             // This should be acknolwedged at least, the position probably shouldn't change if the widget is a window?
             canvas.Translate(m_x, m_y);
         }
+
+        // Popups have a cool dropshadow
+        if (m_windowType == WindowType.Popup && !IsTopLevel && !IsWindow)
+        {
+            var dropShadowFilter = SKImageFilter.CreateDropShadow(
+                dx: 4,
+                dy: 4,
+                sigmaX: 3,
+                sigmaY: 3,
+                color: SKColors.Black.WithAlpha(128)
+            );
+
+            using var paint = new SKPaint
+            {
+                Color = SKColors.Red,
+                ImageFilter = dropShadowFilter,
+                IsAntialias = true
+            };
+
+            var rect = new SKRect(0, 0, m_width, m_height);
+            canvas.DrawRect(rect, paint);
+        }
+
+
         canvas.ClipRect(new(0, 0, m_width, m_height));
 
         (this as IPaintHandler)?.OnPaint(canvas);

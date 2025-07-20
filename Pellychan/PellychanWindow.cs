@@ -116,7 +116,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 var boardsListHolder = new NullWidget(mainHolder)
                 {
                     Fitting = new(FitPolicy.Policy.Fixed, FitPolicy.Policy.Expanding),
-                    Width = 64,
+                    Width = 158,
 
                     Layout = new VBoxLayout { }
                 };
@@ -145,7 +145,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
                 foreach (var board in Pellychan.ChanClient.Boards.Boards)
                 {
-                    new PushButton(board.URL, m_boardsListWidget.ChildWidget)
+                    new PushButton(board.Title, m_boardsListWidget.ChildWidget)
                     {
                         Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                         OnClicked = () =>

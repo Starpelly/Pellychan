@@ -10,7 +10,7 @@ public class PhantomStyle : Style
 
     #region Adjustments
 
-    internal const float PushButton_Rounding = 2.0f;
+    internal const float PushButton_Rounding = 3.0f;
     internal const bool Scrollbar_Shadows = true;
     internal const int Num_ShadowSteps = 3;
 
