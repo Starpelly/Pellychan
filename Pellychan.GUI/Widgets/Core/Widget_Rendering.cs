@@ -145,7 +145,7 @@ public partial class Widget
         // Popups have a cool dropshadow
         if (m_windowType == WindowType.Popup && !IsTopLevel && !IsWindow)
         {
-            var dropShadowFilter = SKImageFilter.CreateDropShadow(
+            var dropShadowFilter = SKImageFilter.CreateDropShadowOnly(
                 dx: 4,
                 dy: 4,
                 sigmaX: 3,
@@ -163,7 +163,6 @@ public partial class Widget
             var rect = new SKRect(0, 0, m_width, m_height);
             canvas.DrawRect(rect, paint);
         }
-
 
         canvas.ClipRect(new(0, 0, m_width, m_height));
 

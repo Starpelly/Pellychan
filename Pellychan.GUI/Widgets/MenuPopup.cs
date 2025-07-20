@@ -14,6 +14,8 @@ public class MenuPopup : Widget, IPaintHandler
     /// </summary>
     public Action? OnSubmitted = null;
 
+    public Menu? Menu => m_menu;
+
     public MenuPopup(Widget? parent = null) : base(parent, WindowType.Popup)
     {
         // I assume the reason opening a popup takes so long is because of OpenGL initialization bullshit (maybe)
@@ -57,13 +59,35 @@ public class MenuPopup : Widget, IPaintHandler
 
     public void OnPaint(SKCanvas canvas)
     {
-        using var paint = new SKPaint();
-        paint.Color = Palette.Get(ColorRole.Window);
-        canvas.DrawRect(0, 0, Width, Height, paint);
+        const bool rounded = false;
 
+        using var paint = new SKPaint();
+        if (rounded)
+            paint.IsAntialias = true;
+
+        // Background
+        paint.Color = Palette.Get(ColorRole.Window);
+
+        if (rounded)
+            canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), 8, 8), paint);
+        else
+            canvas.DrawRect(0, 0, Width, Height, paint);
+
+        // Border
         paint.IsStroke = true;
         paint.Color = Application.DefaultStyle.GetFrameColor().Lighter(1.1f);
-        canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+
+        if (rounded)
+            canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), 8, 8), paint);
+        else
+            canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+
+        if (rounded)
+        {
+            canvas.ClipRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), 8, 8), SKClipOperation.Intersect, true);
+        }
+
+        // 
 
         /*
 
@@ -85,6 +109,17 @@ public class MenuPopup : Widget, IPaintHandler
             OnSubmitted.Invoke();
         else
             this.Delete();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>True if it will close</returns>
+    internal bool RequestClose()
+    {
+        Submit();
+
+        return true;
     }
 
     #endregion

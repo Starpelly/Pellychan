@@ -61,6 +61,9 @@ namespace Pellychan.GUI.Widgets
             };
             menu.OnUserOpened = () =>
             {
+                if (m_openedMenu == menu)
+                    return;
+
                 m_openedMenu = menu;
                 m_popupOpen = true;
 
@@ -114,6 +117,18 @@ namespace Pellychan.GUI.Widgets
         public bool OnMouseDown(MouseEvent evt)
         {
             return true;
+        }
+
+        /// <summary>
+        /// Used to prevent a "double open" when clicking outside a popup but on the menubar...
+        /// This seems kinda hacky...
+        /// </summary>
+        internal bool OwnsPopup(MenuPopup? popup)
+        {
+            if (m_stdPopup == popup)
+                return true;
+
+            return false;
         }
     }
 }

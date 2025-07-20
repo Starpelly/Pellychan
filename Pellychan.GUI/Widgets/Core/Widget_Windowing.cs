@@ -30,7 +30,9 @@ public partial class Widget
         {
             if (type == MouseEventType.Down)
             {
-                if (s_openPopupMenu != null && !s_openPopupMenu.HitTest(mouseX, mouseY))
+                Console.WriteLine(mouseY);
+
+                if (s_openPopupMenu != null && !s_openPopupMenu.HitTestLocal(mouseX, mouseY))
                 {
                     (s_openPopupMenu as MenuPopup)?.Submit();
                     s_openPopupMenu = null;
@@ -52,6 +54,23 @@ public partial class Widget
         if (hovered == null)
         {
             hovered = findHoveredWidget(mouseX, mouseY, true);
+
+            // Close any active popup (because we aren't hovering over it)
+            if (type == MouseEventType.Down && s_openPopupMenu != null && s_openPopupMenu != hovered && s_openPopupMenu is MenuPopup popup)
+            {
+                var dothing = true;
+
+                if (hovered == popup.Menu)
+                {
+                    dothing = false;
+                }
+
+                if (dothing)
+                {
+                    if (popup.RequestClose())
+                        s_openPopupMenu = null;
+                }
+            }
         }
 
         if (hovered != m_lastHovered)

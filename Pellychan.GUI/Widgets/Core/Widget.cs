@@ -549,7 +549,10 @@ public partial class Widget : IDisposable
             initializeWindow();
     }
 
-    public bool HitTest(int x, int y)
+    /// <summary>
+    /// Tests if the mouse position relative to the widget is located in it.
+    /// </summary>
+    public bool HitTestLocal(int x, int y)
     {
         return (ShouldDraw) && (x >= 0 && y >= 0 && x < m_width && y < m_height);
     }
@@ -1066,7 +1069,7 @@ public partial class Widget : IDisposable
         }
 
         if (canCatchEvents)
-        if (!HitTest(localX, localY))
+        if (!HitTestLocal(localX, localY))
             return null;
 
         // If we can't catch any events, skip the hit test and skip immediately to the children
@@ -1094,7 +1097,7 @@ public partial class Widget : IDisposable
             if (!child.VisibleWidget)
                 continue;
 
-            if (child.HitTest(x - child.m_x, y - child.m_y))
+            if (child.HitTestLocal(x - child.m_x, y - child.m_y))
                 return child;
         }
         return null;
