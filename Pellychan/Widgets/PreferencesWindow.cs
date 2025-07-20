@@ -46,7 +46,7 @@ public class PreferencesWindow : MainWindow
         var buttons = new NullWidget(this)
         {
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
-            Height = 39,
+            Height = 42,
             Layout = new HBoxLayout
             {
                 Padding = new(9),

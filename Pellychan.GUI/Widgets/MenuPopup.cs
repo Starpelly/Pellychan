@@ -87,10 +87,7 @@ public class MenuPopup : Widget, IPaintHandler
             canvas.ClipRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), 8, 8), SKClipOperation.Intersect, true);
         }
 
-        // 
-
         /*
-
         paint.IsStroke = false;
         paint.Color = EffectivePalette.Get(ColorRole.Text);
         for (var i = 0; i < m_menu.Items.Count; i++)
@@ -98,7 +95,6 @@ public class MenuPopup : Widget, IPaintHandler
             var item = m_menu.Items[i];
             canvas.DrawText(item.Text, new SKPoint(8, (i * ItemHeight) + (Application.DefaultFont.Size)), Application.DefaultFont, paint);
         }*/
-
     }
 
     #region Internal methods

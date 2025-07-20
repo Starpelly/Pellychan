@@ -316,7 +316,7 @@ public partial class Widget : IDisposable
     {
         get
         {
-            return m_shouldCache && Application.SupportPaintCaching && !Application.HardwareAccel;
+            return m_shouldCache && Config.SUPPORT_PAINT_CACHING && !Config.HardwareAccel;
         }
         set
         {
@@ -329,7 +329,7 @@ public partial class Widget : IDisposable
     #region Windowing
 
     internal bool IsTopLevel => Parent == null && IsWindow;
-    internal bool IsWindow => m_windowType == WindowType.Window || (m_windowType == WindowType.Popup && Application.POPUPS_MAKE_WINDOWS);
+    internal bool IsWindow => m_windowType == WindowType.Window || (m_windowType == WindowType.Popup && Config.POPUPS_MAKE_WINDOWS);
 
     /// <summary>
     /// Difference between this and <see cref="Visible"/> is this also checks if this is just a normal widget.
@@ -363,7 +363,7 @@ public partial class Widget : IDisposable
 
         if (IsTopLevel)
         {
-            if (!Application.HeadlessMode)
+            if (!Config.HeadlessMode)
             {
                 Application.Instance!.AddTopLevel(this);
             }
@@ -672,7 +672,7 @@ public partial class Widget : IDisposable
         unsafe
         {
             SKSurface surface;
-            if (Application.HardwareAccel)
+            if (Config.HardwareAccel)
             {
                 surface = SKSurface.Create(m_nativeWindow.GRContext, m_nativeWindow.RenderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Bgra8888, new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal));
             }
@@ -690,7 +690,7 @@ public partial class Widget : IDisposable
 
             Paint(canvas, rootClip, m_nativeWindow);
 
-            if (!Application.POPUPS_MAKE_WINDOWS)
+            if (!Config.POPUPS_MAKE_WINDOWS)
             {
                 rootClip = new SKRect(0, 0, m_width, m_height);
                 PaintPopups(canvas, rootClip, m_nativeWindow);
@@ -706,7 +706,7 @@ public partial class Widget : IDisposable
             surface.Dispose();
         }
 
-        if (!Application.HardwareAccel)
+        if (!Config.HardwareAccel)
         {
             unsafe
             {
@@ -718,7 +718,7 @@ public partial class Widget : IDisposable
             }
         }
 
-        if (!Application.HardwareAccel)
+        if (!Config.HardwareAccel)
         {
             unsafe
             {
@@ -863,7 +863,7 @@ public partial class Widget : IDisposable
         {
             if (current.IsWindow)
                 break;
-            if (!Application.POPUPS_MAKE_WINDOWS && current.m_windowType == WindowType.Popup)
+            if (!Config.POPUPS_MAKE_WINDOWS && current.m_windowType == WindowType.Popup)
                 break;
 
             x += current.m_x;
@@ -973,7 +973,7 @@ public partial class Widget : IDisposable
 
     private bool isFocusedHack()
     {
-        if (!Application.POPUPS_MAKE_WINDOWS)
+        if (!Config.POPUPS_MAKE_WINDOWS)
             return true;
 
         if (s_openPopupMenu != null && this is not MenuBar)

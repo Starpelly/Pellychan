@@ -26,7 +26,7 @@ public partial class Widget
 
     private void onNativeWindowMouseEvent(int mouseX, int mouseY, MouseEventType type, MouseButton button, int deltaX = 0, int deltaY = 0)
     {
-        if (Application.POPUPS_MAKE_WINDOWS)
+        if (Config.POPUPS_MAKE_WINDOWS)
         {
             if (type == MouseEventType.Down)
             {
@@ -43,7 +43,7 @@ public partial class Widget
         Widget? hovered = null;
 
         // Check popups first
-        if (!Application.POPUPS_MAKE_WINDOWS)
+        if (!Config.POPUPS_MAKE_WINDOWS)
         {
             var find = findHoveredPopupWidget(mouseX, mouseY, true);
             if (find != null)

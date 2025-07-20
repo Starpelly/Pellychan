@@ -71,9 +71,9 @@ internal unsafe class SkiaWindow
 
         Window.Title = title;
 
-        if (Application.HardwareAccel)
+        if (Config.HardwareAccel)
         {
-            if (Application.SHARE_GL_CONTEXTS)
+            if (Config.SHARE_GL_CONTEXTS)
             {
                 SDLGLContext = SDL_GL_CreateContext(SDLWindowHandle);
 
@@ -108,7 +108,7 @@ internal unsafe class SkiaWindow
     {
         ImageInfo = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
-        if (Application.HardwareAccel)
+        if (Config.HardwareAccel)
         {
             RenderTarget?.Dispose();
 
@@ -144,7 +144,7 @@ internal unsafe class SkiaWindow
     {
         WindowRegistry.Remove(this);
 
-        if (!Application.SHARE_GL_CONTEXTS)
+        if (!Config.SHARE_GL_CONTEXTS)
         {
             GRContext?.Dispose();
             InterfaceGL?.Dispose();
@@ -172,7 +172,7 @@ internal unsafe class SkiaWindow
 
     public void BeginPresent()
     {
-        if (Application.HardwareAccel)
+        if (Config.HardwareAccel)
         {
             SDL_GL_MakeCurrent(SDLWindowHandle, SDLGLContext);
         }
@@ -180,7 +180,7 @@ internal unsafe class SkiaWindow
 
     public void EndPresent()
     {
-        if (Application.HardwareAccel)
+        if (Config.HardwareAccel)
         {
             SDL_GL_SwapWindow(SDLWindowHandle);
         }

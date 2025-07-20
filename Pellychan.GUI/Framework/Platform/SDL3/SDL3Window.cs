@@ -126,7 +126,7 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                                     SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
                                     SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
-            if (Application.HardwareAccel)
+            if (Config.HardwareAccel)
             {
                 flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
             }
@@ -192,7 +192,7 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
             s_openedWindows.Add(SDLWindowID, this);
             SDL_AddEventWatch(&eventWatch, ObjectHandle.Handle);
 
-            if (Application.HardwareAccel)
+            if (Config.HardwareAccel)
             {
                 // VSync
                 // SDL_GL_SetSwapInterval(1);

@@ -70,7 +70,7 @@ public partial class Widget
 
         if (m_cachedRenderTexture != null)
         {
-            if (!Application.HardwareAccel)
+            if (!Config.HardwareAccel)
             {
                 SDL.SDL3.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                 var destRect = new SDL_FRect
