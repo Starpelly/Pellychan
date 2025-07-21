@@ -174,6 +174,7 @@ public class PhantomStyle : Style
 
         var isDefault = false;
         var isOn = option.State.HasFlag(StateFlag.On);
+        var isHovering = option.State.HasFlag(StateFlag.MouseOver);
         var isDown = option.State.HasFlag(StateFlag.Sunken);
         var hasFocus = option.State.HasFlag(StateFlag.HasFocus);
         var isEnabled = option.State.HasFlag(StateFlag.Enabled);
@@ -184,7 +185,7 @@ public class PhantomStyle : Style
 
         // Paint background
         {
-            if (isDown || !isEnabled)
+            if (isDown || !isEnabled || isHovering)
             {
                 fill = SwatchColor.Button_Pressed;
                 specular = SwatchColor.Button_Pressed_Specular;
@@ -230,7 +231,6 @@ public class PhantomStyle : Style
             var metrics = Application.DefaultFont.Metrics;
             var textHeight = (-metrics.Ascent) + metrics.Descent;
             Application.DefaultFont.MeasureText(option.Text, out var bounds);
-
 
             var labelX = (button.Width - bounds.Width) / 2;
             var labelY = (button.Height / 2) - (textHeight / 2) - metrics.Ascent;

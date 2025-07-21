@@ -42,8 +42,13 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
         };
         option.InitFrom(this);
 
-        if (m_hovering && m_pressed)
-            option.State |= Style.StateFlag.Sunken;
+        if (m_hovering)
+        {
+            if (m_pressed)
+                option.State |= Style.StateFlag.Sunken;
+            else
+                option.State |= Style.StateFlag.MouseOver;
+        }
         
         Application.DefaultStyle.DrawPushButton(canvas, this, option);
     }
@@ -51,7 +56,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
     public void OnMouseEnter()
     {
         m_hovering = true;
-        MouseCursor.Set(MouseCursor.CursorType.Hand);
+       //  MouseCursor.Set(MouseCursor.CursorType.Hand);
 
         TriggerRepaint();
     }
@@ -59,7 +64,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
     public void OnMouseLeave()
     {
         m_hovering = false;
-        MouseCursor.Set(MouseCursor.CursorType.Arrow);
+        // MouseCursor.Set(MouseCursor.CursorType.Arrow);
 
         TriggerRepaint();
     }

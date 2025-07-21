@@ -37,6 +37,9 @@ public abstract class Style
         /// </summary>
         Raised = 1 << 2,
 
+        /// <summary>
+        /// Indicate if the widget is sunken or pressed.
+        /// </summary>
         Sunken = 1 << 3,
 
         /// <summary>
@@ -53,6 +56,11 @@ public abstract class Style
         /// The widget has focus.
         /// </summary>
         HasFocus = 1 << 6,
+
+        /// <summary>
+        /// Used to indicate if the widget is under the mouse. 
+        /// </summary>
+        MouseOver = 1 << 7,
     }
     
     public abstract void DrawPushButton(SKCanvas canvas, PushButton button, StyleOptionButton option);

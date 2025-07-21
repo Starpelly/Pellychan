@@ -147,10 +147,10 @@ public partial class Widget
         {
             var dropShadowFilter = SKImageFilter.CreateDropShadowOnly(
                 dx: 4,
-                dy: 4,
-                sigmaX: 3,
-                sigmaY: 3,
-                color: SKColors.Black.WithAlpha(128)
+                dy: 3,
+                sigmaX: 2,
+                sigmaY: 2,
+                color: SKColors.Black.WithAlpha(100)
             );
 
             using var paint = new SKPaint

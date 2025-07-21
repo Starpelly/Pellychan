@@ -173,12 +173,16 @@ public partial class Widget : IDisposable
         }
     }
 
-    internal bool ShouldDraw => Visible && !m_deleting;
+    /// <summary>
+    /// This will always return true if the widget is an OS window.
+    /// </summary>
+    internal bool ShouldDraw => (Visible && !m_deleting) || IsWindow;
 
     /// <summary>
     /// Doesn't look up the tree to see if the widget's visible.
+    /// This will always return true if the widget is an OS window.
     /// </summary>
-    internal bool ShouldDrawFast => m_visible && !m_deleting;
+    internal bool ShouldDrawFast => (m_visible && !m_deleting) || IsWindow;
 
     private bool m_catchCursorEvents = true;
 
@@ -329,7 +333,7 @@ public partial class Widget : IDisposable
     #region Windowing
 
     internal bool IsTopLevel => Parent == null && IsWindow;
-    internal bool IsWindow => m_windowType == WindowType.Window || (m_windowType == WindowType.Popup && Config.POPUPS_MAKE_WINDOWS);
+    internal bool IsWindow => m_windowType == WindowType.Window || m_windowType == WindowType.Tool || m_windowType == WindowType.Dialog || (m_windowType == WindowType.Popup && Config.POPUPS_MAKE_WINDOWS);
 
     /// <summary>
     /// Difference between this and <see cref="Visible"/> is this also checks if this is just a normal widget.
@@ -398,7 +402,7 @@ public partial class Widget : IDisposable
             m_nativeWindow.CreateFrameBuffer(m_width, m_height);
 
             m_nativeWindow.Window.Position = new System.Drawing.Point(X, Y);
-            if (m_windowType == WindowType.Window)
+            if (m_windowType != WindowType.Popup)
             {
                 // @HACK
                 m_nativeWindow.Center();
@@ -925,9 +929,20 @@ public partial class Widget : IDisposable
         Console.WriteLine($"Initialized top level widget of type: {GetType().Name}");
 
         WindowFlags flags = WindowFlags.None;
-        if (m_windowType == WindowType.Popup)
+        switch (m_windowType)
         {
-            flags |= WindowFlags.PopupMenu;
+            case WindowType.Popup:
+                flags |= WindowFlags.PopupWindow;
+                break;
+            case WindowType.Tool:
+                flags |= WindowFlags.ToolWindow;
+                break;
+            case WindowType.Dialog:
+                flags |= WindowFlags.DialogWindow;
+                flags |= WindowFlags.Modal;
+                flags |= WindowFlags.SysMenu;
+                break;
+
         }
         SkiaWindow? parentWindow = null;
         var parentWidgetCheck = m_parent;

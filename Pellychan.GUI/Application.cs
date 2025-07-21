@@ -183,7 +183,7 @@ public class Application : IDisposable
                 // So fix that, or don't. I'm not my dad.
                 foreach (var widget in m_widgetsToDelete)
                 {
-                    if (widget.IsDeleting)
+                    // if (widget.IsDeleting)
                     {
                         widget.Dispose();
                     }

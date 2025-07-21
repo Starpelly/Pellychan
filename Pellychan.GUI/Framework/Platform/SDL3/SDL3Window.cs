@@ -27,6 +27,8 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
 
         private const int default_icon_size = 256;
 
+        private WindowFlags m_winFlags = WindowFlags.None;
+
         private static readonly Dictionary<SDL_WindowID, SDL3Window> s_openedWindows = [];
 
         private string m_title = string.Empty;
@@ -112,6 +114,8 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
 
         public void Create(IWindow? parent, WindowFlags wf)
         {
+            m_winFlags = wf;
+
             SDL3Window? parentWindow = null;
             if (parent != null)
             {
@@ -131,7 +135,7 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                 flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
             }
 
-            if (wf.HasFlag(WindowFlags.PopupMenu))
+            if (wf.HasFlag(WindowFlags.PopupWindow))
             {
                 flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU;
                 flags |= SDL_WindowFlags.SDL_WINDOW_TRANSPARENT;
@@ -199,6 +203,8 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
             }
 
             ParentWindow = parentWindow;
+
+            OnCreate(wf);
         }
 
         /// <summary>
@@ -210,6 +216,8 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
             
             if (SDLWindowHandle != null)
             {
+                OnClose(m_winFlags);
+
                 SDL_DestroyWindow(SDLWindowHandle);
                 SDLWindowHandle = null;
             }
@@ -402,6 +410,14 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
         }
 
         #endregion
+
+        internal virtual void OnCreate(WindowFlags wf)
+        {
+        }
+
+        internal virtual void OnClose(WindowFlags wf)
+        {
+        }
 
         private IconGroup? m_iconGroup;
 

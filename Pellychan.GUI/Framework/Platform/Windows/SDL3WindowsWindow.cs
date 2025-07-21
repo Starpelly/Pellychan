@@ -3,13 +3,26 @@ using Pellychan.GUI.Framework.Platform.Windows.Native;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using static SDL.SDL3;
 
 namespace Pellychan.GUI.Framework.Platform.Windows
 {
     [SupportedOSPlatform("windows")]
     internal class SDL3WindowsWindow : SDL3Window
     {
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnableWindow(IntPtr hWnd, bool bEnable);
+
+        private const int GWL_STYLE = -16;
+        private const int WS_MINIMIZEBOX = 0x00020000;
+        private const int WS_MAXIMIZEBOX = 0x00010000;
+        private const int WS_SYSMENU = 0x00080000;
+
         private const int seticon_message = 0x0080;
         private const int icon_big = 1;
         private const int icon_small = 0;
@@ -52,6 +65,49 @@ namespace Pellychan.GUI.Framework.Platform.Windows
 
         const int GCL_STYLE = -26;
         const int CS_DROPSHADOW = 0x00020000;
+
+        internal override void OnCreate(WindowFlags wf)
+        {
+            int style = GetWindowLong(WindowHandle, GWL_STYLE);
+            var oldStyle = style;
+
+            if (wf.HasFlag(WindowFlags.DialogWindow))
+            {
+                // Removes the "minimize" and "maximize" buttons on the window.
+                style &= ~WS_MINIMIZEBOX & ~WS_MAXIMIZEBOX;
+            }
+
+            if (wf.HasFlag(WindowFlags.SysMenu))
+            {
+                // style &= WS_SYSMENU;
+            }
+
+            if (wf.HasFlag(WindowFlags.Modal))
+            {
+                // Disables input for the parent window, acting as a "true modal".
+                if (ParentWindow != null)
+                {
+                    EnableWindow(ParentWindow.WindowHandle, false);
+                }
+            }
+
+            if (oldStyle != style)
+            {
+                SetWindowLong(WindowHandle, GWL_STYLE, style);
+            }
+        }
+
+        internal override void OnClose(WindowFlags wf)
+        {
+            if (wf.HasFlag(WindowFlags.Modal))
+            {
+                // Enables input for the parent window if we disabled it before.
+                if (ParentWindow != null)
+                {
+                    EnableWindow(ParentWindow.WindowHandle, true);
+                }
+            }
+        }
 
         /// <summary>
         /// On Windows, SDL will use the same image for both large and small icons (scaled as necessary).

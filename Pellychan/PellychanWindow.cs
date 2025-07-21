@@ -84,7 +84,9 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     Application.OpenURL("https://github.com/Starpelly/pellychan");
                 }),
 
-                new(MaterialIcons.Info, "About Pellychan")
+                new(MaterialIcons.Info, "About Pellychan", () => {
+                    new AboutWindow(this).Show();
+                })
             ]);
         }
 
@@ -125,7 +127,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 {
                     Fitting = FitPolicy.ExpandingPolicy
                 };
-                m_boardsListWidget.VerticalScrollbar.Visible = false;
+                // m_boardsListWidget.VerticalScrollbar.Visible = false;
 
                 m_boardsListWidget.ContentFrame.Layout = new HBoxLayout
                 {
