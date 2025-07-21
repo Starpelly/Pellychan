@@ -126,16 +126,19 @@ namespace Pellychan.GUI.Framework.Platform.SDL3
                 parentWindow = parent as SDL3Window;
             }
 
-            var flags = SDL_WindowFlags.SDL_WINDOW_RESIZABLE |
-                                    SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
-                                    SDL_WindowFlags.SDL_WINDOW_HIDDEN;
+            var flags = SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY |
+                        SDL_WindowFlags.SDL_WINDOW_HIDDEN;
 
             if (Config.HardwareAccel)
             {
                 flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
             }
 
-            if (wf.HasFlag(WindowFlags.PopupWindow))
+            if (wf.HasFlag(WindowFlags.Resizable))
+            {
+                flags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+            }
+            if (wf.HasFlag(WindowFlags.Popup))
             {
                 flags |= SDL_WindowFlags.SDL_WINDOW_POPUP_MENU;
                 flags |= SDL_WindowFlags.SDL_WINDOW_TRANSPARENT;

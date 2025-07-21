@@ -5,9 +5,9 @@ using Pellychan.GUI.Widgets;
 
 namespace Pellychan.Widgets;
 
-public class PreferencesWindow : MainWindow
+public class PreferencesDialog : DialogWindow
 {
-    public PreferencesWindow(Widget? parent = null) : base(parent)
+    public PreferencesDialog(Widget? parent = null) : base(parent)
     {
         Resize(642, 506);
 

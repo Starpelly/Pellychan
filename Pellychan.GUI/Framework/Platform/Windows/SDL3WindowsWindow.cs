@@ -71,7 +71,7 @@ namespace Pellychan.GUI.Framework.Platform.Windows
             int style = GetWindowLong(WindowHandle, GWL_STYLE);
             var oldStyle = style;
 
-            if (wf.HasFlag(WindowFlags.DialogWindow))
+            if (wf.HasFlag(WindowFlags.Dialog))
             {
                 // Removes the "minimize" and "maximize" buttons on the window.
                 style &= ~WS_MINIMIZEBOX & ~WS_MAXIMIZEBOX;

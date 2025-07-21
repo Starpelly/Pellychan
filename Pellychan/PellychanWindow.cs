@@ -58,7 +58,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     IsSeparator = true,
                 },
                 new(MaterialIcons.Settings, "Preferences", () => {
-                    new PreferencesWindow(this).Show();
+                    new PreferencesDialog(this).Show();
                 }),
             ]);
             AddMenu("Actions", [
@@ -85,7 +85,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                 }),
 
                 new(MaterialIcons.Info, "About Pellychan", () => {
-                    new AboutWindow(this).Show();
+                    new AboutDialog(this).Show();
                 })
             ]);
         }

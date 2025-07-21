@@ -7,12 +7,13 @@ namespace Pellychan.GUI.Framework.Platform
     public enum WindowFlags
     {
         None = 0,
-        PopupWindow = 1 << 0,
-        ToolWindow = 1 << 1,
-        DialogWindow = 1 << 2,
+        Popup = 1 << 0,
+        Tool = 1 << 1,
+        Dialog = 1 << 2,
         Modal = 1 << 3,
         TopMost = 1 << 4,
         SysMenu = 1 << 5,
+        Resizable = 1 << 6,
     }
 
     internal interface IWindow : IDisposable

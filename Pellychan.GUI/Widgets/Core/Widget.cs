@@ -112,6 +112,16 @@ public partial class Widget : IDisposable
 
     public SKRect Rect => new(m_x, m_y, m_x + m_width, m_y + m_height);
 
+    public SKPointI Position
+    {
+        get => new(m_x, m_y);
+        set
+        {
+            m_x = value.X;
+            m_y = value.Y;
+        }
+    }
+
     #endregion
 
     #region Tree
@@ -931,14 +941,18 @@ public partial class Widget : IDisposable
         WindowFlags flags = WindowFlags.None;
         switch (m_windowType)
         {
+            case WindowType.Window:
+                flags |= WindowFlags.Resizable;
+                break;
             case WindowType.Popup:
-                flags |= WindowFlags.PopupWindow;
+                flags |= WindowFlags.Popup;
                 break;
             case WindowType.Tool:
-                flags |= WindowFlags.ToolWindow;
+                flags |= WindowFlags.Tool;
+                flags |= WindowFlags.Resizable;
                 break;
             case WindowType.Dialog:
-                flags |= WindowFlags.DialogWindow;
+                flags |= WindowFlags.Dialog;
                 flags |= WindowFlags.Modal;
                 flags |= WindowFlags.SysMenu;
                 break;
