@@ -125,8 +125,12 @@ public class AboutDialog : DialogWindow, IPaintHandler
     private readonly Image m_bannerImg;
     private readonly Fire m_doomFire = new();
 
+    private SKFont m_fntBig;
+
     public AboutDialog(Widget? parent = null) : base(parent)
     {
+        m_fntBig = Application.CreateUIFont(SKFontStyleWeight.Normal, 2);
+
         using var bannerStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Images.banner.png");
         var img = SKImage.FromEncodedData(bannerStream);
 
@@ -155,18 +159,25 @@ public class AboutDialog : DialogWindow, IPaintHandler
         Resize(640, 480);
     }
 
-    public void OnPaint(SKCanvas canvas)
+    public new void OnPaint(SKCanvas canvas)
     {
         m_doomFire.Update();
         m_doomFire.Render();
 
-        canvas.Clear(EffectivePalette.Get(ColorGroup.Active, ColorRole.Base));
+        canvas.Clear(EffectivePalette.Get(ColorGroup.Active, ColorRole.Base).Darker(1.3f));
 
         canvas.DrawBitmap(m_doomFire.Bitmap, new SKRect(0, 0, Width, Height));
+
+        using var paint = new SKPaint();
+        paint.Color = Palette.Get(ColorRole.Text);
+
+        var txt = "Copyright 2025 Pellyware";
+        
+        canvas.DrawText(txt, (Width / 2) - (m_fntBig.MeasureText(txt) / 2), m_fntBig.Size + 245, m_fntBig, paint);
     }
 
     public override void OnShown()
     {
-        SetWindowTitle("About Pellychan");
+        Title = "About Pellychan";
     }
 }

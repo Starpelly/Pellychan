@@ -45,20 +45,16 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     menu.AddAction(item);
                 }
             }
-            /*
             AddMenu("File", [
-                new(MaterialIcons.Save, "Save"),
-                new(MaterialIcons.DoorFront, "Exit"),
-            ]);
-            */
-            AddMenu("View", [
-                new("New Window"),
+                new(MaterialIcons.Settings, "Preferences", () => {
+                    new PreferencesDialog(this).Show();
+                }),
                 new("")
                 {
                     IsSeparator = true,
                 },
-                new(MaterialIcons.Settings, "Preferences", () => {
-                    new PreferencesDialog(this).Show();
+                new(MaterialIcons.DoorFront, "Exit", () => {
+                    this.Delete();
                 }),
             ]);
             AddMenu("Actions", [
@@ -145,14 +141,14 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     Name = "Boards Lists Holder"
                 };
 
-                foreach (var board in Pellychan.ChanClient.Boards.Boards)
+                foreach (var board in ChanApp.ChanClient.Boards.Boards)
                 {
                     new PushButton(board.Title, m_boardsListWidget.ChildWidget)
                     {
                         Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
                         OnClicked = () =>
                         {
-                            Pellychan.LoadCatalog(board.URL);
+                            ChanApp.LoadCatalog(board.URL);
                         }
                     };
                 }
@@ -278,7 +274,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         if (m_threadsListWidget == null)
             return;
-        m_boardTitleLabel.Text = $"<span class=\"header\">/{board}/ - {Pellychan.ChanClient.Boards.Boards.Find(c => c.URL == board).Title}</span>";
+        m_boardTitleLabel.Text = $"<span class=\"header\">/{board}/ - {ChanApp.ChanClient.Boards.Boards.Find(c => c.URL == board).Title}</span>";
 
         m_threadIds = new Dictionary<long, ThreadWidget>();
         void loadPage(CatalogPage page)
@@ -301,7 +297,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         // loadPage(m_chanClient.Catalog.Pages[0]);
         // return;
-        foreach (var page in Pellychan.ChanClient.Catalog.Pages)
+        foreach (var page in ChanApp.ChanClient.Catalog.Pages)
         {
             loadPage(page);
         }
@@ -315,7 +311,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         // -pelly
 
         // Load thumbnails for threads
-        _ = Pellychan.ChanClient.LoadThumbnailsAsync(m_threadIds.Keys, (long tim, SKImage? image) =>
+        _ = ChanApp.ChanClient.LoadThumbnailsAsync(m_threadIds.Keys, (long tim, SKImage? image) =>
         {
             if (image != null)
             {
@@ -331,14 +327,14 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         clearPosts();
 
-        m_threadTitleLabel.Text = $"<span class=\"header\">{Pellychan.ChanClient.CurrentThread.Posts[0].Sub}</span>";
+        m_threadTitleLabel.Text = $"<span class=\"header\">{ChanApp.ChanClient.CurrentThread.Posts[0].Sub}</span>";
 
 
         var imageIDs = new Dictionary<long, PostWidgetContainer>();
 
-        for (var i = 0; i < Pellychan.ChanClient.CurrentThread.Posts.Count; i++)
+        for (var i = 0; i < ChanApp.ChanClient.CurrentThread.Posts.Count; i++)
         {
-            var post = Pellychan.ChanClient.CurrentThread.Posts[i];
+            var post = ChanApp.ChanClient.CurrentThread.Posts[i];
             var widget = new PostWidgetContainer(post, m_postsListWidget.ChildWidget)
             {
                 Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed)
@@ -354,7 +350,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         Bruhhh(m_postWidgets);
 
         // Load thumbnails for posts
-        _ = Pellychan.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
+        _ = ChanApp.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
         {
             if (image != null)
             {
@@ -408,7 +404,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
         }
 
         // Load thumbnails for posts
-        _ = Pellychan.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
+        _ = ChanApp.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
         {
             if (image != null)
             {

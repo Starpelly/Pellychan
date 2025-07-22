@@ -100,7 +100,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
             };
             pw.Add(item.m_postWidget.APIPost.No, widget);
         }
-        Pellychan.MainWindow.Bruhhh(pw);
+        ChanApp.MainWindow.Bruhhh(pw);
     }
 
     #region Widget events
@@ -200,7 +200,7 @@ public class PostWidget : Widget, IMouseClickHandler
                         {
                             case "quotelink":
                                 ReferencedPosts.Add(node.InnerHtml.TrimStart('>'));
-                                if (node.InnerText == $">>{Pellychan.ChanClient.CurrentThread.No}")
+                                if (node.InnerText == $">>{ChanApp.ChanClient.CurrentThread.No}")
                                 {
                                     node.InnerHtml = $"{node.InnerHtml} (OP)";
                                 }
@@ -250,7 +250,7 @@ public class PostWidget : Widget, IMouseClickHandler
     {
         if (evt.button == GUI.Input.MouseButton.Right)
         {
-            var threadURL = $"https://boards.4chan.org/{Pellychan.ChanClient.CurrentBoard}/thread/{Pellychan.ChanClient.CurrentThread.No}";
+            var threadURL = $"https://boards.4chan.org/{ChanApp.ChanClient.CurrentBoard}/thread/{ChanApp.ChanClient.CurrentThread.No}";
             var postURL = $"{threadURL}#p{m_apiPost.No}";
 
             MenuPopup a = new(this);

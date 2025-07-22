@@ -2,9 +2,9 @@
 
 namespace Pellychan.GUI.Widgets;
 
-public class ToolWindow : Widget
+public class ToolWindow : WindowWidget
 {
-    public ToolWindow(Widget? parent = null) : base(parent, WindowType.Tool)
+    public ToolWindow(Widget? parent = null) : base(WindowType.Tool, parent)
     {
     }
 }

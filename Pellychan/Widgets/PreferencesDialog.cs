@@ -83,6 +83,6 @@ public class PreferencesDialog : DialogWindow
 
     public override void OnShown()
     {
-        SetWindowTitle("Preferences");
+        Title = "Preferences";
     }
 }

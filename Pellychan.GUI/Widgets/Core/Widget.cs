@@ -538,32 +538,6 @@ public partial class Widget : IDisposable
     }
 
     /// <summary>
-    /// Sets the title of the window (if this is a top level widget).
-    /// </summary>
-    public void SetWindowTitle(string title)
-    {
-        if (m_nativeWindow == null)
-            return;
-
-        m_nativeWindow!.Window.Title = (title);
-    }
-
-    /// <summary>
-    /// Forces the window to be created.
-    /// Usually, this is deferred until Show() if the widget is top level.
-    /// 
-    /// ONLY call this method if the widget is a window type!
-    /// </summary>
-    public void CreateWinID()
-    {
-        if (!IsWindow)
-            throw new Exception("Widget is not of a window type.");
-
-        if (m_nativeWindow == null)
-            initializeWindow();
-    }
-
-    /// <summary>
     /// Tests if the mouse position relative to the widget is located in it.
     /// </summary>
     public bool HitTestLocal(int x, int y)
@@ -612,6 +586,24 @@ public partial class Widget : IDisposable
 
         GC.SuppressFinalize(this);
     }
+
+    #region Protected methods
+
+    /// <summary>
+    /// Forces the window to be created.
+    /// Usually, this is deferred until Show() if the widget is top level.
+    /// ONLY call this method if the widget is a window type!
+    /// </summary>
+    protected void CreateWinID()
+    {
+        if (!IsWindow)
+            throw new Exception("Widget is not of a window type.");
+
+        if (m_nativeWindow == null)
+            initializeWindow();
+    }
+
+    #endregion
 
     #region Virtual methods
 

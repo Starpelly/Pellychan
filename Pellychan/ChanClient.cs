@@ -36,8 +36,8 @@ public class ChanClient
         // COOKIES
         // WE AINT NO ROOKIES
         var cookieUri = new Uri("https://sys.4chan.org");
-        m_httpsClientHandler.CookieContainer.Add(cookieUri, new Cookie("cf_clearance", Pellychan.Settings.Cookies.CloudflareClearance));
-        m_httpsClientHandler.CookieContainer.Add(cookieUri, new Cookie("4chan_pass", Pellychan.Settings.Cookies.FourchanPasskey));
+        m_httpsClientHandler.CookieContainer.Add(cookieUri, new Cookie("cf_clearance", ChanApp.Settings.Cookies.CloudflareClearance));
+        m_httpsClientHandler.CookieContainer.Add(cookieUri, new Cookie("4chan_pass", ChanApp.Settings.Cookies.FourchanPasskey));
 
         m_httpClient = new HttpClient(m_httpsClientHandler);
 

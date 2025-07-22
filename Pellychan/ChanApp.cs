@@ -1,10 +1,9 @@
 ﻿using Pellychan.GUI;
 using Pellychan.Resources;
-using Pellychan.Widgets;
 
 namespace Pellychan;
 
-public static class Pellychan
+public static class ChanApp
 {
     public static Settings Settings { get; private set; }
 
@@ -27,10 +26,9 @@ public static class Pellychan
         using var app = new Application();
 
         MainWindow = new PellychanWindow();
-        MainWindow.CreateWinID();
 
-        MainWindow.SetWindowTitle("Pellychan");
-        MainWindow.Resize(1280, 720);
+        MainWindow.Title = "Pellychan";
+        MainWindow.Resize(1600, 900);
 
         // Main Window Icon
         using var iconStream = PellychanResources.ResourceAssembly.GetManifestResourceStream("Pellychan.Resources.Images.4channy.ico");
@@ -53,7 +51,7 @@ public static class Pellychan
         ChanClient.Catalog = ChanClient.GetCatalogAsync().GetAwaiter().GetResult();
 
         MainWindow.LoadBoardCatalog(board);
-        MainWindow.SetWindowTitle($"Pellychan - /{board}/");
+        MainWindow.Title = $"Pellychan - /{board}/";
 
         MainWindow.T();
     }
@@ -63,6 +61,6 @@ public static class Pellychan
         ChanClient.CurrentThread = ChanClient.GetThreadPostsAsync(threadID).GetAwaiter().GetResult();
 
         MainWindow.LoadThreadPosts(threadID);
-        MainWindow.SetWindowTitle($"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/ - {ChanClient.CurrentThread.Posts[0].Sub}");
+        MainWindow.Title = $"Pellychan - /{ChanClient.CurrentBoard}/{threadID}/ - {ChanClient.CurrentThread.Posts[0].Sub}";
     }
 }

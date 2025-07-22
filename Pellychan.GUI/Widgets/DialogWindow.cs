@@ -2,9 +2,9 @@
 
 namespace Pellychan.GUI.Widgets;
 
-public class DialogWindow : Widget, IPaintHandler
+public class DialogWindow : WindowWidget, IPaintHandler
 {
-    public DialogWindow(Widget? parent = null) : base(parent, WindowType.Dialog)
+    public DialogWindow(Widget? parent = null) : base(WindowType.Dialog, parent)
     {
 
     }

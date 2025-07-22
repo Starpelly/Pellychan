@@ -94,13 +94,13 @@ public class MinTestWindow : MainWindow, IMouseDownHandler, IMouseMoveHandler, I
         // m_threadTitleLabel.Text = $"<span class=\"header\">{Pellychan.ChanClient.CurrentThread.Posts[0].Sub}</span>";
 
 
-        var count = Pellychan.ChanClient.CurrentThread.Posts.Count;
+        var count = ChanApp.ChanClient.CurrentThread.Posts.Count;
         // count = 1;
 
         var imageIDs = new Dictionary<long, PostWidgetContainer>(count);
         for (var i = 0; i < count; i++)
         {
-            var post = Pellychan.ChanClient.CurrentThread.Posts[i];
+            var post = ChanApp.ChanClient.CurrentThread.Posts[i];
             var widget = new PostWidgetContainer(post, m_postsListWidget.ChildWidget)
             {
                 Name = $"Post Widget Container ({i})",
@@ -117,7 +117,7 @@ public class MinTestWindow : MainWindow, IMouseDownHandler, IMouseMoveHandler, I
         // Bruhhh(m_postWidgets);
 
         // Load thumbnails for posts
-        _ = Pellychan.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
+        _ = ChanApp.ChanClient.LoadThumbnailsAsync(imageIDs.Keys, (long tim, SKImage? image) =>
         {
             if (image != null)
             {

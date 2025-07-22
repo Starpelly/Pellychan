@@ -181,7 +181,7 @@ internal class ThreadWidget : Widget, IPaintHandler, IPostPaintHandler, IMouseEn
     {
         if (evt.button == MouseButton.Left)
         {
-            Pellychan.LoadThread(Thread.No.ToString());
+            ChanApp.LoadThread(Thread.No.ToString());
         }
 
         return true;

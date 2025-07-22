@@ -109,28 +109,9 @@ public class Application : IDisposable
 
         s_clipboard = new SDL3Clipboard(PngFormat.Instance);
 
-        const int dpi = 96;
-        const float pixelsPerPoint = dpi / 72.0f;
-        const float skiaFontSize = 9 * pixelsPerPoint;
-
-        static SKFont createUIFont(SKFontStyleWeight weight, float sizeMult = 1.0f)
-        {
-            // I kinda like Century Gothic
-            using var typeface = SKTypeface.FromFamilyName("Segoe UI", weight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
-
-            return new SKFont
-            {
-                Edging = SKFontEdging.SubpixelAntialias,
-                Hinting = SKFontHinting.Slight,
-                Subpixel = true,
-                Typeface = typeface,
-                Size = skiaFontSize * sizeMult
-            };
-        }
-
-        m_defaultFont = createUIFont(SKFontStyleWeight.Normal);
-        m_defaultFontBold = createUIFont(SKFontStyleWeight.Bold);
-        m_defaultFontBoldBig = createUIFont(SKFontStyleWeight.Bold, 1.5f);
+        m_defaultFont = CreateUIFont(SKFontStyleWeight.Normal);
+        m_defaultFontBold = CreateUIFont(SKFontStyleWeight.Bold);
+        m_defaultFontBoldBig = CreateUIFont(SKFontStyleWeight.Bold, 1.5f);
 
         using var iconsStream = typeof(Application).Assembly.GetManifestResourceStream("Pellychan.GUI.Resources.MaterialIconsRound-Regular.otf");
         using var iconsTypeface = SKTypeface.FromStream(iconsStream);
@@ -207,6 +188,25 @@ public class Application : IDisposable
 
         SDL3.SDL_Quit();
         GC.SuppressFinalize(this);
+    }
+
+    const int dpi = 96;
+    const float pixelsPerPoint = dpi / 72.0f;
+    const float skiaFontSize = 9 * pixelsPerPoint;
+
+    public static SKFont CreateUIFont(SKFontStyleWeight weight, float sizeMult = 1.0f)
+    {
+        // I kinda like Century Gothic
+        using var typeface = SKTypeface.FromFamilyName("Segoe UI", weight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+
+        return new SKFont
+        {
+            Edging = SKFontEdging.SubpixelAntialias,
+            Hinting = SKFontHinting.Slight,
+            Subpixel = true,
+            Typeface = typeface,
+            Size = skiaFontSize * sizeMult
+        };
     }
 
     public static void OpenURL(string url)

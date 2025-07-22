@@ -2,12 +2,12 @@
 
 namespace Pellychan.GUI.Widgets;
 
-public class MainWindow : Widget, IPaintHandler, IResizeHandler
+public class MainWindow : WindowWidget, IPaintHandler, IResizeHandler
 {
     public MenuBar? MenuBar { get; set; }
     public Widget? CentralWidget = null;
 
-    public MainWindow(Widget? parent = null) : base(parent, WindowType.Window)
+    public MainWindow(Widget? parent = null) : base(WindowType.Window, parent)
     {
 
     }
