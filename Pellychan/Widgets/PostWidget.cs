@@ -27,6 +27,9 @@ public class PostWidgetContainer : Widget, IPaintHandler
 
     public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
 
+    private int m_rowIndex = 0;
+    private int m_treeIndex = 0;
+
     public PostWidgetContainer(Post post, Widget? parent = null) : base(parent)
     {
         Name = "PostWidgetContainer";
@@ -62,6 +65,7 @@ public class PostWidgetContainer : Widget, IPaintHandler
         m_showRepliesButton = new PushButton("View replies", this)
         {
             X = Padding.Left,
+            Height = 20,
             OnClicked = () =>
             {
                 if (!m_viewingReplies)
@@ -76,7 +80,6 @@ public class PostWidgetContainer : Widget, IPaintHandler
     {
         m_repliesHolder = new NullWidget(this)
         {
-            Name = "Hello",
             Width = this.Width,
             
             Fitting = new(FitPolicy.Policy.Expanding, FitPolicy.Policy.Fixed),
@@ -84,8 +87,9 @@ public class PostWidgetContainer : Widget, IPaintHandler
 
             Layout = new VBoxLayout
             {
-                Padding = new(32, 0, -8, 0),
-                Spacing = 1,
+                // Padding = new(32, 0, -8, 0),
+                Padding = new(16, 0, 0, 0),
+                Spacing = 4,
             },
         };
 
@@ -96,7 +100,8 @@ public class PostWidgetContainer : Widget, IPaintHandler
             var widget = new PostWidgetContainer(item.m_postWidget.APIPost, m_repliesHolder)
             {
                 Width = this.Width,
-                Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed)
+                Fitting = new(GUI.Layouts.FitPolicy.Policy.Expanding, GUI.Layouts.FitPolicy.Policy.Fixed),
+                m_treeIndex = this.m_treeIndex + 1 // Alternating row colors for replies? Looks pretty cool ig
             };
             pw.Add(item.m_postWidget.APIPost.No, widget);
         }
@@ -113,15 +118,23 @@ public class PostWidgetContainer : Widget, IPaintHandler
     public void OnPaint(SKCanvas canvas)
     {
         using var paint = new SKPaint();
+        paint.Color = m_treeIndex % 2 == 0 ? Palette.Get(ColorRole.Base) : Palette.Get(ColorRole.AlternateBase);
 
-        paint.Color = Palette.Get(ColorRole.Base);
-        canvas.DrawRect(new(0, 0, this.Width, this.Height), paint);
+        // canvas.DrawRect(0, 0, Width, Height, paint);
+        canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), m_treeIndex == 0 ? 0 : 0), paint);
+
+        if (m_treeIndex == 0)
+            return;
+
+        paint.IsStroke = true;
+        paint.Color = Palette.Get(ColorRole.Base).Darker(1.4f);
+        canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width - 1, Height - 1), m_treeIndex == 0 ? 0 : 0), paint);
     }
 
     #endregion
 }
 
-public class PostWidget : Widget, IMouseClickHandler
+public class PostWidget : Widget, IMouseClickHandler, IPaintHandler
 {
     private readonly Post m_apiPost;
     public Post APIPost => m_apiPost;
@@ -245,6 +258,10 @@ public class PostWidget : Widget, IMouseClickHandler
     }
 
     #region Widget events
+
+    public void OnPaint(SKCanvas canvas)
+    {
+    }
 
     public bool OnMouseClick(MouseEvent evt)
     {

@@ -56,7 +56,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
     public void OnMouseEnter()
     {
         m_hovering = true;
-       //  MouseCursor.Set(MouseCursor.CursorType.Hand);
+        MouseCursor.Set(MouseCursor.CursorType.Hand);
 
         TriggerRepaint();
     }
@@ -64,7 +64,7 @@ public class PushButton : Widget, IPaintHandler, IMouseEnterHandler, IMouseLeave
     public void OnMouseLeave()
     {
         m_hovering = false;
-        // MouseCursor.Set(MouseCursor.CursorType.Arrow);
+        MouseCursor.Set(MouseCursor.CursorType.Arrow);
 
         TriggerRepaint();
     }
