@@ -65,7 +65,7 @@ public class HBoxLayout : Layout
             newHeight = 0;
         }
 
-        var childGap = (widget.Children.Count - 1) * Spacing;
+        var childGap = (visibleChildren.Count - 1) * Spacing;
 
         foreach (var child in visibleChildren)
         {

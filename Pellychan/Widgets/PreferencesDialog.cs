@@ -35,7 +35,7 @@ public class PreferencesDialog : DialogWindow
         }));
         var window = menubar.AddMenu("Window");
         window.AddAction(new(MaterialIcons.Close, "Close", delegate(){
-            this.Delete();
+            this.Dispose();
         }));
 
         new NullWidget(this)

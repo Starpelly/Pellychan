@@ -130,7 +130,7 @@ public class MinTestWindow : MainWindow, IMouseDownHandler, IMouseMoveHandler, I
     {
         foreach (var widget in m_postWidgets)
         {
-            widget.Value.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...
+            widget.Value.Dispose(); // I'm thinking this should defer to the next event loop? It could cause problems...
         }
         m_postWidgets.Clear();
         m_postsListWidget.VerticalScrollbar.Value = 0;

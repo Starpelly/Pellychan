@@ -27,7 +27,19 @@ public class Label : Widget, IPaintHandler
 
     public class TextFragment
     {
-        public string Text { get; set; } = "";
+        private string m_text;
+        private string[] m_words;
+
+        public string Text
+        {
+            get => m_text;
+            set
+            {
+                m_text = value;
+                m_words = m_text.Split(' ');
+            }
+        }
+        public string[] Words => m_words;
 
         public SKColor TextColor { get; set; }
         public bool IsBold { get; set; } = false;
@@ -103,11 +115,9 @@ public class Label : Widget, IPaintHandler
                     break;
             }
         }
-        
+
         foreach (var frag in m_textFragments)
         {
-            var words = frag.Text.Split(' ');
-
             m_paint.Color = frag.TextColor;
 
             // @INVESTIGATE
@@ -120,7 +130,7 @@ public class Label : Widget, IPaintHandler
                 canvas.DrawLine(new SKPoint(x, y + yStart + 1), new SKPoint(x + realTextWidth, y + yStart + 1), m_paint);
             }
 
-            foreach (var word in words)
+            foreach (var word in frag.Words)
             {
                 if (word == "\n")
                 {

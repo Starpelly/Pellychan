@@ -54,7 +54,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
                     IsSeparator = true,
                 },
                 new(MaterialIcons.DoorFront, "Exit", () => {
-                    this.Delete();
+                    this.Dispose();
                 }),
             ]);
             AddMenu("Actions", [
@@ -420,7 +420,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         foreach (var widget in m_threadWidgets)
         {
-            widget.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...
+            widget.Dispose(); // I'm thinking this should defer to the next event loop? It could cause problems...
         }
         m_threadWidgets.Clear();
         m_threadsListWidget.VerticalScrollbar.Value = 0;
@@ -433,7 +433,7 @@ public class PellychanWindow : MainWindow, IResizeHandler, IMouseDownHandler
 
         foreach (var widget in m_postWidgets)
         {
-            widget.Value.Delete(); // I'm thinking this should defer to the next event loop? It could cause problems...
+            widget.Value.Dispose(); // I'm thinking this should defer to the next event loop? It could cause problems...
         }
         m_postWidgets.Clear();
         m_postsListWidget.VerticalScrollbar.Value = 0;

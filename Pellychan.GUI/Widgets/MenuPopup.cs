@@ -33,7 +33,7 @@ public class MenuPopup : Widget, IPaintHandler
 
         foreach (var m in m_widgetItems)
         {
-            m.Delete();
+            m.Dispose();
         }
         m_widgetItems.Clear();
 
@@ -104,7 +104,7 @@ public class MenuPopup : Widget, IPaintHandler
         if (OnSubmitted != null)
             OnSubmitted.Invoke();
         else
-            this.Delete();
+            this.Dispose();
     }
 
     /// <summary>

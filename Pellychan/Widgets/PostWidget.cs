@@ -23,7 +23,8 @@ public class PostWidgetContainer : Widget, IPaintHandler
     private NullWidget? m_repliesHolder = null;
     private PushButton? m_showRepliesButton;
 
-    private bool m_viewingReplies = false;
+    private bool m_loadedReplies = false;
+    private bool m_showingReplies = false;
 
     public List<string> ReferencedPosts => m_postWidget.ReferencedPosts;
 
@@ -65,12 +66,20 @@ public class PostWidgetContainer : Widget, IPaintHandler
         m_showRepliesButton = new PushButton("View replies", this)
         {
             X = Padding.Left,
-            Height = 20,
             OnClicked = () =>
             {
-                if (!m_viewingReplies)
+                if (!m_showingReplies)
                 {
-                    loadReplies(replies);
+                    m_showRepliesButton!.Text = "Hide replies";
+
+                    if (!m_loadedReplies)
+                        loadReplies(replies);
+                    showReplies();
+                }
+                else
+                {
+                    m_showRepliesButton!.Text = "View replies";
+                    hideReplies();
                 }
             }
         };
@@ -78,6 +87,8 @@ public class PostWidgetContainer : Widget, IPaintHandler
 
     private void loadReplies(List<PostWidgetContainer> replies)
     {
+        m_loadedReplies = true;
+
         m_repliesHolder = new NullWidget(this)
         {
             Width = this.Width,
@@ -93,7 +104,6 @@ public class PostWidgetContainer : Widget, IPaintHandler
             },
         };
 
-        m_viewingReplies = true;
         var pw = new Dictionary<int, PostWidgetContainer>(replies.Count);
         foreach (var item in replies)
         {
@@ -106,6 +116,18 @@ public class PostWidgetContainer : Widget, IPaintHandler
             pw.Add(item.m_postWidget.APIPost.No, widget);
         }
         ChanApp.MainWindow.Bruhhh(pw);
+    }
+
+    private void showReplies()
+    {
+        m_repliesHolder.Visible = true;
+        m_showingReplies = true;
+    }
+
+    private void hideReplies()
+    {
+        m_repliesHolder.Visible = false;
+        m_showingReplies = false;
     }
 
     #region Widget events

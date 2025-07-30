@@ -9,13 +9,13 @@ public partial class LayoutTests
     [SetUp]
     public void SetUp()
     {
-        Application.HeadlessMode = true;
+        Config.HeadlessMode = true;
     }
 
     [TearDown]
     public void TearDown()
     {
-        Application.HeadlessMode = false;
+        Config.HeadlessMode = false;
     }
 
     #region All Layouts

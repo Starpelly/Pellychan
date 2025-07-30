@@ -84,7 +84,7 @@ public partial class Widget : IDisposable
                 dispatchResize();
 
                 if (!DisableResizeEvents)
-                    this.NotifyLayoutChange();
+                    this.InvalidateAllParentsLayout();
             }
         }
     }
@@ -103,7 +103,7 @@ public partial class Widget : IDisposable
                 dispatchResize();
 
                 if (!DisableResizeEvents)
-                    this.NotifyLayoutChange();
+                    this.InvalidateAllParentsLayout();
             }
         }
     }
@@ -155,7 +155,7 @@ public partial class Widget : IDisposable
             if (m_visible != value)
             {
                 m_visible = value;
-                EnqueueLayout();
+                InvalidateAllParentsLayout();
             }
         }
     }
@@ -487,7 +487,7 @@ public partial class Widget : IDisposable
         }
 
         TriggerRepaint();
-        NotifyLayoutChange();
+        InvalidateAllParentsLayout();
     }
 
     public void SetPosition(int x, int y)
@@ -547,21 +547,16 @@ public partial class Widget : IDisposable
 
     internal void RequestWindowClose()
     {
-        Delete();
+        Dispose();
     }
 
     /// <summary>
-    /// Deletes the widget from the hierarchy and disposes anything it may have allocated.
+    /// Deletes the widget from the hierarchy and marks it ready to be disposed.
     /// </summary>
-    public void Delete()
-    {
-        m_deleting = true;
-        Application.Instance!.EnqueueWidgetForDeletion(this);
-        // Dispose();
-    }
-
     public virtual void Dispose()
     {
+        m_deleting = true;
+
         if (IsTopLevel)
         {
             Application.Instance!.RemoveTopLevel(this);
@@ -574,6 +569,7 @@ public partial class Widget : IDisposable
         }
 
         m_parent?.m_children.Remove(this);
+        InvalidateAllParentsLayout();
         m_parent = null;
 
         m_cachedSurface?.Dispose();
@@ -822,7 +818,7 @@ public partial class Widget : IDisposable
     /// <summary>
     /// Tells all parents to invalidate layouts (if they have layouts).
     /// </summary>
-    public void NotifyLayoutChange()
+    public void InvalidateAllParentsLayout()
     {
         var p = Parent;
         while (p != null)
